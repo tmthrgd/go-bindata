@@ -5,8 +5,8 @@ check: errcheck golint $(FILES:.go=.checked)
 
 out/%.checked: out/%.go
 	errcheck $<
-	go vet --all $<
-	go vet --shadow $<
+	go tool vet --all $<
+	go tool vet --shadow $<
 	golint $<
 
 $(GOPATH)/bin/go-bindata: $(wildcard ../*.go) $(wildcard ../**/*.go)
