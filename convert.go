@@ -6,6 +6,7 @@ package bindata
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -250,8 +251,12 @@ func safeFunctionName(name string, knownFuncs map[string]int) string {
 			outBytes = append(outBytes, inBytes[i])
 		}
 	}
+	
+	// Convert Json to upper case to make golint happy
+	r, _ := regexp.Compile("(Json)(?:$|[A-Z])")
+	outlint := r.ReplaceAllFunc(outBytes, bytes.ToUpper)
 
-	name = string(outBytes)
+	name = string(outlint)
 
 	// Identifier can't start with a digit.
 	if unicode.IsDigit(rune(name[0])) {
