@@ -229,6 +229,61 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 }
 
 var regFuncName = regexp.MustCompile(`[^a-zA-Z0-9_]`)
+var regReservedWords *regexp.Regexp
+
+// This is the list taken from golint
+func init() {
+	var commonInitialisms = []string{
+		"ACL",
+		"API",
+		"ASCII",
+		"CPU",
+		"CSS",
+		"DNS",
+		"EOF",
+		"GUID",
+		"HTML",
+		"HTTP",
+		"HTTPS",
+		"ID",
+		"IP",
+		"JSON",
+		"LHS",
+		"QPS",
+		"RAM",
+		"RHS",
+		"RPC",
+		"SLA",
+		"SMTP",
+		"SQL",
+		"SSH",
+		"TCP",
+		"TLS",
+		"TTL",
+		"UDP",
+		"UI",
+		"UID",
+		"UUID",
+		"URI",
+		"URL",
+		"UTF8",
+		"VM",
+		"XML",
+		"XMPP",
+		"XSRF",
+		"XSS",
+	}
+	var buf bytes.Buffer
+	buf.WriteString(`(?i)(`)
+	for i, term := range commonInitialisms {
+		buf.WriteString(term)
+		if i < len(commonInitialisms)-1 {
+			buf.WriteByte('|')
+		}
+	}
+	buf.WriteByte(')')
+	regReservedWords = regexp.MustCompile(buf.String())
+}
 
 // safeFunctionName converts the given name into a name
 // which qualifies as a valid function identifier. It
@@ -251,10 +306,8 @@ func safeFunctionName(name string, knownFuncs map[string]int) string {
 			outBytes = append(outBytes, inBytes[i])
 		}
 	}
-	
-	// Convert Json to upper case to make golint happy
-	r, _ := regexp.Compile("(Css|Html|Json|Sql|Xml)(?:$|[A-Z])")
-	outlint := r.ReplaceAllFunc(outBytes, bytes.ToUpper)
+	// make golint happy
+	outlint := regReservedWords.ReplaceAllFunc(outBytes, bytes.ToUpper)
 
 	name = string(outlint)
 
