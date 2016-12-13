@@ -253,7 +253,7 @@ func safeFunctionName(name string, knownFuncs map[string]int) string {
 	}
 	
 	// Convert Json to upper case to make golint happy
-	r, _ := regexp.Compile("(Json)(?:$|[A-Z])")
+	r, _ := regexp.Compile("(Css|Html|Json|Sql|Xml)(?:$|[A-Z])")
 	outlint := r.ReplaceAllFunc(outBytes, bytes.ToUpper)
 
 	name = string(outlint)
