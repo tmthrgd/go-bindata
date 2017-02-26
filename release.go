@@ -441,8 +441,7 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 	}
 
 	_, err = io.WriteString(w, `}
-	a := &asset{bytes: bytes, info: info}
-	return a, nil
+	return &asset{bytes: bytes, info: info}, nil
 }
 
 `)
