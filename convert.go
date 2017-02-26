@@ -348,7 +348,7 @@ func safeFunctionName(name string, knownFuncs map[string]int) string {
 // error that occurred. The hash is a hex encoded, BLAKE2B
 // digest of the file contents truncated to the requested
 // length.
-func hashFile(path, name string, format HashFormat, length int) (newName, hash string, err error) {
+func hashFile(path, name string, format HashFormat, length int) (newName string, hash []byte, err error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return
@@ -364,19 +364,21 @@ func hashFile(path, name string, format HashFormat, length int) (newName, hash s
 		return
 	}
 
-	hash = hex.EncodeToString(h.Sum(nil))[:length]
+	hash = h.Sum(nil)
+
+	enc := hex.EncodeToString(hash)[:length]
 
 	dir, file := filepath.Split(name)
 	ext := filepath.Ext(file)
 
 	switch format {
 	case DirHash:
-		newName = filepath.Join(dir, hash, file)
+		newName = filepath.Join(dir, enc, file)
 	case NameHashSuffix:
 		file = strings.TrimSuffix(file, ext)
-		newName = filepath.Join(dir, file+"-"+hash+ext)
+		newName = filepath.Join(dir, file+"-"+enc+ext)
 	case HashWithExt:
-		newName = filepath.Join(dir, hash+ext)
+		newName = filepath.Join(dir, enc+ext)
 	case NameUnchanged:
 		newName = name
 	default:

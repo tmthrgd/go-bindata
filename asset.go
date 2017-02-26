@@ -11,5 +11,5 @@ type Asset struct {
 	Func string // Function name for the procedure returning the asset contents.
 
 	OriginalName string // Original Name before hashing applied to Name.
-	Hash         string // Generated hash for file.
+	Hash         []byte // Generated hash of file.
 }
