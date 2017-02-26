@@ -167,6 +167,9 @@ type Config struct {
 	HashFormat HashFormat
 	// The length of the hash to use, defaults to 16 characters.
 	HashLength int
+
+	// When true, the AssetDir API will not be provided.
+	NoAssetDir bool
 }
 
 // NewConfig returns a default configuration struct.

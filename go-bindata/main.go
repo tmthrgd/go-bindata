@@ -54,6 +54,7 @@ func parseArgs() *bindata.Config {
 	flag.StringVar(&c.Output, "o", c.Output, "Optional name of the output file to be generated.")
 	flag.Var((*hashFormatValue)(&c.HashFormat), "hash", "Optional the format of name hashing to apply.")
 	flag.IntVar(&c.HashLength, "hashlen", c.HashLength, "Optional length of hashes to be generated.")
+	flag.BoolVar(&c.NoAssetDir, "nodir", c.NoAssetDir, "Do not provide the AssetDir APIs")
 	flag.BoolVar(&version, "version", false, "Displays version information.")
 
 	ignore := make([]string, 0)

@@ -96,9 +96,12 @@ func Translate(c *Config) error {
 	if err := writeTOC(&buf, toc, c.HashFormat); err != nil {
 		return err
 	}
-	// Write hierarchical tree of assets
-	if err := writeTOCTree(&buf, toc); err != nil {
-		return err
+
+	if !c.NoAssetDir {
+		// Write hierarchical tree of assets
+		if err := writeTOCTree(&buf, toc); err != nil {
+			return err
+		}
 	}
 
 	if !c.NoRestore {
