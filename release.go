@@ -377,7 +377,7 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: %q, size: %d, mode: os.FileMode(%d), modTime: time.Unix(%d, 0)}
+	info := bindataFileInfo{name: %q, size: %d, mode: os.FileMode(%04o), modTime: time.Unix(%d, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
