@@ -7,7 +7,6 @@ package bindata
 import (
 	"bytes"
 	"fmt"
-	"go/format"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -15,6 +14,8 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+
+	"golang.org/x/tools/imports"
 )
 
 // Translate reads assets from an input directory, converts them
@@ -102,7 +103,7 @@ func Translate(c *Config) error {
 		return err
 	}
 
-	out, err := format.Source(buf.Bytes())
+	out, err := imports.Process(c.Output, buf.Bytes(), nil)
 	if err != nil {
 		return err
 	}
