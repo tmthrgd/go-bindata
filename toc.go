@@ -223,6 +223,21 @@ func AssetInfo(name string) (os.FileInfo, error) {
 	return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 }
 
+// AssetAndInfo loads and returns the asset and asset info for the
+// given name. It returns an error if the asset could not be found
+// or could not be loaded.
+func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
+	canonicalName := strings.Replace(name, "\\", "/", -1)
+	if f, ok := _bindata[canonicalName]; ok {
+		a, err := f()
+		if err != nil {
+			return nil, nil, err
+		}
+		return a.bytes, a.info, nil
+	}
+	return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+}
+
 // AssetNames returns the names of the assets.
 func AssetNames() []string {
 	names := make([]string, 0, len(_bindata))
