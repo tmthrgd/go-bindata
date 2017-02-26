@@ -358,7 +358,7 @@ func hashFile(c *Config, path, name string) (newName string, hash []byte, err er
 	}
 	defer f.Close()
 
-	h, err := blake2b.New512(nil)
+	h, err := blake2b.New512(c.HashKey)
 	if err != nil {
 		return
 	}

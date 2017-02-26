@@ -183,6 +183,9 @@ type Config struct {
 	HashLength int
 	// The encoding to use to encode the name hash.
 	HashEncoding HashEncoding
+	// The key to use to turn the BLAKE2B hashing into a MAC. Must be between
+	// zero and 64 bytes long.
+	HashKey []byte
 
 	// When true, the AssetDir API will not be provided.
 	NoAssetDir bool
