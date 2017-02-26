@@ -254,7 +254,9 @@ func writeTOCFooter(w io.Writer) error {
 
 // writeTOCHashNameHeader writes the table of contents header for hash names.
 func writeTOCHashNameHeader(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `func AssetName(name string) (string, error) {
+	_, err := fmt.Fprintf(w, `// AssetName returns the hashed name associated with an asset of a
+// given name.
+func AssetName(name string) (string, error) {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	if hashedName, ok := _hashNames[cannonicalName]; ok {
 		return hashedName, nil
