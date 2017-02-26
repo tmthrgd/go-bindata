@@ -303,7 +303,7 @@ func (fi bindataFileInfo) FileHash() string {
 }
 
 func compressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader) error {
-	_, err := fmt.Fprintf(w, `var _%s = "`, asset.Func)
+	_, err := fmt.Fprintf(w, "var _%s = \"\" +\n\t\"", asset.Func)
 	if err != nil {
 		return err
 	}
@@ -330,7 +330,7 @@ func %sBytes() ([]byte, error) {
 }
 
 func compressed_memcopy(w io.Writer, asset *Asset, r io.Reader) error {
-	_, err := fmt.Fprintf(w, `var _%s = []byte("`, asset.Func)
+	_, err := fmt.Fprintf(w, "var _%s = []byte(\"\" +\n\t\"", asset.Func)
 	if err != nil {
 		return err
 	}
@@ -357,7 +357,7 @@ func %sBytes() ([]byte, error) {
 }
 
 func uncompressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader) error {
-	_, err := fmt.Fprintf(w, `var _%s = "`, asset.Func)
+	_, err := fmt.Fprintf(w, "var _%s = \"\" +\n\t\"", asset.Func)
 	if err != nil {
 		return err
 	}
