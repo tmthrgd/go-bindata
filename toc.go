@@ -118,12 +118,12 @@ func AssetDir(name string) ([]string, error) {
 		for _, p := range pathList {
 			node = node.Children[p]
 			if node == nil {
-				return nil, fmt.Errorf("Asset %%s not found", name)
+				return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 			}
 		}
 	}
 	if node.Func != nil {
-		return nil, fmt.Errorf("Asset %%s not found", name)
+		return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}
 	rv := make([]string, 0, len(node.Children))
 	for childName := range node.Children {
@@ -190,11 +190,11 @@ func Asset(name string) ([]byte, error) {
 	if f, ok := _bindata[cannonicalName]; ok {
 		a, err := f()
 		if err != nil {
-			return nil, fmt.Errorf("Asset %%s can't read by error: %%v", name, err)
+			return nil, err
 		}
 		return a.bytes, nil
 	}
-	return nil, fmt.Errorf("Asset %%s not found", name)
+	return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 }
 
 // MustAsset is like Asset but panics when Asset would return an error.
@@ -216,11 +216,11 @@ func AssetInfo(name string) (os.FileInfo, error) {
 	if f, ok := _bindata[cannonicalName]; ok {
 		a, err := f()
 		if err != nil {
-			return nil, fmt.Errorf("AssetInfo %%s can't read by error: %%v", name, err)
+			return nil, err
 		}
 		return a.info, nil
 	}
-	return nil, fmt.Errorf("AssetInfo %%s not found", name)
+	return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 }
 
 // AssetNames returns the names of the assets.
@@ -259,7 +259,7 @@ func writeTOCHashNameHeader(w io.Writer) error {
 	if hashedName, ok := _hashNames[cannonicalName]; ok {
 		return hashedName, nil
 	}
-	return "", fmt.Errorf("Asset %%s not found", name)
+	return "", &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 }
 
 var _hashNames = map[string]string{
