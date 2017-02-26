@@ -98,9 +98,11 @@ func Translate(c *Config) error {
 		return err
 	}
 
-	// Write restore procedure
-	if err := writeRestore(&buf); err != nil {
-		return err
+	if !c.NoRestore {
+		// Write restore procedure
+		if err := writeRestore(&buf); err != nil {
+			return err
+		}
 	}
 
 	out, err := imports.Process(c.Output, buf.Bytes(), nil)

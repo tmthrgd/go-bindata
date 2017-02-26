@@ -140,6 +140,9 @@ type Config struct {
 	//
 	// This parameter can be provided multiple times.
 	Ignore []*regexp.Regexp
+
+	// When true, the RestoreAsset and RestoreAssets APIs will not be provided.
+	NoRestore bool
 }
 
 // NewConfig returns a default configuration struct.
