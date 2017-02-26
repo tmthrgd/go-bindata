@@ -413,23 +413,23 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 	}
 
 	_, name := path.Split(asset.Name)
-	mode := uint(fi.Mode())
-	modTime := fi.ModTime().Unix()
-	modTimeNano := fi.ModTime().Nanosecond()
-	size := fi.Size()
-	if c.NoMetadata {
-		mode = 0
-		modTime = 0
-		modTimeNano = 0
-		size = 0
+
+	var meta string
+	if !c.NoMetadata {
+		mode := uint(fi.Mode())
+		modTime := fi.ModTime().Unix()
+		modTimeNano := fi.ModTime().Nanosecond()
+		size := fi.Size()
+		if c.Mode > 0 {
+			mode = uint(os.ModePerm) & c.Mode
+		}
+		if c.ModTime > 0 {
+			modTime = c.ModTime
+			modTimeNano = 0
+		}
+		meta = fmt.Sprintf(", size: %d, mode: os.FileMode(%04o), modTime: time.Unix(%d, %d)", size, mode, modTime, modTimeNano)
 	}
-	if c.Mode > 0 {
-		mode = uint(os.ModePerm) & c.Mode
-	}
-	if c.ModTime > 0 {
-		modTime = c.ModTime
-		modTimeNano = 0
-	}
+
 	var extra string
 	if c.HashFormat != NoHash {
 		var buf bytes.Buffer
@@ -437,17 +437,18 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 		sw.Write(asset.Hash)
 		extra = fmt.Sprintf(", original: %q,\n\thash: \"%s\"", asset.OriginalName, buf.String())
 	}
+
 	_, err = fmt.Fprintf(w, `func %s() (*asset, error) {
 	bytes, err := %sBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: %q, size: %d, mode: os.FileMode(%04o), modTime: time.Unix(%d, %d)%s}
+	info := bindataFileInfo{name: %q%s%s}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
-`, asset.Func, asset.Func, name, size, mode, modTime, modTimeNano, extra)
+`, asset.Func, asset.Func, name, meta, extra)
 	return err
 }
