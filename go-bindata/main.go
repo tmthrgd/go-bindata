@@ -7,6 +7,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -77,7 +78,7 @@ func parseArgs() *bindata.Config {
 
 	// Make sure we have input paths.
 	if flag.NArg() == 0 {
-		fmt.Fprintf(os.Stderr, "Missing <input dir>\n\n")
+		io.WriteString(os.Stderr, "Missing <input dir>\n\n")
 		flag.Usage()
 		os.Exit(1)
 	}

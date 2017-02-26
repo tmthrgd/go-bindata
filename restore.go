@@ -5,12 +5,11 @@
 package bindata
 
 import (
-	"fmt"
 	"io"
 )
 
 func writeRestore(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `
+	_, err := io.WriteString(w, `
 // RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
 	data, err := Asset(name)

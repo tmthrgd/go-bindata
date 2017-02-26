@@ -97,7 +97,7 @@ var _bintree = `)
 }
 
 func writeTOCTree(w io.Writer, toc []Asset) error {
-	_, err := fmt.Fprintf(w, `// AssetDir returns the file names below a certain
+	_, err := io.WriteString(w, `// AssetDir returns the file names below a certain
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
 // following hierarchy:
@@ -182,7 +182,7 @@ func writeTOC(w io.Writer, toc []Asset, hashFormat HashFormat) error {
 
 // writeTOCHeader writes the table of contents file header.
 func writeTOCHeader(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `// Asset loads and returns the asset for the given name.
+	_, err := io.WriteString(w, `// Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func Asset(name string) ([]byte, error) {
@@ -261,7 +261,7 @@ func writeTOCAsset(w io.Writer, asset *Asset) error {
 
 // writeTOCFooter writes the table of contents file footer.
 func writeTOCFooter(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `}
+	_, err := io.WriteString(w, `}
 
 `)
 	return err
@@ -269,7 +269,7 @@ func writeTOCFooter(w io.Writer) error {
 
 // writeTOCHashNameHeader writes the table of contents header for hash names.
 func writeTOCHashNameHeader(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `// AssetName returns the hashed name associated with an asset of a
+	_, err := io.WriteString(w, `// AssetName returns the hashed name associated with an asset of a
 // given name.
 func AssetName(name string) (string, error) {
 	canonicalName := strings.Replace(name, "\\", "/", -1)
@@ -292,7 +292,7 @@ func writeTOCHashNameAsset(w io.Writer, asset *Asset) error {
 
 // writeTOCHashNameFooter writes the hash table of contents file footer.
 func writeTOCHashNameFooter(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `}
+	_, err := io.WriteString(w, `}
 
 `)
 	return err

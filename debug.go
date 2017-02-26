@@ -29,7 +29,7 @@ func writeDebug(w io.Writer, c *Config, toc []Asset) error {
 // writeDebugHeader writes output file headers.
 // This targets debug builds.
 func writeDebugHeader(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `import (
+	_, err := io.WriteString(w, `import (
 	"fmt"
 	"io/ioutil"
 	"os"

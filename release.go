@@ -102,7 +102,7 @@ func sanitize(b []byte) []byte {
 }
 
 func header_compressed_nomemcopy(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `import (
+	_, err := io.WriteString(w, `import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
@@ -139,7 +139,7 @@ func bindataRead(data, name string) ([]byte, error) {
 }
 
 func header_compressed_memcopy(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `import (
+	_, err := io.WriteString(w, `import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
@@ -176,7 +176,7 @@ func bindataRead(data []byte, name string) ([]byte, error) {
 }
 
 func header_uncompressed_nomemcopy(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `import (
+	_, err := io.WriteString(w, `import (
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -203,7 +203,7 @@ func bindataRead(data, name string) ([]byte, error) {
 }
 
 func header_uncompressed_memcopy(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `import (
+	_, err := io.WriteString(w, `import (
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -216,7 +216,7 @@ func header_uncompressed_memcopy(w io.Writer) error {
 }
 
 func header_release_common(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `type asset struct {
+	_, err := io.WriteString(w, `type asset struct {
 	bytes []byte
 	info  os.FileInfo
 }
@@ -252,7 +252,7 @@ func (fi bindataFileInfo) Sys() interface{} {
 }
 
 func header_release_hash(w io.Writer) error {
-	_, err := fmt.Fprintf(w, `type asset struct {
+	_, err := io.WriteString(w, `type asset struct {
 	bytes []byte
 	info os.FileInfo
 }
