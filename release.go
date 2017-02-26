@@ -390,10 +390,15 @@ func uncompressed_memcopy(w io.Writer, asset *Asset, r io.Reader) error {
 	if err != nil {
 		return err
 	}
+
 	if utf8.Valid(b) && !bytes.Contains(b, []byte{0}) {
-		fmt.Fprintf(w, "`%s`", sanitize(b))
+		_, err = fmt.Fprintf(w, "`%s`", sanitize(b))
 	} else {
-		fmt.Fprintf(w, "%+q", b)
+		_, err = fmt.Fprintf(w, "%+q", b)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	_, err = fmt.Fprintf(w, `)
