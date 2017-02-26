@@ -359,6 +359,7 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 
 	mode := uint(fi.Mode())
 	modTime := fi.ModTime().Unix()
+	modTimeNano := fi.ModTime().Nanosecond()
 	size := fi.Size()
 	if c.NoMetadata {
 		mode = 0
@@ -370,6 +371,7 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 	}
 	if c.ModTime > 0 {
 		modTime = c.ModTime
+		modTimeNano = 0
 	}
 	_, err = fmt.Fprintf(w, `func %s() (*asset, error) {
 	bytes, err := %sBytes()
@@ -377,11 +379,11 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: %q, size: %d, mode: os.FileMode(%04o), modTime: time.Unix(%d, 0)}
+	info := bindataFileInfo{name: %q, size: %d, mode: os.FileMode(%04o), modTime: time.Unix(%d, %d)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
-`, asset.Func, asset.Func, asset.Name, size, mode, modTime)
+`, asset.Func, asset.Func, asset.Name, size, mode, modTime, modTimeNano)
 	return err
 }
