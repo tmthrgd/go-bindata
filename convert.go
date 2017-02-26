@@ -93,7 +93,7 @@ func Translate(c *Config) error {
 	}
 
 	// Write table of contents
-	if err := writeTOC(&buf, toc, c.HashFormat != NoHash); err != nil {
+	if err := writeTOC(&buf, toc, c.HashFormat); err != nil {
 		return err
 	}
 	// Write hierarchical tree of assets
@@ -364,17 +364,18 @@ func hashFile(path, name string, format HashFormat, length int) (newName, hash s
 	hash = hex.EncodeToString(h.Sum(nil))[:length]
 
 	dir, file := filepath.Split(name)
+	ext := filepath.Ext(file)
 
 	switch format {
 	case DirHash:
 		newName = filepath.Join(dir, hash, file)
 	case NameHashSuffix:
-		ext := filepath.Ext(file)
 		file = strings.TrimSuffix(file, ext)
 		newName = filepath.Join(dir, file+"-"+hash+ext)
 	case HashWithExt:
-		ext := filepath.Ext(file)
 		newName = filepath.Join(dir, hash+ext)
+	case NameUnchanged:
+		newName = name
 	default:
 		panic("unreachable")
 	}

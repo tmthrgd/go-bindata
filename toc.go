@@ -145,7 +145,7 @@ func AssetDir(name string) ([]string, error) {
 }
 
 // writeTOC writes the table of contents file.
-func writeTOC(w io.Writer, toc []Asset, isHash bool) error {
+func writeTOC(w io.Writer, toc []Asset, hashFormat HashFormat) error {
 	err := writeTOCHeader(w)
 	if err != nil {
 		return err
@@ -162,7 +162,7 @@ func writeTOC(w io.Writer, toc []Asset, isHash bool) error {
 		return err
 	}
 
-	if !isHash {
+	if hashFormat == NoHash || hashFormat == NameUnchanged {
 		return nil
 	}
 

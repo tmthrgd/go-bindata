@@ -19,6 +19,8 @@ func (hf *hashFormatValue) String() string {
 		return "namesuffix"
 	case bindata.HashWithExt:
 		return "hashext"
+	case bindata.NameUnchanged:
+		return "unchanged"
 	default:
 		panic("invalid HashFormat")
 	}
@@ -34,8 +36,10 @@ func (hf *hashFormatValue) Set(value string) error {
 		*hf = hashFormatValue(bindata.NameHashSuffix)
 	case "hashext":
 		*hf = hashFormatValue(bindata.HashWithExt)
+	case "unchanged":
+		*hf = hashFormatValue(bindata.NameUnchanged)
 	default:
-		return fmt.Errorf("invalid value %s, expected one of: none, dir, namesuffix or hashext", value)
+		return fmt.Errorf("invalid value %s, expected one of: none, dir, namesuffix, hashext or unchanged", value)
 	}
 
 	return nil

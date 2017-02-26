@@ -25,6 +25,9 @@ const (
 	NameHashSuffix
 	// HashWithExt formats names like path/to/hash.ext.
 	HashWithExt
+	// NameUnchanged generates the file hash but does not change
+	// the asset name.
+	NameUnchanged
 )
 
 // InputConfig defines options on a asset directory to be convert.
