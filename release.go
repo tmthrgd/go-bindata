@@ -364,6 +364,7 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 	if c.NoMetadata {
 		mode = 0
 		modTime = 0
+		modTimeNano = 0
 		size = 0
 	}
 	if c.Mode > 0 {
