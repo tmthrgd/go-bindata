@@ -432,7 +432,10 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 	}
 	var extra string
 	if c.HashFormat != NoHash {
-		extra = fmt.Sprintf(", original: %q, hash: %+q", asset.OriginalName, asset.Hash)
+		var buf bytes.Buffer
+		sw := &StringWriter{Writer: &buf}
+		sw.Write(asset.Hash)
+		extra = fmt.Sprintf(", original: %q,\n\thash: \"%s\"", asset.OriginalName, buf.String())
 	}
 	_, err = fmt.Fprintf(w, `func %s() (*asset, error) {
 	bytes, err := %sBytes()
