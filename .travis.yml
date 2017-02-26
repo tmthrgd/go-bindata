@@ -1,5 +1,9 @@
 language: go
-sudo: false
 go:
-  - 1.7
-  - tip
+    - 1.7
+    - 1.8
+    - tip
+matrix:
+    fast_finish: true
+    allow_failures:
+        - go: tip
