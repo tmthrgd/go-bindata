@@ -1,7 +1,6 @@
 package bindata
 
 import (
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -27,7 +26,7 @@ func TestFindFiles(t *testing.T) {
 	var toc []Asset
 	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)
-	err := findFiles("testdata/dupname", "testdata/dupname", true, &toc, []*regexp.Regexp{}, knownFuncs, visitedPaths, NoHash, 0)
+	err := findFiles(new(Config), "testdata/dupname", "testdata/dupname", true, &toc, knownFuncs, visitedPaths)
 	if err != nil {
 		t.Errorf("expected to be no error: %+v", err)
 	}
@@ -42,14 +41,14 @@ func TestFindFilesWithSymlinks(t *testing.T) {
 
 	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)
-	err := findFiles("testdata/symlinkSrc", "testdata/symlinkSrc", true, &tocSrc, []*regexp.Regexp{}, knownFuncs, visitedPaths, NoHash, 0)
+	err := findFiles(new(Config), "testdata/symlinkSrc", "testdata/symlinkSrc", true, &tocSrc, knownFuncs, visitedPaths)
 	if err != nil {
 		t.Errorf("expected to be no error: %+v", err)
 	}
 
 	knownFuncs = make(map[string]int)
 	visitedPaths = make(map[string]bool)
-	err = findFiles("testdata/symlinkParent", "testdata/symlinkParent", true, &tocTarget, []*regexp.Regexp{}, knownFuncs, visitedPaths, NoHash, 0)
+	err = findFiles(new(Config), "testdata/symlinkParent", "testdata/symlinkParent", true, &tocTarget, knownFuncs, visitedPaths)
 	if err != nil {
 		t.Errorf("expected to be no error: %+v", err)
 	}
@@ -72,7 +71,7 @@ func TestFindFilesWithRecursiveSymlinks(t *testing.T) {
 
 	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)
-	err := findFiles("testdata/symlinkRecursiveParent", "testdata/symlinkRecursiveParent", true, &toc, []*regexp.Regexp{}, knownFuncs, visitedPaths, NoHash, 0)
+	err := findFiles(new(Config), "testdata/symlinkRecursiveParent", "testdata/symlinkRecursiveParent", true, &toc, knownFuncs, visitedPaths)
 	if err != nil {
 		t.Errorf("expected to be no error: %+v", err)
 	}
@@ -87,7 +86,7 @@ func TestFindFilesWithSymlinkedFile(t *testing.T) {
 
 	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)
-	err := findFiles("testdata/symlinkFile", "testdata/symlinkFile", true, &toc, []*regexp.Regexp{}, knownFuncs, visitedPaths, NoHash, 0)
+	err := findFiles(new(Config), "testdata/symlinkFile", "testdata/symlinkFile", true, &toc, knownFuncs, visitedPaths)
 	if err != nil {
 		t.Errorf("expected to be no error: %+v", err)
 	}

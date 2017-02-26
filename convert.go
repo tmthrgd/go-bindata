@@ -6,6 +6,8 @@ package bindata
 
 import (
 	"bytes"
+	"encoding/base32"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -37,7 +39,7 @@ func Translate(c *Config) error {
 	var visitedPaths = make(map[string]bool)
 	// Locate all the assets.
 	for _, input := range c.Input {
-		err = findFiles(input.Path, c.Prefix, input.Recursive, &toc, c.Ignore, knownFuncs, visitedPaths, c.HashFormat, c.HashLength)
+		err = findFiles(c, input.Path, c.Prefix, input.Recursive, &toc, knownFuncs, visitedPaths)
 		if err != nil {
 			return err
 		}
@@ -129,7 +131,7 @@ func (v ByName) Less(i, j int) bool { return v[i].Name() < v[j].Name() }
 // findFiles recursively finds all the file paths in the given directory tree.
 // They are added to the given map as keys. Values will be safe function names
 // for each file, which will be used when generating the output code.
-func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regexp.Regexp, knownFuncs map[string]int, visitedPaths map[string]bool, hashFormat HashFormat, hashLength int) error {
+func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]Asset, knownFuncs map[string]int, visitedPaths map[string]bool) error {
 	dirpath := dir
 	if len(prefix) > 0 {
 		dirpath, _ = filepath.Abs(dirpath)
@@ -171,7 +173,7 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 		asset.Name = filepath.ToSlash(asset.Path)
 
 		ignoring := false
-		for _, re := range ignore {
+		for _, re := range c.Ignore {
 			if re.MatchString(asset.Path) {
 				ignoring = true
 				break
@@ -185,7 +187,7 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 			if recursive {
 				recursivePath := filepath.Join(dir, file.Name())
 				visitedPaths[asset.Path] = true
-				findFiles(recursivePath, prefix, recursive, toc, ignore, knownFuncs, visitedPaths, hashFormat, hashLength)
+				findFiles(c, recursivePath, prefix, recursive, toc, knownFuncs, visitedPaths)
 			}
 			continue
 		} else if file.Mode()&os.ModeSymlink == os.ModeSymlink {
@@ -200,7 +202,7 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 			}
 			if _, ok := visitedPaths[linkPath]; !ok {
 				visitedPaths[linkPath] = true
-				findFiles(asset.Path, prefix, recursive, toc, ignore, knownFuncs, visitedPaths, hashFormat, hashLength)
+				findFiles(c, asset.Path, prefix, recursive, toc, knownFuncs, visitedPaths)
 			}
 			continue
 		}
@@ -229,9 +231,9 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 			return fmt.Errorf("Invalid file: %v", asset.Path)
 		}
 
-		if hashFormat != NoHash {
+		if c.HashFormat != NoHash {
 			asset.OriginalName = asset.Name
-			asset.Name, asset.Hash, err = hashFile(asset.Path, asset.Name, hashFormat, hashLength)
+			asset.Name, asset.Hash, err = hashFile(c, asset.Path, asset.Name)
 			if err != nil {
 				return err
 			}
@@ -343,12 +345,13 @@ func safeFunctionName(name string, knownFuncs map[string]int) string {
 	return name
 }
 
-// hashFile applies name hashing with a given format and
-// length. It returns the hashed name, the hash and any
-// error that occurred. The hash is a hex encoded, BLAKE2B
-// digest of the file contents truncated to the requested
-// length.
-func hashFile(path, name string, format HashFormat, length int) (newName string, hash []byte, err error) {
+var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
+
+// hashFile applies name hashing with a given format,
+// length and encoding. It returns the hashed name, the
+// hash and any error that occurred. The hash is a BLAKE2B
+// digest of the file contents.
+func hashFile(c *Config, path, name string) (newName string, hash []byte, err error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return
@@ -366,12 +369,28 @@ func hashFile(path, name string, format HashFormat, length int) (newName string,
 
 	hash = h.Sum(nil)
 
-	enc := hex.EncodeToString(hash)[:length]
+	if c.HashFormat == NameUnchanged {
+		newName = name
+		return
+	}
+
+	var enc string
+	switch c.HashEncoding {
+	case HexHash:
+		enc = hex.EncodeToString(hash)
+	case Base32Hash:
+		enc = strings.TrimSuffix(base32Enc.EncodeToString(hash), "=")
+	case Base64Hash:
+		enc = base64.RawURLEncoding.EncodeToString(hash)
+	default:
+		panic("unreachable")
+	}
 
 	dir, file := filepath.Split(name)
 	ext := filepath.Ext(file)
+	enc = enc[:c.HashLength]
 
-	switch format {
+	switch c.HashFormat {
 	case DirHash:
 		newName = filepath.Join(dir, enc, file)
 	case NameHashSuffix:
@@ -379,8 +398,6 @@ func hashFile(path, name string, format HashFormat, length int) (newName string,
 		newName = filepath.Join(dir, file+"-"+enc+ext)
 	case HashWithExt:
 		newName = filepath.Join(dir, enc+ext)
-	case NameUnchanged:
-		newName = name
 	default:
 		panic("unreachable")
 	}

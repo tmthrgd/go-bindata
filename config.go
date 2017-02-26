@@ -30,6 +30,20 @@ const (
 	NameUnchanged
 )
 
+// HashEncoding specifies which encoding to use when hashing names.
+type HashEncoding int
+
+const (
+	// HexHash uses hexadecimal encoding.
+	HexHash HashEncoding = iota
+	// Base32Hash uses unpadded, lowercase standard base32
+	// encoding (see RFC 4648).
+	Base32Hash
+	// Base64Hash uses an unpadded URL-safe base64 encoding
+	// defined in RFC 4648.
+	Base64Hash
+)
+
 // InputConfig defines options on a asset directory to be convert.
 type InputConfig struct {
 	// Path defines a directory containing asset files to be included
@@ -167,6 +181,8 @@ type Config struct {
 	HashFormat HashFormat
 	// The length of the hash to use, defaults to 16 characters.
 	HashLength int
+	// The encoding to use to encode the name hash.
+	HashEncoding HashEncoding
 
 	// When true, the AssetDir API will not be provided.
 	NoAssetDir bool
