@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"unicode/utf8"
 )
 
@@ -357,6 +358,7 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 		return err
 	}
 
+	_, name := path.Split(asset.Name)
 	mode := uint(fi.Mode())
 	modTime := fi.ModTime().Unix()
 	modTimeNano := fi.ModTime().Nanosecond()
@@ -385,6 +387,6 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 	return a, nil
 }
 
-`, asset.Func, asset.Func, asset.Name, size, mode, modTime, modTimeNano)
+`, asset.Func, asset.Func, name, size, mode, modTime, modTimeNano)
 	return err
 }
