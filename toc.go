@@ -113,8 +113,8 @@ func writeTOCTree(w io.Writer, toc []Asset) error {
 func AssetDir(name string) ([]string, error) {
 	node := _bintree
 	if len(name) != 0 {
-		cannonicalName := strings.Replace(name, "\\", "/", -1)
-		pathList := strings.Split(cannonicalName, "/")
+		canonicalName := strings.Replace(name, "\\", "/", -1)
+		pathList := strings.Split(canonicalName, "/")
 		for _, p := range pathList {
 			node = node.Children[p]
 			if node == nil {
@@ -186,8 +186,8 @@ func writeTOCHeader(w io.Writer) error {
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func Asset(name string) ([]byte, error) {
-	cannonicalName := strings.Replace(name, "\\", "/", -1)
-	if f, ok := _bindata[cannonicalName]; ok {
+	canonicalName := strings.Replace(name, "\\", "/", -1)
+	if f, ok := _bindata[canonicalName]; ok {
 		a, err := f()
 		if err != nil {
 			return nil, err
@@ -212,8 +212,8 @@ func MustAsset(name string) []byte {
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func AssetInfo(name string) (os.FileInfo, error) {
-	cannonicalName := strings.Replace(name, "\\", "/", -1)
-	if f, ok := _bindata[cannonicalName]; ok {
+	canonicalName := strings.Replace(name, "\\", "/", -1)
+	if f, ok := _bindata[canonicalName]; ok {
 		a, err := f()
 		if err != nil {
 			return nil, err
@@ -257,8 +257,8 @@ func writeTOCHashNameHeader(w io.Writer) error {
 	_, err := fmt.Fprintf(w, `// AssetName returns the hashed name associated with an asset of a
 // given name.
 func AssetName(name string) (string, error) {
-	cannonicalName := strings.Replace(name, "\\", "/", -1)
-	if hashedName, ok := _hashNames[cannonicalName]; ok {
+	canonicalName := strings.Replace(name, "\\", "/", -1)
+	if hashedName, ok := _hashNames[canonicalName]; ok {
 		return hashedName, nil
 	}
 	return "", &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
