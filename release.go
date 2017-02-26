@@ -52,6 +52,9 @@ func writeReleaseHeader(w io.Writer, c *Config) error {
 	if err != nil {
 		return err
 	}
+	if c.HashFormat != NoHash {
+		return header_release_hash(w)
+	}
 	return header_release_common(w)
 }
 
@@ -248,6 +251,57 @@ func (fi bindataFileInfo) Sys() interface{} {
 	return err
 }
 
+func header_release_hash(w io.Writer) error {
+	_, err := fmt.Fprintf(w, `type asset struct {
+	bytes []byte
+	info os.FileInfo
+}
+
+type FileInfo interface {
+	os.FileInfo
+
+	OriginalName() string
+	FileHash() string
+}
+
+type bindataFileInfo struct {
+	name     string
+	size     int64
+	mode     os.FileMode
+	modTime  time.Time
+	original string
+	hash     string
+}
+
+func (fi bindataFileInfo) Name() string {
+	return fi.name
+}
+func (fi bindataFileInfo) Size() int64 {
+	return fi.size
+}
+func (fi bindataFileInfo) Mode() os.FileMode {
+	return fi.mode
+}
+func (fi bindataFileInfo) ModTime() time.Time {
+	return fi.modTime
+}
+func (fi bindataFileInfo) IsDir() bool {
+	return false
+}
+func (fi bindataFileInfo) Sys() interface{} {
+	return nil
+}
+func (fi bindataFileInfo) OriginalName() string {
+	return fi.original
+}
+func (fi bindataFileInfo) FileHash() string {
+	return fi.hash
+}
+
+`)
+	return err
+}
+
 func compressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader) error {
 	_, err := fmt.Fprintf(w, `var _%s = "`, asset.Func)
 	if err != nil {
@@ -376,17 +430,21 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 		modTime = c.ModTime
 		modTimeNano = 0
 	}
+	var extra string
+	if c.HashFormat != NoHash {
+		extra = fmt.Sprintf(", original: %q, hash: %q", asset.OriginalName, asset.Hash)
+	}
 	_, err = fmt.Fprintf(w, `func %s() (*asset, error) {
 	bytes, err := %sBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: %q, size: %d, mode: os.FileMode(%04o), modTime: time.Unix(%d, %d)}
+	info := bindataFileInfo{name: %q, size: %d, mode: os.FileMode(%04o), modTime: time.Unix(%d, %d)%s}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
 
-`, asset.Func, asset.Func, name, size, mode, modTime, modTimeNano)
+`, asset.Func, asset.Func, name, size, mode, modTime, modTimeNano, extra)
 	return err
 }

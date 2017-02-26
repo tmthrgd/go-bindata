@@ -145,7 +145,7 @@ func AssetDir(name string) ([]string, error) {
 }
 
 // writeTOC writes the table of contents file.
-func writeTOC(w io.Writer, toc []Asset) error {
+func writeTOC(w io.Writer, toc []Asset, isHash bool) error {
 	err := writeTOCHeader(w)
 	if err != nil {
 		return err
@@ -158,7 +158,26 @@ func writeTOC(w io.Writer, toc []Asset) error {
 		}
 	}
 
-	return writeTOCFooter(w)
+	if err := writeTOCFooter(w); err != nil {
+		return err
+	}
+
+	if !isHash {
+		return nil
+	}
+
+	if err := writeTOCHashNameHeader(w); err != nil {
+		return err
+	}
+
+	for i := range toc {
+		err = writeTOCHashNameAsset(w, &toc[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	return writeTOCHashNameFooter(w)
 }
 
 // writeTOCHeader writes the table of contents file header.
@@ -227,6 +246,35 @@ func writeTOCAsset(w io.Writer, asset *Asset) error {
 
 // writeTOCFooter writes the table of contents file footer.
 func writeTOCFooter(w io.Writer) error {
+	_, err := fmt.Fprintf(w, `}
+
+`)
+	return err
+}
+
+// writeTOCHashNameHeader writes the table of contents header for hash names.
+func writeTOCHashNameHeader(w io.Writer) error {
+	_, err := fmt.Fprintf(w, `func AssetName(name string) (string, error) {
+	cannonicalName := strings.Replace(name, "\\", "/", -1)
+	if hashedName, ok := _hashNames[cannonicalName]; ok {
+		return hashedName, nil
+	}
+	return "", fmt.Errorf("Asset %%s not found", name)
+}
+
+var _hashNames = map[string]string{
+`)
+	return err
+}
+
+// writeTOCHashNameAsset write a hash name entry for the given asset.
+func writeTOCHashNameAsset(w io.Writer, asset *Asset) error {
+	_, err := fmt.Fprintf(w, "\t%q: %q,\n", asset.OriginalName, asset.Name)
+	return err
+}
+
+// writeTOCHashNameFooter writes the hash table of contents file footer.
+func writeTOCHashNameFooter(w io.Writer) error {
 	_, err := fmt.Fprintf(w, `}
 
 `)

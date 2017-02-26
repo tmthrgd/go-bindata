@@ -9,6 +9,22 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"golang.org/x/crypto/blake2b"
+)
+
+// HashFormat specifies which format to use when hashing names.
+type HashFormat int
+
+const (
+	// NoHash disables name hashing.
+	NoHash HashFormat = iota
+	// DirHash formats names like path/to/hash/name.ext.
+	DirHash
+	// NameHashSuffix formats names like path/to/name-hash.ext.
+	NameHashSuffix
+	// HashWithExt formats names like path/to/hash.ext.
+	HashWithExt
 )
 
 // InputConfig defines options on a asset directory to be convert.
@@ -143,6 +159,11 @@ type Config struct {
 
 	// When true, the RestoreAsset and RestoreAssets APIs will not be provided.
 	NoRestore bool
+
+	// Which of the given name hashing formats to use.
+	HashFormat HashFormat
+	// The length of the hash to use, defaults to 16 characters.
+	HashLength int
 }
 
 // NewConfig returns a default configuration struct.
@@ -154,6 +175,7 @@ func NewConfig() *Config {
 	c.Debug = false
 	c.Output = "./bindata.go"
 	c.Ignore = make([]*regexp.Regexp, 0)
+	c.HashLength = 16
 	return c
 }
 
@@ -200,6 +222,14 @@ func (c *Config) validate() error {
 
 	if stat != nil && stat.IsDir() {
 		return fmt.Errorf("Output path is a directory.")
+	}
+
+	if (c.Debug || c.Dev) && c.HashFormat != NoHash {
+		return fmt.Errorf("HashFormat is not compatible with Debug and Dev.")
+	}
+
+	if c.HashFormat != NoHash && (c.HashLength <= 0 || c.HashLength > 2*blake2b.Size) {
+		return fmt.Errorf("HashLength must be between 1 and %d bytes in length.", 2*blake2b.Size)
 	}
 
 	return nil

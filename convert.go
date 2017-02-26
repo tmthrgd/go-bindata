@@ -6,7 +6,9 @@ package bindata
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -15,6 +17,7 @@ import (
 	"strings"
 	"unicode"
 
+	"golang.org/x/crypto/blake2b"
 	"golang.org/x/tools/imports"
 )
 
@@ -34,7 +37,7 @@ func Translate(c *Config) error {
 	var visitedPaths = make(map[string]bool)
 	// Locate all the assets.
 	for _, input := range c.Input {
-		err = findFiles(input.Path, c.Prefix, input.Recursive, &toc, c.Ignore, knownFuncs, visitedPaths)
+		err = findFiles(input.Path, c.Prefix, input.Recursive, &toc, c.Ignore, knownFuncs, visitedPaths, c.HashFormat, c.HashLength)
 		if err != nil {
 			return err
 		}
@@ -90,7 +93,7 @@ func Translate(c *Config) error {
 	}
 
 	// Write table of contents
-	if err := writeTOC(&buf, toc); err != nil {
+	if err := writeTOC(&buf, toc, c.HashFormat != NoHash); err != nil {
 		return err
 	}
 	// Write hierarchical tree of assets
@@ -123,7 +126,7 @@ func (v ByName) Less(i, j int) bool { return v[i].Name() < v[j].Name() }
 // findFiles recursively finds all the file paths in the given directory tree.
 // They are added to the given map as keys. Values will be safe function names
 // for each file, which will be used when generating the output code.
-func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regexp.Regexp, knownFuncs map[string]int, visitedPaths map[string]bool) error {
+func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regexp.Regexp, knownFuncs map[string]int, visitedPaths map[string]bool, hashFormat HashFormat, hashLength int) error {
 	dirpath := dir
 	if len(prefix) > 0 {
 		dirpath, _ = filepath.Abs(dirpath)
@@ -179,7 +182,7 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 			if recursive {
 				recursivePath := filepath.Join(dir, file.Name())
 				visitedPaths[asset.Path] = true
-				findFiles(recursivePath, prefix, recursive, toc, ignore, knownFuncs, visitedPaths)
+				findFiles(recursivePath, prefix, recursive, toc, ignore, knownFuncs, visitedPaths, hashFormat, hashLength)
 			}
 			continue
 		} else if file.Mode()&os.ModeSymlink == os.ModeSymlink {
@@ -194,7 +197,7 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 			}
 			if _, ok := visitedPaths[linkPath]; !ok {
 				visitedPaths[linkPath] = true
-				findFiles(asset.Path, prefix, recursive, toc, ignore, knownFuncs, visitedPaths)
+				findFiles(asset.Path, prefix, recursive, toc, ignore, knownFuncs, visitedPaths, hashFormat, hashLength)
 			}
 			continue
 		}
@@ -221,6 +224,14 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 		// This shouldn't happen.
 		if len(asset.Name) == 0 {
 			return fmt.Errorf("Invalid file: %v", asset.Path)
+		}
+
+		if hashFormat != NoHash {
+			asset.OriginalName = asset.Name
+			asset.Name, asset.Hash, err = hashFile(asset.Path, asset.Name, hashFormat, hashLength)
+			if err != nil {
+				return err
+			}
 		}
 
 		asset.Func = safeFunctionName(asset.Name, knownFuncs)
@@ -327,4 +338,46 @@ func safeFunctionName(name string, knownFuncs map[string]int) string {
 	}
 
 	return name
+}
+
+// hashFile applies name hashing with a given format and
+// length. It returns the hashed name, the hash and any
+// error that occurred. The hash is a hex encoded, BLAKE2B
+// digest of the file contents truncated to the requested
+// length.
+func hashFile(path, name string, format HashFormat, length int) (newName, hash string, err error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	h, err := blake2b.New512(nil)
+	if err != nil {
+		return
+	}
+
+	if _, err = io.Copy(h, f); err != nil {
+		return
+	}
+
+	hash = hex.EncodeToString(h.Sum(nil))[:length]
+
+	dir, file := filepath.Split(name)
+
+	switch format {
+	case DirHash:
+		newName = filepath.Join(dir, hash, file)
+	case NameHashSuffix:
+		ext := filepath.Ext(file)
+		file = strings.TrimSuffix(file, ext)
+		newName = filepath.Join(dir, file+"-"+hash+ext)
+	case HashWithExt:
+		ext := filepath.Ext(file)
+		newName = filepath.Join(dir, hash+ext)
+	default:
+		panic("unreachable")
+	}
+
+	return
 }
