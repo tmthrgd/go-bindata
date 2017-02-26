@@ -316,16 +316,7 @@ func compressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(w, `"
-
-func %sBytes() ([]byte, error) {
-	return bindataRead(
-		_%s,
-		%q,
-	)
-}
-
-`, asset.Func, asset.Func, asset.Name)
+	_, err = io.WriteString(w, "\"\n\n")
 	return err
 }
 
@@ -343,16 +334,7 @@ func compressed_memcopy(w io.Writer, asset *Asset, r io.Reader) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(w, `")
-
-func %sBytes() ([]byte, error) {
-	return bindataRead(
-		_%s,
-		%q,
-	)
-}
-
-`, asset.Func, asset.Func, asset.Name)
+	_, err = io.WriteString(w, "\")\n\n")
 	return err
 }
 
@@ -367,16 +349,7 @@ func uncompressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(w, `"
-
-func %sBytes() ([]byte, error) {
-	return bindataRead(
-		_%s,
-		%q,
-	)
-}
-
-`, asset.Func, asset.Func, asset.Name)
+	_, err = io.WriteString(w, "\"\n\n")
 	return err
 }
 
@@ -401,13 +374,7 @@ func uncompressed_memcopy(w io.Writer, asset *Asset, r io.Reader) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(w, `)
-
-func %sBytes() ([]byte, error) {
-	return _%s, nil
-}
-
-`, asset.Func, asset.Func)
+	_, err = io.WriteString(w, ")\n\n")
 	return err
 }
 
@@ -417,14 +384,28 @@ func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
 		return err
 	}
 
-	_, name := path.Split(asset.Name)
 	_, err = fmt.Fprintf(w, `func %s() (*asset, error) {
-	bytes, err := %[1]sBytes()
+	`, asset.Func)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	info := bindataFileInfo{name: %q`, asset.Func, name)
+	if c.NoCompress && !c.NoMemCopy {
+		_, err = fmt.Fprintf(w, `bytes := []byte(_%s)`, asset.Func)
+	} else {
+		_, err = fmt.Fprintf(w, `bytes, err := bindataRead(
+		_%s,
+		%q,
+	)
+	if err != nil {
+		return nil, err
+	}`, asset.Func, asset.Name)
+	}
+
+	_, name := path.Split(asset.Name)
+	_, err = fmt.Fprintf(w, `
+
+	info := bindataFileInfo{name: %q`, name)
 	if err != nil {
 		return err
 	}
