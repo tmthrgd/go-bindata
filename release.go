@@ -261,23 +261,23 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 		}
 	})
 	if a.err != nil {
-		return nil, nil, a.err
+		return nil, nil, &os.PathError{Op: "read", Path: name, Err: a.err}
 	}
 
 	return a.bytes, a, nil
 {{- else if $.Config.Compress}}
 	gz, err := gzip.NewReader(strings.NewReader(a.data))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, &os.PathError{Op: "read", Path: name, Err: err}
 	}
 
 	var buf bytes.Buffer
 	if _, err = io.Copy(&buf, gz); err != nil {
-		return nil, nil, err
+		return nil, nil, &os.PathError{Op: "read", Path: name, Err: err}
 	}
 
 	if err = gz.Close(); err != nil {
-		return nil, nil, err
+		return nil, nil, &os.PathError{Op: "read", Path: name, Err: err}
 	}
 
 	return buf.Bytes(), a, nil
