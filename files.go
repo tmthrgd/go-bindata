@@ -130,7 +130,6 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, k
 			}
 		}
 
-		asset.Func = safeFunctionName(asset.Name, knownFuncs)
 		asset.Path, _ = filepath.Abs(asset.Path)
 		*toc = append(*toc, asset)
 	}
