@@ -30,19 +30,16 @@ func (w *stringWriter) Write(p []byte) (n int, err error) {
 			return
 		}
 
-		n += 4
+		n++
 		w.c++
 
 		if w.WrapAt == 0 || w.c%w.WrapAt != 0 {
 			continue
 		}
 
-		nn, err := fmt.Fprintf(w.Writer, "\" +\n%s\"", w.Indent)
-		if err != nil {
-			return n, err
+		if _, err = fmt.Fprintf(w.Writer, "\" +\n%s\"", w.Indent); err != nil {
+			return
 		}
-
-		n += nn
 	}
 
 	return
