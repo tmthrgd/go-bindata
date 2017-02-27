@@ -192,9 +192,6 @@ type Config struct {
 
 	// When true, the AssetDir API will be provided.
 	AssetDir bool
-
-	// When true, run the output through golang.org/x/tools/imports.
-	Format bool
 }
 
 // NewConfig returns a default configuration struct.
@@ -210,7 +207,6 @@ func NewConfig() *Config {
 	c.Restore = true
 	c.HashLength = 16
 	c.AssetDir = true
-	c.Format = true
 	return c
 }
 

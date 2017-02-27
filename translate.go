@@ -5,12 +5,9 @@
 package bindata
 
 import (
-	"bytes"
-	"io/ioutil"
+	"os"
 	"strings"
 	"text/template"
-
-	"golang.org/x/tools/imports"
 )
 
 // Translate reads assets from an input directory, converts them
@@ -35,23 +32,17 @@ func Translate(c *Config) error {
 		}
 	}
 
-	var buf bytes.Buffer
-	if err := baseTemplate.Execute(&buf, struct {
+	out, err := os.OpenFile(c.Output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	return baseTemplate.Execute(out, struct {
 		Config    *Config
 		AssetName bool
 		Assets    []binAsset
-	}{c, c.HashFormat != NoHash && c.HashFormat != NameUnchanged, toc}); err != nil {
-		return err
-	}
-
-	out := buf.Bytes()
-	if c.Format {
-		if out, err = imports.Process(c.Output, out, nil); err != nil {
-			return err
-		}
-	}
-
-	return ioutil.WriteFile(c.Output, out, 0666)
+	}{c, c.HashFormat != NoHash && c.HashFormat != NameUnchanged, toc})
 }
 
 var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{

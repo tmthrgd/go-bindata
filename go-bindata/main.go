@@ -55,7 +55,6 @@ func parseArgs() *bindata.Config {
 	flag.Var((*hashEncodingValue)(&c.HashEncoding), "hashenc", `Optional the encoding of the hash to use. (default "hex")`)
 	flag.Var((*hexEncodingValue)(&c.HashKey), "hashkey", "Optional hexadecimal key to use to turn the BLAKE2B hashing into a MAC.")
 	flag.BoolVar(&c.AssetDir, "assetdir", c.AssetDir, "Provide the AssetDir APIs.")
-	flag.BoolVar(&c.Format, "fmt", c.Format, "Run the output through goimports.")
 	flag.Var((*appendRegexValue)(&c.Ignore), "ignore", "Regex pattern to ignore")
 
 	// Deprecated options
