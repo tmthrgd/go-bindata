@@ -127,6 +127,7 @@ type asset struct {
 func (a *asset) Name() string {
 	return a.name
 }
+
 func (a *asset) Size() int64 {
 {{- if $.Config.Compress}}
 	return a.size
@@ -134,6 +135,7 @@ func (a *asset) Size() int64 {
 	return int64(len(a.data))
 {{- end}}
 }
+
 func (a *asset) Mode() os.FileMode {
 {{- if gt $.Config.Mode 0}}
 	return {{printf "%04o" $.Config.Mode}}
@@ -143,6 +145,7 @@ func (a *asset) Mode() os.FileMode {
 	return 0
 {{- end}}
 }
+
 func (a *asset) ModTime() time.Time {
 {{- if gt $.Config.ModTime 0}}
 	return time.Unix({{$.Config.ModTime}}, 0)
@@ -152,13 +155,17 @@ func (a *asset) ModTime() time.Time {
 	return time.Time{}
 {{- end}}
 }
+
 func (*asset) IsDir() bool {
 	return false
 }
+
 func (*asset) Sys() interface{} {
 	return nil
 }
+
 {{- if ne $.Config.HashFormat 0}}
+
 func (a *asset) OriginalName() string {
 {{- if $.AssetName}}
 	return a.orig
@@ -166,6 +173,7 @@ func (a *asset) OriginalName() string {
 	return a.name
 {{- end}}
 }
+
 func (a *asset) FileHash() []byte {
 	return a.hash
 }
