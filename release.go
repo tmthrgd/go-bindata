@@ -110,15 +110,12 @@ type asset struct {
 {{- else}}
 	data []byte
 {{- end -}}
-
 {{- if and $.Config.Metadata (le $.Config.Mode 0)}}
 	mode os.FileMode
 {{- end -}}
-
 {{- if and $.Config.Metadata (le $.Config.ModTime 0)}}
 	time time.Time
 {{- end -}}
-
 {{- if ne $.Config.HashFormat 0}}
 	hash []byte
 {{- end}}
