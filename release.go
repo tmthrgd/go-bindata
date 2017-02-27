@@ -134,11 +134,11 @@ import (
 
 func bindataRead(data, name string) ([]byte, error) {
 	gz, err := gzip.NewReader(strings.NewReader(data))
-{{else}}
+{{- else}}
 
 func bindataRead(data []byte, name string) ([]byte, error) {
 	gz, err := gzip.NewReader(bytes.NewBuffer(data))
-{{end -}}
+{{- end}}
 	if err != nil {
 		return nil, fmt.Errorf("Read %q: %v", name, err)
 	}
