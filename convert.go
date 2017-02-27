@@ -99,14 +99,14 @@ func Translate(c *Config) error {
 		return err
 	}
 
-	if !c.NoAssetDir {
+	if c.AssetDir {
 		// Write hierarchical tree of assets
 		if err := writeTOCTree(&buf, toc); err != nil {
 			return err
 		}
 	}
 
-	if !c.NoRestore {
+	if c.Restore {
 		// Write restore procedure
 		if err := writeRestore(&buf); err != nil {
 			return err

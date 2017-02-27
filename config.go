@@ -174,8 +174,8 @@ type Config struct {
 	// This parameter can be provided multiple times.
 	Ignore []*regexp.Regexp
 
-	// When true, the RestoreAsset and RestoreAssets APIs will not be provided.
-	NoRestore bool
+	// When true, the RestoreAsset and RestoreAssets APIs will be provided.
+	Restore bool
 
 	// Which of the given name hashing formats to use.
 	HashFormat HashFormat
@@ -187,8 +187,8 @@ type Config struct {
 	// zero and 64 bytes long.
 	HashKey []byte
 
-	// When true, the AssetDir API will not be provided.
-	NoAssetDir bool
+	// When true, the AssetDir API will be provided.
+	AssetDir bool
 
 	// When true, run the output through golang.org/x/tools/imports.
 	Format bool
@@ -203,7 +203,9 @@ func NewConfig() *Config {
 	c.Debug = false
 	c.Output = "./bindata.go"
 	c.Ignore = make([]*regexp.Regexp, 0)
+	c.Restore = true
 	c.HashLength = 16
+	c.AssetDir = true
 	c.Format = true
 	return c
 }
