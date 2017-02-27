@@ -90,11 +90,6 @@ import (
 	"time"
 )
 
-type asset struct {
-	data string
-	info *bindataFileInfo
-}
-
 {{else -}}
 import (
 {{- if $.Config.Restore}}
@@ -114,11 +109,6 @@ import (
 {{- end}}
 )
 
-type asset struct {
-	data []byte
-	info *bindataFileInfo
-}
-
 {{if not $.Config.MemCopy -}}
 func bindataRead(data string) []byte {
 	var empty [0]byte
@@ -134,9 +124,15 @@ func bindataRead(data string) []byte {
 {{end -}}
 {{end -}}
 
-type bindataFileInfo struct {
+type asset struct {
+{{- if $.Config.Compress}}
+	data string
+	size int64
+{{- else}}
+	data []byte
+{{- end}}
+
 	name    string
-	size    int64
 	mode    os.FileMode
 	modTime time.Time
 {{if ne $.Config.HashFormat 0}}
@@ -145,30 +141,34 @@ type bindataFileInfo struct {
 {{end -}}
 }
 
-func (fi *bindataFileInfo) Name() string {
-	return fi.name
+func (a *asset) Name() string {
+	return a.name
 }
-func (fi *bindataFileInfo) Size() int64 {
-	return fi.size
+func (a *asset) Size() int64 {
+{{- if $.Config.Compress}}
+	return a.size
+{{- else}}
+	return int64(len(a.data))
+{{- end}}
 }
-func (fi *bindataFileInfo) Mode() os.FileMode {
-	return fi.mode
+func (a *asset) Mode() os.FileMode {
+	return a.mode
 }
-func (fi *bindataFileInfo) ModTime() time.Time {
-	return fi.modTime
+func (a *asset) ModTime() time.Time {
+	return a.modTime
 }
-func (fi *bindataFileInfo) IsDir() bool {
+func (*asset) IsDir() bool {
 	return false
 }
-func (fi *bindataFileInfo) Sys() interface{} {
+func (*asset) Sys() interface{} {
 	return nil
 }
 {{- if ne $.Config.HashFormat 0}}
-func (fi *bindataFileInfo) OriginalName() string {
-	return fi.original
+func (a *asset) OriginalName() string {
+	return a.original
 }
-func (fi *bindataFileInfo) FileHash() []byte {
-	return fi.hash
+func (a *asset) FileHash() []byte {
+	return a.hash
 }
 {{- end}}
 
@@ -183,9 +183,9 @@ type FileInfo interface {
 {{- end}}
 
 // _bindata is a table, holding each asset generator, mapped to its name.
-var _bindata = map[string]asset{
-{{range $.Assets}}	{{printf "%q" .Name}}: {
-		{{$data := read .Path -}}
+var _bindata = map[string]*asset{
+{{range $.Assets}}	{{printf "%q" .Name}}: &asset{
+		data: {{$data := read .Path -}}
 		{{- if $.Config.Compress -}}
 			"" +
 			{{gzip $data "\t\t\t" 24}}
@@ -202,36 +202,37 @@ var _bindata = map[string]asset{
 			{{wrap $data "\t\t\t" 24 -}}
 			)
 		{{- end}},
-		&bindataFileInfo{
-			name: {{printf "%q" (name .Name)}},
+	{{- if $.Config.Compress}}
+		size: {{len $data}},
+	{{- end}}
 
 	{{- if $.Config.Metadata -}}
-		{{- $info := stat .Path}}
+	{{- $info := stat .Path}}
 
-			size:    {{$info.Size}},
+		name:    {{printf "%q" (name .Name)}},
+	{{- if gt $.Config.Mode 0}}
+		mode:    {{printf "%04o" $.Config.Mode}},
+	{{- else}}
+		mode:    {{printf "%04o" $info.Mode}},
+	{{- end -}}
 
-		{{- if gt $.Config.Mode 0}}
-			mode:    {{printf "%04o" $.Config.Mode}},
-		{{- else}}
-			mode:    {{printf "%04o" $info.Mode}},
-		{{- end -}}
-
-		{{- if gt $.Config.ModTime 0}}
-			modTime: time.Unix($.Config.ModTime, 0),
-		{{- else -}}
-			{{$mod := $info.ModTime}}
-			modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
-		{{- end}}
+	{{- if gt $.Config.ModTime 0}}
+		modTime: time.Unix($.Config.ModTime, 0),
+	{{- else -}}
+		{{$mod := $info.ModTime}}
+		modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
+	{{- end}}
+	{{- else}}
+		name: {{printf "%q" (name .Name)}},
 	{{- end}}
 
 	{{- if ne $.Config.HashFormat 0}}
 
-			original: {{printf "%q" .OriginalName}},
-			hash: []byte("" +
-				{{wrap .Hash "\t\t\t\t" 22 -}}
-			),
+		original: {{printf "%q" .OriginalName}},
+		hash: []byte("" +
+			{{wrap .Hash "\t\t\t" 24 -}}
+		),
 	{{- end}}
-		},
 	},
 {{end -}}
 }
@@ -240,13 +241,13 @@ var _bindata = map[string]asset{
 // given name. It returns an error if the asset could not be found
 // or could not be loaded.
 func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
-	f, ok := _bindata[strings.Replace(name, "\\", "/", -1)]
+	a, ok := _bindata[strings.Replace(name, "\\", "/", -1)]
 	if !ok {
 		return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}
 {{- if $.Config.Compress}}
 
-	gz, err := gzip.NewReader(strings.NewReader(f.data))
+	gz, err := gzip.NewReader(strings.NewReader(a.data))
 	if err != nil {
 		return nil, nil, fmt.Errorf("Read %q: %v", name, err)
 	}
@@ -260,10 +261,10 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 		return nil, nil, err
 	}
 
-	return buf.Bytes(), f.info, nil
+	return buf.Bytes(), a, nil
 {{- else}}
 
-	return f.data, f.info, nil
+	return a.data, a, nil
 {{- end}}
 }
 
