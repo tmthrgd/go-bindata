@@ -88,5 +88,4 @@ var _hashNames = map[string]string{
 {{end -}}
 }
 {{- end}}
-
 `))

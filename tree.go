@@ -63,7 +63,8 @@ var treeTemplate = template.Must(template.Must(template.New("bintree").Funcs(tem
 {{- if .Children -}}
 	{{repeat "\t" .Depth}}
 {{- end -}}
-}}`)).New("tree").Parse(`// AssetDir returns the file names below a certain
+}}`)).New("tree").Parse(`
+// AssetDir returns the file names below a certain
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
 // following hierarchy:
