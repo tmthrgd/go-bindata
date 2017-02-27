@@ -22,12 +22,11 @@ func Translate(c *Config) error {
 		return err
 	}
 
-	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)
+
 	// Locate all the assets.
 	for _, input := range c.Input {
-		err = findFiles(c, input.Path, c.Prefix, input.Recursive, &toc, knownFuncs, visitedPaths)
-		if err != nil {
+		if err = findFiles(c, input.Path, c.Prefix, input.Recursive, &toc, visitedPaths); err != nil {
 			return err
 		}
 	}

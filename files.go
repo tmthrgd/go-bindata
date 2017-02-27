@@ -22,7 +22,7 @@ func (v byName) Less(i, j int) bool { return v[i].Name() < v[j].Name() }
 // findFiles recursively finds all the file paths in the given directory tree.
 // They are added to the given map as keys. Values will be safe function names
 // for each file, which will be used when generating the output code.
-func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, knownFuncs map[string]int, visitedPaths map[string]bool) error {
+func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, visitedPaths map[string]bool) error {
 	dirpath := dir
 	if len(prefix) > 0 {
 		dirpath, _ = filepath.Abs(dirpath)
@@ -78,7 +78,7 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, k
 			if recursive {
 				recursivePath := filepath.Join(dir, file.Name())
 				visitedPaths[asset.Path] = true
-				findFiles(c, recursivePath, prefix, recursive, toc, knownFuncs, visitedPaths)
+				findFiles(c, recursivePath, prefix, recursive, toc, visitedPaths)
 			}
 			continue
 		} else if file.Mode()&os.ModeSymlink == os.ModeSymlink {
@@ -93,7 +93,7 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, k
 			}
 			if _, ok := visitedPaths[linkPath]; !ok {
 				visitedPaths[linkPath] = true
-				findFiles(c, asset.Path, prefix, recursive, toc, knownFuncs, visitedPaths)
+				findFiles(c, asset.Path, prefix, recursive, toc, visitedPaths)
 			}
 			continue
 		}
