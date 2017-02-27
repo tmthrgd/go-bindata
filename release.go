@@ -115,6 +115,9 @@ func bindataRead(data string) []byte {
 
 type asset struct {
 	name string
+{{- if $.AssetName}}
+	orig string
+{{- end -}}
 {{- if $.Config.Compress}}
 	data string
 	size int64
@@ -132,11 +135,6 @@ type asset struct {
 
 {{- if ne $.Config.HashFormat 0}}
 	hash []byte
-{{- end -}}
-
-{{- if $.AssetName}}
-
-	original string
 {{- end}}
 }
 
@@ -177,7 +175,7 @@ func (*asset) Sys() interface{} {
 {{- if ne $.Config.HashFormat 0}}
 func (a *asset) OriginalName() string {
 {{- if $.AssetName}}
-	return a.original
+	return a.orig
 {{- else}}
 	return a.name
 {{- end}}
@@ -201,6 +199,9 @@ type FileInfo interface {
 var _bindata = map[string]*asset{
 {{range $.Assets}}	{{printf "%q" .Name}}: &asset{
 		name: {{printf "%q" (name .Name)}},
+	{{- if $.AssetName}}
+		orig: {{printf "%q" .OriginalName}},
+	{{- end}}
 		data: {{$data := read .Path -}}
 		{{- if $.Config.Compress -}}
 			"" +
@@ -235,11 +236,6 @@ var _bindata = map[string]*asset{
 		hash: []byte("" +
 			{{wrap .Hash "\t\t\t" 24 -}}
 		),
-	{{- end -}}
-
-	{{- if $.AssetName}}
-
-		original: {{printf "%q" .OriginalName}},
 	{{- end}}
 	},
 {{end -}}
