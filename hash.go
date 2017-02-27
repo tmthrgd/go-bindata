@@ -22,56 +22,55 @@ var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 // length and encoding. It returns the hashed name, the
 // hash and any error that occurred. The hash is a BLAKE2B
 // digest of the file contents.
-func hashFile(c *Config, path, name string) (newName string, hash []byte, err error) {
-	f, err := os.Open(path)
+func hashFile(c *Config, asset *binAsset) error {
+	f, err := os.Open(asset.Path)
 	if err != nil {
-		return
+		return err
 	}
 	defer f.Close()
 
 	h, err := blake2b.New512(c.HashKey)
 	if err != nil {
-		return
+		return err
 	}
 
 	if _, err = io.Copy(h, f); err != nil {
-		return
+		return err
 	}
 
-	hash = h.Sum(nil)
+	asset.Hash = h.Sum(nil)
 
 	if c.HashFormat == NameUnchanged {
-		newName = name
-		return
+		return nil
 	}
 
 	var enc string
 	switch c.HashEncoding {
 	case HexHash:
-		enc = hex.EncodeToString(hash)
+		enc = hex.EncodeToString(asset.Hash)
 	case Base32Hash:
-		enc = strings.TrimSuffix(base32Enc.EncodeToString(hash), "=")
+		enc = strings.TrimSuffix(base32Enc.EncodeToString(asset.Hash), "=")
 	case Base64Hash:
-		enc = base64.RawURLEncoding.EncodeToString(hash)
+		enc = base64.RawURLEncoding.EncodeToString(asset.Hash)
 	default:
 		panic("unreachable")
 	}
 
-	dir, file := filepath.Split(name)
+	dir, file := filepath.Split(asset.Name)
 	ext := filepath.Ext(file)
 	enc = enc[:c.HashLength]
 
 	switch c.HashFormat {
 	case DirHash:
-		newName = filepath.Join(dir, enc, file)
+		asset.Name = filepath.Join(dir, enc, file)
 	case NameHashSuffix:
 		file = strings.TrimSuffix(file, ext)
-		newName = filepath.Join(dir, file+"-"+enc+ext)
+		asset.Name = filepath.Join(dir, file+"-"+enc+ext)
 	case HashWithExt:
-		newName = filepath.Join(dir, enc+ext)
+		asset.Name = filepath.Join(dir, enc+ext)
 	default:
 		panic("unreachable")
 	}
 
-	return
+	return nil
 }

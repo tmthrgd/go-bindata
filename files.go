@@ -132,8 +132,7 @@ outer:
 		if c.HashFormat != NoHash {
 			asset.OriginalName = asset.Name
 
-			asset.Name, asset.Hash, err = hashFile(c, asset.Path, asset.Name)
-			if err != nil {
+			if err = hashFile(c, &asset); err != nil {
 				return err
 			}
 		}
