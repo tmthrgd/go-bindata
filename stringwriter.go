@@ -5,6 +5,7 @@
 package bindata
 
 import (
+	"fmt"
 	"io"
 )
 
@@ -12,7 +13,9 @@ const lowerHex = "0123456789abcdef"
 
 type StringWriter struct {
 	io.Writer
-	c int
+	Indent string
+	WrapAt int
+	c      int
 }
 
 func (w *StringWriter) Write(p []byte) (n int, err error) {
@@ -29,13 +32,11 @@ func (w *StringWriter) Write(p []byte) (n int, err error) {
 		w.Writer.Write(buf)
 		w.c++
 
-		// 28 fits nicely with tab width at 4 and a 120 char line limit
-		if w.c%28 == 0 {
-			io.WriteString(w.Writer, "\" +\n\t\"")
+		if w.WrapAt != 0 && w.c%w.WrapAt == 0 {
+			fmt.Fprintf(w.Writer, "\" +\n%s\"", w.Indent)
 		}
 	}
 
 	n++
-
 	return
 }

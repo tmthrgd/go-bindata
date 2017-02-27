@@ -7,186 +7,94 @@ package bindata
 import (
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
+	"text/template"
 	"unicode/utf8"
 )
 
 // writeRelease writes the release code file.
 func writeRelease(w io.Writer, c *Config, toc []Asset) error {
-	err := writeReleaseHeader(w, c)
-	if err != nil {
-		return err
-	}
-
-	for i := range toc {
-		err = writeReleaseAsset(w, c, &toc[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return releaseTemplate.Execute(w, struct {
+		Config *Config
+		Assets []Asset
+	}{c, toc})
 }
 
-// writeReleaseHeader writes output file headers.
-// This targets release builds.
-func writeReleaseHeader(w io.Writer, c *Config) error {
-	var err error
-	if c.NoCompress {
-		if c.NoMemCopy {
-			err = header_uncompressed_nomemcopy(w)
-		} else {
-			err = header_uncompressed_memcopy(w)
+var releaseTemplate = template.Must(template.New("debug").Funcs(template.FuncMap{
+	"stat": os.Stat,
+	"read": ioutil.ReadFile,
+	"name": func(name string) string {
+		_, name = path.Split(name)
+		return name
+	},
+	"wrap": func(data []byte, indent string, wrapAt int) string {
+		var buf bytes.Buffer
+		buf.WriteString(`"`)
+
+		sw := &StringWriter{
+			Writer: &buf,
+			Indent: indent,
+			WrapAt: wrapAt,
 		}
-	} else {
-		if c.NoMemCopy {
-			err = header_compressed_nomemcopy(w)
-		} else {
-			err = header_compressed_memcopy(w)
+		sw.Write(data)
+
+		buf.WriteString(`"`)
+		return buf.String()
+	},
+	"gzip": func(data []byte, indent string, wrapAt int) (string, error) {
+		var buf bytes.Buffer
+		buf.WriteString(`"`)
+
+		gz := gzip.NewWriter(&StringWriter{
+			Writer: &buf,
+			Indent: indent,
+			WrapAt: wrapAt,
+		})
+
+		if _, err := gz.Write(data); err != nil {
+			return "", err
 		}
-	}
-	if err != nil {
-		return err
-	}
-	if c.HashFormat != NoHash {
-		return header_release_hash(w)
-	}
-	return header_release_common(w)
-}
 
-// writeReleaseAsset write a release entry for the given asset.
-// A release entry is a function which embeds and returns
-// the file's byte content.
-func writeReleaseAsset(w io.Writer, c *Config, asset *Asset) error {
-	fd, err := os.Open(asset.Path)
-	if err != nil {
-		return err
-	}
-
-	defer fd.Close()
-
-	if c.NoCompress {
-		if c.NoMemCopy {
-			err = uncompressed_nomemcopy(w, asset, fd)
-		} else {
-			err = uncompressed_memcopy(w, asset, fd)
+		if err := gz.Close(); err != nil {
+			return "", err
 		}
-	} else {
-		if c.NoMemCopy {
-			err = compressed_nomemcopy(w, asset, fd)
-		} else {
-			err = compressed_memcopy(w, asset, fd)
-		}
-	}
-	if err != nil {
-		return err
-	}
-	return asset_release_common(w, c, asset)
-}
 
-// sanitize prepares a valid UTF-8 string as a raw string constant.
-// Based on https://code.google.com/p/go/source/browse/godoc/static/makestatic.go?repo=tools
-func sanitize(b []byte) []byte {
-	// Replace ` with `+"`"+`
-	b = bytes.Replace(b, []byte("`"), []byte("`+\"`\"+`"), -1)
+		buf.WriteString(`"`)
+		return buf.String(), nil
+	},
+	// sanitize prepares a valid UTF-8 string as a raw string constant.
+	// Based on https://code.google.com/p/go/source/browse/godoc/static/makestatic.go?repo=tools
+	"sanitize": func(b []byte) []byte {
+		// Replace ` with `+"`"+`
+		b = bytes.Replace(b, []byte("`"), []byte("`+\"`\"+`"), -1)
 
-	// Replace BOM with `+"\xEF\xBB\xBF"+`
-	// (A BOM is valid UTF-8 but not permitted in Go source files.
-	// I wouldn't bother handling this, but for some insane reason
-	// jquery.js has a BOM somewhere in the middle.)
-	return bytes.Replace(b, []byte("\xEF\xBB\xBF"), []byte("`+\"\\xEF\\xBB\\xBF\"+`"), -1)
-}
-
-func header_compressed_nomemcopy(w io.Writer) error {
-	_, err := io.WriteString(w, `import (
-	"bytes"
-	"compress/gzip"
-	"fmt"
-	"io"
-	"io/ioutil"
+		// Replace BOM with `+"\xEF\xBB\xBF"+`
+		// (A BOM is valid UTF-8 but not permitted in Go source files.
+		// I wouldn't bother handling this, but for some insane reason
+		// jquery.js has a BOM somewhere in the middle.)
+		return bytes.Replace(b, []byte("\xEF\xBB\xBF"), []byte("`+\"\\xEF\\xBB\\xBF\"+`"), -1)
+	},
+	"utf8Valid": utf8.Valid,
+	"containsZero": func(data []byte) bool {
+		return bytes.Contains(data, []byte{0})
+	},
+}).Parse(`{{if $.Config.NoCompress -}}
+import (
 	"os"
-	"path/filepath"
-	"strings"
-	"time"
-)
-
-func bindataRead(data, name string) ([]byte, error) {
-	gz, err := gzip.NewReader(strings.NewReader(data))
-	if err != nil {
-		return nil, fmt.Errorf("Read %%q: %%v", name, err)
-	}
-
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, gz)
-	clErr := gz.Close()
-
-	if err != nil {
-		return nil, fmt.Errorf("Read %%q: %%v", name, err)
-	}
-	if clErr != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-`)
-	return err
-}
-
-func header_compressed_memcopy(w io.Writer) error {
-	_, err := io.WriteString(w, `import (
-	"bytes"
-	"compress/gzip"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
-)
-
-func bindataRead(data []byte, name string) ([]byte, error) {
-	gz, err := gzip.NewReader(bytes.NewBuffer(data))
-	if err != nil {
-		return nil, fmt.Errorf("Read %%q: %%v", name, err)
-	}
-
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, gz)
-	clErr := gz.Close()
-
-	if err != nil {
-		return nil, fmt.Errorf("Read %%q: %%v", name, err)
-	}
-	if clErr != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-`)
-	return err
-}
-
-func header_uncompressed_nomemcopy(w io.Writer) error {
-	_, err := io.WriteString(w, `import (
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
+{{- if $.Config.NoMemCopy}}
 	"reflect"
+{{- end}}
 	"strings"
 	"time"
+{{- if $.Config.NoMemCopy}}
 	"unsafe"
+{{- end}}
 )
 
+{{if $.Config.NoMemCopy -}}
 func bindataRead(data, name string) ([]byte, error) {
 	var empty [0]byte
 	sx := (*reflect.StringHeader)(unsafe.Pointer(&data))
@@ -198,64 +106,51 @@ func bindataRead(data, name string) ([]byte, error) {
 	return b, nil
 }
 
-`)
-	return err
-}
-
-func header_uncompressed_memcopy(w io.Writer) error {
-	_, err := io.WriteString(w, `import (
+{{end -}}
+{{else -}}
+import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
-`)
-	return err
+
+{{- if $.Config.NoMemCopy}}
+
+func bindataRead(data, name string) ([]byte, error) {
+	gz, err := gzip.NewReader(strings.NewReader(data))
+{{else}}
+
+func bindataRead(data []byte, name string) ([]byte, error) {
+	gz, err := gzip.NewReader(bytes.NewBuffer(data))
+{{end -}}
+	if err != nil {
+		return nil, fmt.Errorf("Read %q: %v", name, err)
+	}
+
+	var buf bytes.Buffer
+	if _, err = io.Copy(&buf, gz); err != nil {
+		return nil, fmt.Errorf("Read %q: %v", name, err)
+	}
+
+	if err = gz.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
-func header_release_common(w io.Writer) error {
-	_, err := io.WriteString(w, `type asset struct {
+{{end -}}
+
+type asset struct {
 	bytes []byte
 	info  os.FileInfo
 }
 
-type bindataFileInfo struct {
-	name    string
-	size    int64
-	mode    os.FileMode
-	modTime time.Time
-}
-
-func (fi bindataFileInfo) Name() string {
-	return fi.name
-}
-func (fi bindataFileInfo) Size() int64 {
-	return fi.size
-}
-func (fi bindataFileInfo) Mode() os.FileMode {
-	return fi.mode
-}
-func (fi bindataFileInfo) ModTime() time.Time {
-	return fi.modTime
-}
-func (fi bindataFileInfo) IsDir() bool {
-	return false
-}
-func (fi bindataFileInfo) Sys() interface{} {
-	return nil
-}
-
-`)
-	return err
-}
-
-func header_release_hash(w io.Writer) error {
-	_, err := io.WriteString(w, `type asset struct {
-	bytes []byte
-	info os.FileInfo
-}
+{{- if ne $.Config.HashFormat 0}}
 
 type FileInfo interface {
 	os.FileInfo
@@ -263,14 +158,17 @@ type FileInfo interface {
 	OriginalName() string
 	FileHash() string
 }
+{{- end}}
 
 type bindataFileInfo struct {
-	name     string
-	size     int64
-	mode     os.FileMode
-	modTime  time.Time
+	name    string
+	size    int64
+	mode    os.FileMode
+	modTime time.Time
+{{if ne $.Config.HashFormat 0}}
 	original string
 	hash     string
+{{end -}}
 }
 
 func (fi bindataFileInfo) Name() string {
@@ -291,159 +189,80 @@ func (fi bindataFileInfo) IsDir() bool {
 func (fi bindataFileInfo) Sys() interface{} {
 	return nil
 }
+{{- if ne $.Config.HashFormat 0}}
 func (fi bindataFileInfo) OriginalName() string {
 	return fi.original
 }
 func (fi bindataFileInfo) FileHash() string {
 	return fi.hash
 }
+{{- end}}
 
-`)
-	return err
-}
+{{range $.Assets -}}
+{{$data := read .Path -}}
 
-func compressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader) error {
-	_, err := fmt.Fprintf(w, "var _%s = \"\" +\n\t\"", asset.Func)
-	if err != nil {
-		return err
-	}
+var _{{.Func}} = {{if and $.Config.NoMemCopy $.Config.NoCompress -}}
+	"" +
+	{{wrap $data "\t" 28}}
+{{- else if $.Config.NoCompress -}}
+	[]byte(
+	{{- if and (utf8Valid $data) (not (containsZero $data)) -}}
+		` + "`{{printf \"%s\" (sanitize $data)}}`" + `
+	{{- else -}}
+		{{printf "%+q" $data}}
+	{{- end -}}
+	)
+{{- else if $.Config.NoMemCopy -}}
+	"" +
+	{{gzip $data "\t" 28}}
+{{- else -}}
+	[]byte("" +
+	{{gzip $data "\t" 28 -}}
+	)
+{{- end}}
 
-	gz := gzip.NewWriter(&StringWriter{Writer: w})
-	_, err = io.Copy(gz, r)
-	gz.Close()
-
-	if err != nil {
-		return err
-	}
-
-	_, err = io.WriteString(w, "\"\n\n")
-	return err
-}
-
-func compressed_memcopy(w io.Writer, asset *Asset, r io.Reader) error {
-	_, err := fmt.Fprintf(w, "var _%s = []byte(\"\" +\n\t\"", asset.Func)
-	if err != nil {
-		return err
-	}
-
-	gz := gzip.NewWriter(&StringWriter{Writer: w})
-	_, err = io.Copy(gz, r)
-	gz.Close()
-
-	if err != nil {
-		return err
-	}
-
-	_, err = io.WriteString(w, "\")\n\n")
-	return err
-}
-
-func uncompressed_nomemcopy(w io.Writer, asset *Asset, r io.Reader) error {
-	_, err := fmt.Fprintf(w, "var _%s = \"\" +\n\t\"", asset.Func)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(&StringWriter{Writer: w}, r)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.WriteString(w, "\"\n\n")
-	return err
-}
-
-func uncompressed_memcopy(w io.Writer, asset *Asset, r io.Reader) error {
-	_, err := fmt.Fprintf(w, `var _%s = []byte(`, asset.Func)
-	if err != nil {
-		return err
-	}
-
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	if utf8.Valid(b) && !bytes.Contains(b, []byte{0}) {
-		_, err = fmt.Fprintf(w, "`%s`", sanitize(b))
-	} else {
-		_, err = fmt.Fprintf(w, "%+q", b)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	_, err = io.WriteString(w, ")\n\n")
-	return err
-}
-
-func asset_release_common(w io.Writer, c *Config, asset *Asset) error {
-	fi, err := os.Stat(asset.Path)
-	if err != nil {
-		return err
-	}
-
-	_, err = fmt.Fprintf(w, `func %s() (*asset, error) {
-	`, asset.Func)
-	if err != nil {
-		return err
-	}
-
-	if c.NoCompress && !c.NoMemCopy {
-		_, err = fmt.Fprintf(w, `bytes := []byte(_%s)`, asset.Func)
-	} else {
-		_, err = fmt.Fprintf(w, `bytes, err := bindataRead(
-		_%s,
-		%q,
+func {{.Func}}() (*asset, error) {
+{{- if and $.Config.NoCompress (not $.Config.NoMemCopy)}}
+	bytes := []byte(_{{.Func}})
+{{- else}}
+	bytes, err := bindataRead(
+		_{{.Func}},
+		{{printf "%q" .Name}},
 	)
 	if err != nil {
 		return nil, err
-	}`, asset.Func, asset.Name)
 	}
+{{end}}
+	return &asset{
+		bytes: bytes,
+		info: bindataFileInfo{
+			name: {{printf "%q" .Name}},
 
-	_, name := path.Split(asset.Name)
-	_, err = fmt.Fprintf(w, `
+{{- if not $.Config.NoMetadata}}
+	{{$info := stat .Path}}
+			size:    {{$info.Size}},
 
-	info := bindataFileInfo{name: %q`, name)
-	if err != nil {
-		return err
-	}
+	{{- if gt $.Config.Mode 0}}
+			mode:    {{printf "%04o" $.Config.Mode}},
+	{{- else}}
+			mode:    {{printf "%04o" $info.Mode}},
+	{{- end -}}
 
-	if !c.NoMetadata {
-		mode := uint(fi.Mode())
-		modTime := fi.ModTime().Unix()
-		modTimeNano := fi.ModTime().Nanosecond()
-		size := fi.Size()
-		if c.Mode > 0 {
-			mode = uint(os.ModePerm) & c.Mode
-		}
-		if c.ModTime > 0 {
-			modTime = c.ModTime
-			modTimeNano = 0
-		}
+	{{- if gt $.Config.ModTime 0}}
+			modTime: time.Unix($.Config.ModTime, 0),
+	{{- else -}}
+		{{$mod := $info.ModTime}}
+			modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
+	{{- end}}
+{{- end}}
 
-		_, err = fmt.Fprintf(w, ", size: %d, mode: os.FileMode(%04o), modTime: time.Unix(%d, %d)", size, mode, modTime, modTimeNano)
-		if err != nil {
-			return err
-		}
-	}
+{{- if ne $.Config.HashFormat 0}}
 
-	if c.HashFormat != NoHash {
-		var buf bytes.Buffer
-		sw := &StringWriter{Writer: &buf}
-		sw.Write(asset.Hash)
-
-		_, err = fmt.Fprintf(w, ", original: %q,\n\thash: \"%s\"", asset.OriginalName, buf.String())
-		if err != nil {
-			return err
-		}
-	}
-
-	_, err = io.WriteString(w, `}
-	return &asset{bytes: bytes, info: info}, nil
+			original: {{printf "%q" .OriginalName}},
+			hash: {{wrap .Hash "\t\t\t\t" 22}},
+{{- end}}
+		},
+	}, nil
 }
 
-`)
-	return err
-}
+{{end}}`))
