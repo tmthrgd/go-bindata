@@ -14,6 +14,10 @@ import (
 type hashEncodingValue bindata.HashEncoding
 
 func (he *hashEncodingValue) String() string {
+	if he == nil {
+		return "hex"
+	}
+
 	switch bindata.HashEncoding(*he) {
 	case bindata.HexHash:
 		return "hex"

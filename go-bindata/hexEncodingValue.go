@@ -9,6 +9,10 @@ import "encoding/hex"
 type hexEncodingValue []byte
 
 func (he *hexEncodingValue) String() string {
+	if he == nil {
+		return ""
+	}
+
 	return hex.EncodeToString(*he)
 }
 

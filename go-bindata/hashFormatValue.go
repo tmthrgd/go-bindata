@@ -14,6 +14,10 @@ import (
 type hashFormatValue bindata.HashFormat
 
 func (hf *hashFormatValue) String() string {
+	if hf == nil {
+		return ""
+	}
+
 	switch bindata.HashFormat(*hf) {
 	case bindata.NoHash:
 		return ""
