@@ -78,7 +78,9 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, v
 			if recursive {
 				recursivePath := filepath.Join(dir, file.Name())
 				visitedPaths[asset.Path] = true
-				findFiles(c, recursivePath, prefix, recursive, toc, visitedPaths)
+				if err = findFiles(c, recursivePath, prefix, recursive, toc, visitedPaths); err != nil {
+					return err
+				}
 			}
 			continue
 		} else if file.Mode()&os.ModeSymlink == os.ModeSymlink {
@@ -93,7 +95,9 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, v
 			}
 			if _, ok := visitedPaths[linkPath]; !ok {
 				visitedPaths[linkPath] = true
-				findFiles(c, asset.Path, prefix, recursive, toc, visitedPaths)
+				if err = findFiles(c, asset.Path, prefix, recursive, toc, visitedPaths); err != nil {
+					return err
+				}
 			}
 			continue
 		}
