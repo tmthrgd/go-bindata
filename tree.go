@@ -44,12 +44,7 @@ func init() {
 
 			return l
 		},
-	}).Parse(`{
-{{- if .Asset.Func -}}
-	{{.Asset.Func}}
-{{- else -}}
-	nil
-{{- end}}, map[string]*bintree{
+	}).Parse(`bintree{
 {{- if .Children}}
 {{$max := maxKeyLength .Children -}}
 {{range $k, $v := .Children -}}
@@ -60,7 +55,7 @@ func init() {
 {{- if .Children -}}
 	{{repeat "\t" .Depth}}
 {{- end -}}
-}}`))
+}`))
 
 	template.Must(baseTemplate.New("tree").Funcs(template.FuncMap{
 		"tree": func(toc []binAsset) *assetTree {
@@ -94,31 +89,29 @@ func AssetDir(name string) ([]string, error) {
 	node := _bintree
 
 	if name != "" {
+		var ok bool
 		canonicalName := strings.Replace(name, "\\", "/", -1)
 		for _, p := range strings.Split(canonicalName, "/") {
-			if node = node.Children[p]; node == nil {
+			if node, ok = node[p]; !ok {
 				return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 			}
 		}
 	}
 
-	if node.Func != nil {
+	if len(node) == 0 {
 		return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}
 
-	rv := make([]string, 0, len(node.Children))
-	for name := range node.Children {
+	rv := make([]string, 0, len(node))
+	for name := range node {
 		rv = append(rv, name)
 	}
 
 	return rv, nil
 }
 
-type bintree struct {
-	Func     func() ([]byte, os.FileInfo, error)
-	Children map[string]*bintree
-}
+type bintree map[string]bintree
 
-var _bintree = &bintree{{template "bintree" (tree .Assets)}}
+var _bintree = {{template "bintree" (tree .Assets)}}
 `))
 }
