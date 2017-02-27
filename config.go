@@ -202,7 +202,6 @@ func NewConfig() *Config {
 	c.Compress = true
 	c.Metadata = true
 	c.Output = "./bindata.go"
-	c.Ignore = make([]*regexp.Regexp, 0)
 	c.Restore = true
 	c.HashLength = 16
 	c.AssetDir = true
