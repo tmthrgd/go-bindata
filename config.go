@@ -219,16 +219,15 @@ func (c *Config) validate() error {
 	}
 
 	for _, input := range c.Input {
-		_, err := os.Lstat(input.Path)
-		if err != nil {
-			return fmt.Errorf("Failed to stat input path '%s': %v", input.Path, err)
+		if _, err := os.Lstat(input.Path); err != nil {
+			return err
 		}
 	}
 
 	if len(c.Output) == 0 {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return errors.New("Unable to determine current working directory.")
+			return err
 		}
 
 		c.Output = filepath.Join(cwd, "bindata.go")
@@ -237,22 +236,17 @@ func (c *Config) validate() error {
 	stat, err := os.Lstat(c.Output)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return fmt.Errorf("Output path: %v", err)
+			return err
 		}
 
 		// File does not exist. This is fine, just make
 		// sure the directory it is to be in exists.
-		dir, _ := filepath.Split(c.Output)
-		if dir != "" {
-			err = os.MkdirAll(dir, 0744)
-
-			if err != nil {
-				return fmt.Errorf("Create output directory: %v", err)
+		if dir, _ := filepath.Split(c.Output); dir != "" {
+			if err = os.MkdirAll(dir, 0744); err != nil {
+				return err
 			}
 		}
-	}
-
-	if stat != nil && stat.IsDir() {
+	} else if stat.IsDir() {
 		return errors.New("Output path is a directory.")
 	}
 
