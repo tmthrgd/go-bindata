@@ -58,7 +58,7 @@ func Translate(c *Config) error {
 
 	if c.AssetDir {
 		// Write hierarchical tree of assets
-		if err := writeTOCTree(&buf, toc); err != nil {
+		if err := writeTree(&buf, toc); err != nil {
 			return err
 		}
 	}
