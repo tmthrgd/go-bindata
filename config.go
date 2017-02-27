@@ -200,7 +200,6 @@ func NewConfig() *Config {
 	c.Package = "main"
 	c.MemCopy = true
 	c.Compress = true
-	c.Debug = false
 	c.Metadata = true
 	c.Output = "./bindata.go"
 	c.Ignore = make([]*regexp.Regexp, 0)
