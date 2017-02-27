@@ -17,10 +17,7 @@ import (
 )
 
 func main() {
-	cfg := parseArgs()
-	err := bindata.Translate(cfg)
-
-	if err != nil {
+	if err := bindata.Translate(parseArgs()); err != nil {
 		fmt.Fprintf(os.Stderr, "bindata: %v\n", err)
 		os.Exit(1)
 	}
@@ -32,15 +29,15 @@ func main() {
 // This function exits the program with an error, if
 // any of the command line options are incorrect.
 func parseArgs() *bindata.Config {
-	var version bool
-
-	c := bindata.NewConfig()
-
 	flag.Usage = func() {
 		fmt.Printf("Usage: %s [options] <input directories>\n\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 
+	var version bool
+	flag.BoolVar(&version, "version", false, "Displays version information.")
+
+	c := bindata.NewConfig()
 	flag.BoolVar(&c.Debug, "debug", c.Debug, "Do not embed the assets, but provide the embedding API. Contents will still be loaded from disk.")
 	flag.BoolVar(&c.Dev, "dev", c.Dev, "Similar to debug, but does not emit absolute paths. Expects a rootDir variable to already exist in the generated code's package.")
 	flag.StringVar(&c.Tags, "tags", c.Tags, "Optional set of build tags to include.")
@@ -60,7 +57,6 @@ func parseArgs() *bindata.Config {
 	flag.BoolVar(&c.AssetDir, "assetdir", c.AssetDir, "Provide the AssetDir APIs.")
 	flag.BoolVar(&c.Format, "fmt", c.Format, "Run the output through goimports.")
 	flag.Var((*appendRegexValue)(&c.Ignore), "ignore", "Regex pattern to ignore")
-	flag.BoolVar(&version, "version", false, "Displays version information.")
 
 	flag.Parse()
 
@@ -85,19 +81,18 @@ func parseArgs() *bindata.Config {
 	}
 
 	// Change pkg to containing directory of output. If output flag is set and package flag is not.
-	pkgSet := false
-	outputSet := false
+	var pkgSet, outputSet bool
 	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "pkg" {
+		switch f.Name {
+		case "pkg":
 			pkgSet = true
-		}
-		if f.Name == "o" {
+		case "o":
 			outputSet = true
 		}
 	})
+
 	if outputSet && !pkgSet {
-		pkg := filepath.Base(filepath.Dir(c.Output))
-		if pkg != "." && pkg != "/" {
+		if pkg := filepath.Base(filepath.Dir(c.Output)); pkg != "." && pkg != "/" {
 			c.Package = pkg
 		}
 	}
@@ -117,11 +112,10 @@ func parseInput(path string) bindata.InputConfig {
 			Path:      filepath.Clean(path[:len(path)-4]),
 			Recursive: true,
 		}
-	} else {
-		return bindata.InputConfig{
-			Path:      filepath.Clean(path),
-			Recursive: false,
-		}
 	}
 
+	return bindata.InputConfig{
+		Path:      filepath.Clean(path),
+		Recursive: false,
+	}
 }
