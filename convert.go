@@ -47,6 +47,7 @@ func Translate(c *Config) error {
 
 	var buf bytes.Buffer
 
+	// Write file header.
 	if err := writeHeader(&buf, c, toc); err != nil {
 		return err
 	}
