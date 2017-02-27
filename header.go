@@ -12,7 +12,7 @@ import (
 )
 
 // writeHeader writes the file header.
-func writeHeader(w io.Writer, c *Config, toc []Asset) error {
+func writeHeader(w io.Writer, c *Config, toc []binAsset) error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -20,7 +20,7 @@ func writeHeader(w io.Writer, c *Config, toc []Asset) error {
 
 	return headerTemplate.Execute(w, struct {
 		Config     *Config
-		Assets     []Asset
+		Assets     []binAsset
 		WorkingDir string
 	}{c, toc, wd})
 }

@@ -27,7 +27,7 @@ import (
 // to Go code and writes new files to the output specified
 // in the given configuration.
 func Translate(c *Config) error {
-	var toc []Asset
+	var toc []binAsset
 
 	// Ensure our configuration has sane values.
 	err := c.validate()
@@ -93,16 +93,16 @@ func Translate(c *Config) error {
 }
 
 // Implement sort.Interface for []os.FileInfo based on Name()
-type ByName []os.FileInfo
+type byName []os.FileInfo
 
-func (v ByName) Len() int           { return len(v) }
-func (v ByName) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
-func (v ByName) Less(i, j int) bool { return v[i].Name() < v[j].Name() }
+func (v byName) Len() int           { return len(v) }
+func (v byName) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
+func (v byName) Less(i, j int) bool { return v[i].Name() < v[j].Name() }
 
 // findFiles recursively finds all the file paths in the given directory tree.
 // They are added to the given map as keys. Values will be safe function names
 // for each file, which will be used when generating the output code.
-func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]Asset, knownFuncs map[string]int, visitedPaths map[string]bool) error {
+func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, knownFuncs map[string]int, visitedPaths map[string]bool) error {
 	dirpath := dir
 	if len(prefix) > 0 {
 		dirpath, _ = filepath.Abs(dirpath)
@@ -135,11 +135,11 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]Asset, know
 		}
 
 		// Sort to make output stable between invocations
-		sort.Sort(ByName(list))
+		sort.Sort(byName(list))
 	}
 
 	for _, file := range list {
-		var asset Asset
+		var asset binAsset
 		asset.Path = filepath.Join(dirpath, file.Name())
 		asset.Name = filepath.ToSlash(asset.Path)
 

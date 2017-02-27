@@ -16,10 +16,10 @@ import (
 )
 
 // writeRelease writes the release code file.
-func writeRelease(w io.Writer, c *Config, toc []Asset) error {
+func writeRelease(w io.Writer, c *Config, toc []binAsset) error {
 	return releaseTemplate.Execute(w, struct {
 		Config *Config
-		Assets []Asset
+		Assets []binAsset
 	}{c, toc})
 }
 
@@ -34,7 +34,7 @@ var releaseTemplate = template.Must(template.New("debug").Funcs(template.FuncMap
 		var buf bytes.Buffer
 		buf.WriteString(`"`)
 
-		sw := &StringWriter{
+		sw := &stringWriter{
 			Writer: &buf,
 			Indent: indent,
 			WrapAt: wrapAt,
@@ -48,7 +48,7 @@ var releaseTemplate = template.Must(template.New("debug").Funcs(template.FuncMap
 		var buf bytes.Buffer
 		buf.WriteString(`"`)
 
-		gz := gzip.NewWriter(&StringWriter{
+		gz := gzip.NewWriter(&stringWriter{
 			Writer: &buf,
 			Indent: indent,
 			WrapAt: wrapAt,

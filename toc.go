@@ -12,7 +12,7 @@ import (
 )
 
 type assetTree struct {
-	Asset    Asset
+	Asset    binAsset
 	Children map[string]*assetTree
 }
 
@@ -31,7 +31,7 @@ func (node *assetTree) child(name string) *assetTree {
 	return rv
 }
 
-func (root *assetTree) Add(route []string, asset Asset) {
+func (root *assetTree) Add(route []string, asset binAsset) {
 	for _, name := range route {
 		root = root.child(name)
 	}
@@ -96,7 +96,7 @@ var _bintree = `)
 	return err
 }
 
-func writeTOCTree(w io.Writer, toc []Asset) error {
+func writeTOCTree(w io.Writer, toc []binAsset) error {
 	_, err := io.WriteString(w, `// AssetDir returns the file names below a certain
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
@@ -145,7 +145,7 @@ func AssetDir(name string) ([]string, error) {
 }
 
 // writeTOC writes the table of contents file.
-func writeTOC(w io.Writer, toc []Asset, hashFormat HashFormat) error {
+func writeTOC(w io.Writer, toc []binAsset, hashFormat HashFormat) error {
 	err := writeTOCHeader(w)
 	if err != nil {
 		return err
@@ -254,7 +254,7 @@ var _bindata = map[string]func() (*asset, error){
 }
 
 // writeTOCAsset write a TOC entry for the given asset.
-func writeTOCAsset(w io.Writer, asset *Asset) error {
+func writeTOCAsset(w io.Writer, asset *binAsset) error {
 	_, err := fmt.Fprintf(w, "\t%q: %s,\n", asset.Name, asset.Func)
 	return err
 }
@@ -285,7 +285,7 @@ var _hashNames = map[string]string{
 }
 
 // writeTOCHashNameAsset write a hash name entry for the given asset.
-func writeTOCHashNameAsset(w io.Writer, asset *Asset) error {
+func writeTOCHashNameAsset(w io.Writer, asset *binAsset) error {
 	_, err := fmt.Fprintf(w, "\t%q: %q,\n", asset.OriginalName, asset.Name)
 	return err
 }

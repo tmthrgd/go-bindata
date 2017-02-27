@@ -23,7 +23,7 @@ func TestSafeFunctionName(t *testing.T) {
 }
 
 func TestFindFiles(t *testing.T) {
-	var toc []Asset
+	var toc []binAsset
 	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)
 	err := findFiles(new(Config), "testdata/dupname", "testdata/dupname", true, &toc, knownFuncs, visitedPaths)
@@ -36,8 +36,8 @@ func TestFindFiles(t *testing.T) {
 }
 
 func TestFindFilesWithSymlinks(t *testing.T) {
-	var tocSrc []Asset
-	var tocTarget []Asset
+	var tocSrc []binAsset
+	var tocTarget []binAsset
 
 	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)
@@ -67,7 +67,7 @@ func TestFindFilesWithSymlinks(t *testing.T) {
 }
 
 func TestFindFilesWithRecursiveSymlinks(t *testing.T) {
-	var toc []Asset
+	var toc []binAsset
 
 	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)
@@ -82,7 +82,7 @@ func TestFindFilesWithRecursiveSymlinks(t *testing.T) {
 }
 
 func TestFindFilesWithSymlinkedFile(t *testing.T) {
-	var toc []Asset
+	var toc []binAsset
 
 	var knownFuncs = make(map[string]int)
 	var visitedPaths = make(map[string]bool)

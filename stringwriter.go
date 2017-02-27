@@ -11,14 +11,14 @@ import (
 
 const lowerHex = "0123456789abcdef"
 
-type StringWriter struct {
+type stringWriter struct {
 	io.Writer
 	Indent string
 	WrapAt int
 	c      int
 }
 
-func (w *StringWriter) Write(p []byte) (n int, err error) {
+func (w *stringWriter) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return
 	}

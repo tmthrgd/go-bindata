@@ -10,10 +10,10 @@ import (
 )
 
 // writeDebug writes the debug code file.
-func writeDebug(w io.Writer, c *Config, toc []Asset) error {
+func writeDebug(w io.Writer, c *Config, toc []binAsset) error {
 	return debugTemplate.Execute(w, struct {
 		Config *Config
-		Assets []Asset
+		Assets []binAsset
 	}{c, toc})
 }
 

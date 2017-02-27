@@ -4,9 +4,7 @@
 
 package bindata
 
-import (
-	"io"
-)
+import "io"
 
 func writeRestore(w io.Writer) error {
 	_, err := io.WriteString(w, `
