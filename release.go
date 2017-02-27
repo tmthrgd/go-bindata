@@ -90,22 +90,9 @@ import (
 	"time"
 )
 
-func bindataRead(data, name string) ([]byte, error) {
-	gz, err := gzip.NewReader(strings.NewReader(data))
-	if err != nil {
-		return nil, fmt.Errorf("Read %q: %v", name, err)
-	}
-
-	var buf bytes.Buffer
-	if _, err = io.Copy(&buf, gz); err != nil {
-		return nil, fmt.Errorf("Read %q: %v", name, err)
-	}
-
-	if err = gz.Close(); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+type asset struct {
+	data string
+	info *bindataFileInfo
 }
 
 {{else -}}
@@ -126,6 +113,11 @@ import (
 	"unsafe"
 {{- end}}
 )
+
+type asset struct {
+	data []byte
+	info *bindataFileInfo
+}
 
 {{if not $.Config.MemCopy -}}
 func bindataRead(data string) []byte {
@@ -238,40 +230,44 @@ var _bininfo_{{.Func}} = &bindataFileInfo{
 {{- end}}
 }
 
-func {{.Func}}() ([]byte, os.FileInfo, error) {
-{{- if $.Config.Compress}}
-	data, err := bindataRead(
-		_bindata_{{.Func}},
-		{{printf "%q" .Name}},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return data, _bininfo_{{.Func}}, nil
-{{- else}}
-	return _bindata_{{.Func}}, _bininfo_{{.Func}}, nil
-{{- end}}
-}
-
 {{end -}}
 
 // AssetAndInfo loads and returns the asset and asset info for the
 // given name. It returns an error if the asset could not be found
 // or could not be loaded.
 func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
-	if f, ok := _bindata[strings.Replace(name, "\\", "/", -1)]; ok {
-		return f()
+	f, ok := _bindata[strings.Replace(name, "\\", "/", -1)]
+	if !ok {
+		return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+	}
+{{- if $.Config.Compress}}
+
+	gz, err := gzip.NewReader(strings.NewReader(f.data))
+	if err != nil {
+		return nil, nil, fmt.Errorf("Read %q: %v", name, err)
 	}
 
-	return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+	var buf bytes.Buffer
+	if _, err = io.Copy(&buf, gz); err != nil {
+		return nil, nil, fmt.Errorf("Read %q: %v", name, err)
+	}
+
+	if err = gz.Close(); err != nil {
+		return nil, nil, err
+	}
+
+	return buf.Bytes(), f.info, nil
+{{- else}}
+
+	return f.data, f.info, nil
+{{- end}}
 }
 
 // _bindata is a table, holding each asset generator, mapped to its name.
-var _bindata = map[string]func() ([]byte, os.FileInfo, error){
+var _bindata = map[string]asset{
 {{$max := maxNameLength .Assets -}}
 {{range .Assets}}	{{printf "%q" .Name}}:
-	{{- repeat " " (sub $max (len .Name))}} {{.Func}},
+	{{- repeat " " (sub $max (len .Name))}} {_bindata_{{.Func}}, _bininfo_{{.Func}}},
 {{end -}}
 }`))
 }
