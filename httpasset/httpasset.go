@@ -134,27 +134,26 @@ func isFieldSeparator(r rune) bool {
 }
 
 func parseAcceptEncoding(header string) (brotli, gzip bool) {
+outer:
 	for _, value := range strings.Split(header, ",") {
 		fields := strings.FieldsFunc(value, isFieldSeparator)
 		if len(fields) == 0 {
 			continue
 		}
 
-		supported := true
 		for _, field := range fields[1:] {
 			switch field {
 			case "q=0", "q=0.0", "q=0.00", "q=0.000",
 				"Q=0", "Q=0.0", "Q=0.00", "Q=0.000":
-				supported = false
-				break
+				continue outer
 			}
 		}
 
 		switch strings.ToLower(fields[0]) {
 		case "br":
-			brotli = supported
+			brotli = true
 		case "gzip":
-			gzip = supported
+			gzip = true
 		}
 	}
 
