@@ -215,7 +215,7 @@ var _bindata = map[string]*asset{
 	{{- end -}}
 
 	{{- if gt $.Config.ModTime 0}}
-		modTime: time.Unix($.Config.ModTime, 0),
+		modTime: time.Unix({{$.Config.ModTime}}, 0),
 	{{- else -}}
 		{{$mod := $info.ModTime}}
 		modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
