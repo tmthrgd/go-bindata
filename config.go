@@ -163,8 +163,8 @@ type Config struct {
 	// repository.
 	Dev bool
 
-	// When true, size, mode and modtime are not preserved from files
-	NoMetadata bool
+	// When false, size, mode and modtime are not preserved from files
+	Metadata bool
 	// When nonzero, use this as mode for all files.
 	Mode uint
 	// When nonzero, use this as unix timestamp for all files.
@@ -204,6 +204,7 @@ func NewConfig() *Config {
 	c.MemCopy = true
 	c.Compress = true
 	c.Debug = false
+	c.Metadata = true
 	c.Output = "./bindata.go"
 	c.Ignore = make([]*regexp.Regexp, 0)
 	c.Restore = true

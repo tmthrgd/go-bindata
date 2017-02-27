@@ -213,7 +213,7 @@ var _bindata_{{.Func}} = {{if $.Config.Compress -}}
 var _bininfo_{{.Func}} = &bindataFileInfo{
 	name: {{printf "%q" .Name}},
 
-{{- if not $.Config.NoMetadata}}
+{{- if $.Config.Metadata}}
 {{$info := stat .Path}}
 	size:    {{$info.Size}},
 

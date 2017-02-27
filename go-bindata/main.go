@@ -45,7 +45,7 @@ func parseArgs() *bindata.Config {
 	flag.StringVar(&c.Package, "pkg", c.Package, "Package name to use in the generated code.")
 	flag.BoolVar(&c.MemCopy, "memcopy", c.MemCopy, "Do not use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
 	flag.BoolVar(&c.Compress, "compress", c.Compress, "Assets will be GZIP compressed when this flag is specified.")
-	flag.BoolVar(&c.NoMetadata, "nometadata", c.NoMetadata, "Assets will not preserve size, mode, and modtime info.")
+	flag.BoolVar(&c.Metadata, "metadata", c.Metadata, "Assets will preserve size, mode, and modtime info.")
 	flag.UintVar(&c.Mode, "mode", c.Mode, "Optional file mode override for all files.")
 	flag.Int64Var(&c.ModTime, "modtime", c.ModTime, "Optional modification unix timestamp override for all files.")
 	flag.BoolVar(&c.Restore, "restore", c.Restore, "Provide the restore APIs.")
@@ -59,9 +59,10 @@ func parseArgs() *bindata.Config {
 	flag.Var((*appendRegexValue)(&c.Ignore), "ignore", "Regex pattern to ignore")
 
 	// Deprecated options
-	var noMemCopy, noCompress bool
+	var noMemCopy, noCompress, noMetadata bool
 	flag.BoolVar(&noMemCopy, "nomemcopy", !c.MemCopy, "[Deprecated]: use -memcpy=false.")
 	flag.BoolVar(&noCompress, "nocompress", !c.Compress, "[Deprecated]: use -compress=false.")
+	flag.BoolVar(&noMetadata, "nometadata", !c.Metadata, "[Deprecated]: use -metadata=false.")
 
 	flag.Parse()
 
@@ -88,6 +89,7 @@ func parseArgs() *bindata.Config {
 	var pkgSet, outputSet bool
 	var memcopySet, nomemcopySet bool
 	var compressSet, nocompressSet bool
+	var metadataSet, nometadataSet bool
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "pkg":
@@ -102,6 +104,10 @@ func parseArgs() *bindata.Config {
 			compressSet = true
 		case "nocompress":
 			nocompressSet = true
+		case "metadata":
+			metadataSet = true
+		case "nometadata":
+			nometadataSet = true
 		}
 	})
 
@@ -118,6 +124,10 @@ func parseArgs() *bindata.Config {
 
 	if !compressSet && nocompressSet {
 		c.Compress = !noCompress
+	}
+
+	if !metadataSet && nometadataSet {
+		c.Metadata = !noMetadata
 	}
 
 	if !c.MemCopy && c.Compress {
