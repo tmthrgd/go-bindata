@@ -101,47 +101,44 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Etag", string(etag[:2+l]))
 	}
 
-	if fh.compressed == nil {
-		http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
-		return
-	}
-
-	brotli, gzip := parseAcceptEncoding(r.Header.Get("Accept-Encoding"))
-
-	if ok {
-		name = fi.OriginalName()
-	}
-
-	for _, enc := range [...]struct {
-		name, ext string
-		supported bool
-	}{
-		{"br", ".br", brotli},
-		{"gzip", ".gz", gzip},
-	} {
-		if !enc.supported {
-			continue
+	if fh.compressed != nil {
+		if ok {
+			name = fi.OriginalName()
 		}
 
-		if compressed, _, err := fh.compressed(name + enc.ext); err != nil {
-			if os.IsNotExist(err) {
-				continue
-			} else if os.IsPermission(err) {
-				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-				return
-			}
-
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		brotli, gzip := parseAcceptEncoding(r.Header.Get("Accept-Encoding"))
+		if (brotli && fh.serveCompressed(w, r, info, name, ".br", len(data))) ||
+			(gzip && fh.serveCompressed(w, r, info, name, ".gz", len(data))) {
 			return
-		} else if len(compressed) < len(data) {
-			w.Header().Set("Content-Encoding", enc.name)
-
-			data = compressed
-			break
 		}
 	}
 
 	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
+}
+
+func (fh *fileHandler) serveCompressed(w http.ResponseWriter, r *http.Request, info os.FileInfo, name, ext string, size int) bool {
+	data, _, err := fh.compressed(name + ext)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+
+		if os.IsPermission(err) {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return true
+		}
+
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return true
+	}
+
+	if len(data) >= size {
+		return false
+	}
+
+	w.Header().Set("Content-Encoding", name)
+	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
+	return true
 }
 
 func isFieldSeparator(r rune) bool {
