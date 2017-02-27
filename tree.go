@@ -5,99 +5,65 @@
 package bindata
 
 import (
-	"fmt"
 	"io"
-	"sort"
 	"strings"
+	"text/template"
 )
 
 type assetTree struct {
 	Asset    binAsset
 	Children map[string]*assetTree
+	Depth    int
 }
 
 func newAssetTree() *assetTree {
-	tree := &assetTree{}
-	tree.Children = make(map[string]*assetTree)
-	return tree
+	return &assetTree{
+		Children: make(map[string]*assetTree),
+	}
 }
 
 func (node *assetTree) child(name string) *assetTree {
 	rv, ok := node.Children[name]
 	if !ok {
 		rv = newAssetTree()
+		rv.Depth = node.Depth + 1
 		node.Children[name] = rv
 	}
+
 	return rv
 }
 
-func (root *assetTree) Add(route []string, asset binAsset) {
-	for _, name := range route {
-		root = root.child(name)
-	}
-	root.Asset = asset
-}
-
-func ident(w io.Writer, n int) {
-	for i := 0; i < n; i++ {
-		w.Write([]byte{'\t'})
-	}
-}
-
-func (root *assetTree) funcOrNil() string {
-	if root.Asset.Func == "" {
-		return "nil"
-	} else {
-		return root.Asset.Func
-	}
-}
-
-func (root *assetTree) writeGoMap(w io.Writer, nident int) {
-	if nident == 0 {
-		io.WriteString(w, "&bintree")
-	}
-	fmt.Fprintf(w, "{%s, map[string]*bintree{", root.funcOrNil())
-
-	if len(root.Children) > 0 {
-		io.WriteString(w, "\n")
-
-		// Sort to make output stable between invocations
-		filenames := make([]string, len(root.Children))
-		i := 0
-		for filename, _ := range root.Children {
-			filenames[i] = filename
-			i++
-		}
-		sort.Strings(filenames)
-
-		for _, p := range filenames {
-			ident(w, nident+1)
-			fmt.Fprintf(w, `"%s": `, p)
-			root.Children[p].writeGoMap(w, nident+1)
-		}
-		ident(w, nident)
-	}
-
-	io.WriteString(w, "}}")
-	if nident > 0 {
-		io.WriteString(w, ",")
-	}
-	io.WriteString(w, "\n")
-}
-
-func (root *assetTree) WriteAsGoMap(w io.Writer) error {
-	_, err := fmt.Fprint(w, `type bintree struct {
-	Func     func() (*asset, error)
-	Children map[string]*bintree
-}
-
-var _bintree = `)
-	root.writeGoMap(w, 0)
-	return err
-}
-
 func writeTree(w io.Writer, toc []binAsset) error {
-	_, err := io.WriteString(w, `// AssetDir returns the file names below a certain
+	tree := newAssetTree()
+	for _, asset := range toc {
+		node := tree
+		for _, name := range strings.Split(asset.Name, "/") {
+			node = node.child(name)
+		}
+
+		node.Asset = asset
+	}
+
+	return treeTemplate.Execute(w, tree)
+}
+
+var treeTemplate = template.Must(template.Must(template.New("bintree").Funcs(template.FuncMap{
+	"repeat": strings.Repeat,
+}).Parse(`{
+{{- if .Asset.Func -}}
+	{{.Asset.Func}}
+{{- else -}}
+	nil
+{{- end}}, map[string]*bintree{
+{{- if .Children}}
+{{range $k, $v := .Children -}}
+{{repeat "\t" $v.Depth}}{{printf "%q" $k}}: {{template "bintree" $v}},
+{{end -}}
+{{- end -}}
+{{- if .Children -}}
+	{{repeat "\t" .Depth}}
+{{- end -}}
+}}`)).New("tree").Parse(`// AssetDir returns the file names below a certain
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
 // following hierarchy:
@@ -112,34 +78,32 @@ func writeTree(w io.Writer, toc []binAsset) error {
 // AssetDir("") will return []string{"data"}.
 func AssetDir(name string) ([]string, error) {
 	node := _bintree
-	if len(name) != 0 {
+
+	if name != "" {
 		canonicalName := strings.Replace(name, "\\", "/", -1)
-		pathList := strings.Split(canonicalName, "/")
-		for _, p := range pathList {
-			node = node.Children[p]
-			if node == nil {
+		for _, p := range strings.Split(canonicalName, "/") {
+			if node = node.Children[p]; node == nil {
 				return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 			}
 		}
 	}
+
 	if node.Func != nil {
 		return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}
+
 	rv := make([]string, 0, len(node.Children))
-	for childName := range node.Children {
-		rv = append(rv, childName)
+	for name := range node.Children {
+		rv = append(rv, name)
 	}
+
 	return rv, nil
 }
 
-`)
-	if err != nil {
-		return err
-	}
-	tree := newAssetTree()
-	for i := range toc {
-		pathList := strings.Split(toc[i].Name, "/")
-		tree.Add(pathList, toc[i])
-	}
-	return tree.WriteAsGoMap(w)
+type bintree struct {
+	Func     func() (*asset, error)
+	Children map[string]*bintree
 }
+
+var _bintree = &bintree{{template "bintree" .}}
+`))
