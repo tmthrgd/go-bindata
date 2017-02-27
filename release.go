@@ -83,7 +83,13 @@ var releaseTemplate = template.Must(template.New("release").Funcs(template.FuncM
 	},
 }).Parse(`{{if $.Config.NoCompress -}}
 import (
+{{- if $.Config.Restore}}
+	"io/ioutil"
+{{- end}}
 	"os"
+{{- if $.Config.Restore}}
+	"path/filepath"
+{{- end}}
 {{- if $.Config.NoMemCopy}}
 	"reflect"
 {{- end}}
@@ -113,7 +119,13 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+{{- if $.Config.Restore}}
+	"io/ioutil"
+{{- end}}
 	"os"
+{{- if $.Config.Restore}}
+	"path/filepath"
+{{- end}}
 	"strings"
 	"time"
 )

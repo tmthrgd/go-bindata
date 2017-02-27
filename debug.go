@@ -20,9 +20,9 @@ func writeDebug(w io.Writer, c *Config, toc []binAsset) error {
 var debugTemplate = template.Must(template.New("debug").Parse(`import (
 	"io/ioutil"
 	"os"
-{{- if $.Config.Dev}}
+{{- if or $.Config.Dev $.Config.Restore}}
 	"path/filepath"
-{{end}}
+{{- end}}
 	"strings"
 )
 
