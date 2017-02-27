@@ -5,66 +5,43 @@
 package bindata
 
 import (
-	"fmt"
 	"io"
+	"text/template"
 )
 
 // writeDebug writes the debug code file.
 func writeDebug(w io.Writer, c *Config, toc []Asset) error {
-	err := writeDebugHeader(w)
-	if err != nil {
-		return err
-	}
-
-	for i := range toc {
-		err = writeDebugAsset(w, c, &toc[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return debugTemplate.Execute(w, struct {
+		Config *Config
+		Assets []Asset
+	}{c, toc})
 }
 
-// writeDebugHeader writes output file headers.
-// This targets debug builds.
-func writeDebugHeader(w io.Writer) error {
-	_, err := io.WriteString(w, `import (
-	"fmt"
+var debugTemplate = template.Must(template.New("debug").Parse(`import (
 	"io/ioutil"
 	"os"
+{{- if $.Config.Dev}}
 	"path/filepath"
+{{end}}
 	"strings"
 )
-
-// bindataRead reads the given file from disk. It returns an error on failure.
-func bindataRead(path, name string) ([]byte, error) {
-	return ioutil.ReadFile(path)
-}
 
 type asset struct {
 	bytes []byte
 	info  os.FileInfo
 }
 
-`)
-	return err
-}
+{{- range $.Assets}}
 
-// writeDebugAsset write a debug entry for the given asset.
-// A debug entry is simply a function which reads the asset from
-// the original file (e.g.: from disk).
-func writeDebugAsset(w io.Writer, c *Config, asset *Asset) error {
-	pathExpr := fmt.Sprintf("%q", asset.Path)
-	if c.Dev {
-		pathExpr = fmt.Sprintf("filepath.Join(rootDir, %q)", asset.Name)
-	}
+// {{.Func}} reads file data from disk. It returns an error on failure.
+func {{.Func}}() (*asset, error) {
+{{- if $.Config.Dev}}
+	path := filepath.Join(rootDir, {{printf "%q" .Name}})
+{{- else}}
+	path := {{printf "%q" .Path}}
+{{- end}}
 
-	_, err := fmt.Fprintf(w, `// %s reads file data from disk. It returns an error on failure.
-func %s() (*asset, error) {
-	path := %s
-	name := %q
-	bytes, err := bindataRead(path, name)
+	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -74,10 +51,7 @@ func %s() (*asset, error) {
 		return nil, err
 	}
 
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
+	return &asset{bytes: bytes, info: fi}, nil
 }
-
-`, asset.Func, asset.Func, pathExpr, asset.Name)
-	return err
-}
+{{- end}}
+`))
