@@ -5,49 +5,19 @@
 package bindata
 
 import (
-	"fmt"
 	"io"
+	"text/template"
 )
 
 // writeTOC writes the table of contents file.
 func writeTOC(w io.Writer, toc []binAsset, hashFormat HashFormat) error {
-	err := writeTOCHeader(w)
-	if err != nil {
-		return err
-	}
-
-	for i := range toc {
-		err = writeTOCAsset(w, &toc[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	if err := writeTOCFooter(w); err != nil {
-		return err
-	}
-
-	if hashFormat == NoHash || hashFormat == NameUnchanged {
-		return nil
-	}
-
-	if err := writeTOCHashNameHeader(w); err != nil {
-		return err
-	}
-
-	for i := range toc {
-		err = writeTOCHashNameAsset(w, &toc[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	return writeTOCHashNameFooter(w)
+	return tocTemplate.Execute(w, struct {
+		AssetName bool
+		Assets    []binAsset
+	}{hashFormat != NoHash && hashFormat != NameUnchanged, toc})
 }
 
-// writeTOCHeader writes the table of contents file header.
-func writeTOCHeader(w io.Writer) error {
-	_, err := io.WriteString(w, `// Asset loads and returns the asset for the given name.
+var tocTemplate = template.Must(template.New("toc").Parse(`// Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func Asset(name string) ([]byte, error) {
@@ -114,27 +84,13 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-`)
-	return err
+{{range .Assets}}	{{printf "%q" .Name}}: {{.Func}},
+{{end -}}
 }
 
-// writeTOCAsset write a TOC entry for the given asset.
-func writeTOCAsset(w io.Writer, asset *binAsset) error {
-	_, err := fmt.Fprintf(w, "\t%q: %s,\n", asset.Name, asset.Func)
-	return err
-}
+{{- if $.AssetName}}
 
-// writeTOCFooter writes the table of contents file footer.
-func writeTOCFooter(w io.Writer) error {
-	_, err := io.WriteString(w, `}
-
-`)
-	return err
-}
-
-// writeTOCHashNameHeader writes the table of contents header for hash names.
-func writeTOCHashNameHeader(w io.Writer) error {
-	_, err := io.WriteString(w, `// AssetName returns the hashed name associated with an asset of a
+// AssetName returns the hashed name associated with an asset of a
 // given name.
 func AssetName(name string) (string, error) {
 	canonicalName := strings.Replace(name, "\\", "/", -1)
@@ -145,20 +101,9 @@ func AssetName(name string) (string, error) {
 }
 
 var _hashNames = map[string]string{
-`)
-	return err
+{{range .Assets}}	{{printf "%q" .OriginalName}}: {{printf "%q" .Name}},
+{{end -}}
 }
+{{- end}}
 
-// writeTOCHashNameAsset write a hash name entry for the given asset.
-func writeTOCHashNameAsset(w io.Writer, asset *binAsset) error {
-	_, err := fmt.Fprintf(w, "\t%q: %q,\n", asset.OriginalName, asset.Name)
-	return err
-}
-
-// writeTOCHashNameFooter writes the hash table of contents file footer.
-func writeTOCHashNameFooter(w io.Writer) error {
-	_, err := io.WriteString(w, `}
-
-`)
-	return err
-}
+`))
