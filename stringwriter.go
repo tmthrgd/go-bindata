@@ -9,8 +9,6 @@ import (
 	"io"
 )
 
-const lowerHex = "0123456789abcdef"
-
 type stringWriter struct {
 	io.Writer
 	Indent string
@@ -19,24 +17,33 @@ type stringWriter struct {
 }
 
 func (w *stringWriter) Write(p []byte) (n int, err error) {
-	if len(p) == 0 {
-		return
-	}
+	var buf [4]byte
+	buf[0] = '\\'
+	buf[1] = 'x'
 
-	buf := []byte(`\x00`)
-	var b byte
-
-	for n, b = range p {
+	for _, b := range p {
+		const lowerHex = "0123456789abcdef"
 		buf[2] = lowerHex[b/16]
 		buf[3] = lowerHex[b%16]
-		w.Writer.Write(buf)
+
+		if _, err = w.Writer.Write(buf[:]); err != nil {
+			return
+		}
+
+		n += 4
 		w.c++
 
-		if w.WrapAt != 0 && w.c%w.WrapAt == 0 {
-			fmt.Fprintf(w.Writer, "\" +\n%s\"", w.Indent)
+		if w.WrapAt == 0 || w.c%w.WrapAt != 0 {
+			continue
 		}
+
+		nn, err := fmt.Fprintf(w.Writer, "\" +\n%s\"", w.Indent)
+		if err != nil {
+			return n, err
+		}
+
+		n += nn
 	}
 
-	n++
 	return
 }
