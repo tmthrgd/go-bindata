@@ -119,11 +119,15 @@ type asset struct {
 	size int64
 {{- else}}
 	data []byte
-{{- end}}
+{{- end -}}
+{{- if $.Config.Metadata}}
 
 	name    string
 	mode    os.FileMode
 	modTime time.Time
+{{- else}}
+	name string
+{{- end}}
 {{if ne $.Config.HashFormat 0}}
 	original string
 	hash     []byte
@@ -141,10 +145,18 @@ func (a *asset) Size() int64 {
 {{- end}}
 }
 func (a *asset) Mode() os.FileMode {
+{{- if $.Config.Metadata}}
 	return a.mode
+{{- else}}
+	return 0
+{{- end}}
 }
 func (a *asset) ModTime() time.Time {
+{{- if $.Config.Metadata}}
 	return a.modTime
+{{- else}}
+	return time.Time{}
+{{- end}}
 }
 func (*asset) IsDir() bool {
 	return false
