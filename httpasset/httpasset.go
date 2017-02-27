@@ -106,17 +106,20 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accept := parseAcceptEncoding(r.Header.Get("Accept-Encoding"))
+	brotli, gzip := parseAcceptEncoding(r.Header.Get("Accept-Encoding"))
 
 	if ok {
 		name = fi.OriginalName()
 	}
 
-	for _, enc := range [...]struct{ name, ext string }{
-		{"br", ".br"},
-		{"gzip", ".gz"},
+	for _, enc := range [...]struct {
+		name, ext string
+		supported bool
+	}{
+		{"br", ".br", brotli},
+		{"gzip", ".gz", gzip},
 	} {
-		if _, has := accept[enc.name]; !has {
+		if !enc.supported {
 			continue
 		}
 
@@ -145,25 +148,29 @@ func isFieldSeparator(r rune) bool {
 	return r == ';' || unicode.IsSpace(r)
 }
 
-func parseAcceptEncoding(header string) (c map[string]struct{}) {
-	c = make(map[string]struct{})
-
-outer:
+func parseAcceptEncoding(header string) (brotli, gzip bool) {
 	for _, value := range strings.Split(header, ",") {
 		fields := strings.FieldsFunc(value, isFieldSeparator)
 		if len(fields) == 0 {
 			continue
 		}
 
+		supported := true
 		for _, field := range fields[1:] {
 			switch field {
 			case "q=0", "q=0.0", "q=0.00", "q=0.000",
 				"Q=0", "Q=0.0", "Q=0.00", "Q=0.000":
-				continue outer
+				supported = false
+				break
 			}
 		}
 
-		c[strings.ToLower(fields[0])] = struct{}{}
+		switch strings.ToLower(fields[0]) {
+		case "br":
+			brotli = supported
+		case "gzip":
+			gzip = supported
+		}
 	}
 
 	return
