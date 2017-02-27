@@ -56,6 +56,7 @@ func parseArgs() *bindata.Config {
 	flag.Var((*hexEncodingValue)(&c.HashKey), "hashkey", "Optional hexadecimal key to use to turn the BLAKE2B hashing into a MAC.")
 	flag.BoolVar(&c.AssetDir, "assetdir", c.AssetDir, "Provide the AssetDir APIs.")
 	flag.Var((*appendRegexValue)(&c.Ignore), "ignore", "Regex pattern to ignore")
+	flag.BoolVar(&c.DecompressOnce, "once", c.DecompressOnce, "Only GZIP decompress the resource once.")
 
 	// Deprecated options
 	var noMemCopy, noCompress, noMetadata bool

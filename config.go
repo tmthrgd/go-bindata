@@ -192,6 +192,9 @@ type Config struct {
 
 	// When true, the AssetDir API will be provided.
 	AssetDir bool
+
+	// When true, only gzip decompress the data on first use.
+	DecompressOnce bool
 }
 
 // NewConfig returns a default configuration struct.
@@ -205,6 +208,7 @@ func NewConfig() *Config {
 	c.Restore = true
 	c.HashLength = 16
 	c.AssetDir = true
+	c.DecompressOnce = true
 	return c
 }
 

@@ -75,6 +75,9 @@ import (
 	"reflect"
 {{- end}}
 	"strings"
+{{- if and $.Config.Compress $.Config.DecompressOnce}}
+	"sync"
+{{- end}}
 	"time"
 {{- if $unsafeRead}}
 	"unsafe"
@@ -117,6 +120,12 @@ type asset struct {
 {{- end -}}
 {{- if ne $.Config.HashFormat 0}}
 	hash []byte
+{{- end}}
+{{- if and $.Config.Compress $.Config.DecompressOnce}}
+
+	once  sync.Once
+	bytes []byte
+	err   error
 {{- end}}
 }
 
@@ -235,8 +244,28 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 	if !ok {
 		return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}
-{{- if $.Config.Compress}}
+{{if and $.Config.Compress $.Config.DecompressOnce}}
+	a.once.Do(func() {
+		var gz *gzip.Reader
+		if gz, a.err = gzip.NewReader(strings.NewReader(a.data)); a.err != nil {
+			return
+		}
 
+		var buf bytes.Buffer
+		if _, a.err = io.Copy(&buf, gz); a.err != nil {
+			return
+		}
+
+		if a.err = gz.Close(); a.err == nil {
+			a.bytes = buf.Bytes()
+		}
+	})
+	if a.err != nil {
+		return nil, nil, a.err
+	}
+
+	return a.bytes, a, nil
+{{- else if $.Config.Compress}}
 	gz, err := gzip.NewReader(strings.NewReader(a.data))
 	if err != nil {
 		return nil, nil, err
@@ -253,7 +282,6 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 
 	return buf.Bytes(), a, nil
 {{- else}}
-
 	return a.data, a, nil
 {{- end}}
 }
