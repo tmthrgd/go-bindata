@@ -14,19 +14,17 @@ import (
 // to Go code and writes new files to the output specified
 // in the given configuration.
 func Translate(c *Config) error {
-	var toc []binAsset
-
 	// Ensure our configuration has sane values.
-	err := c.validate()
-	if err != nil {
+	if err := c.validate(); err != nil {
 		return err
 	}
 
+	var toc []binAsset
 	var visitedPaths = make(map[string]bool)
 
 	// Locate all the assets.
 	for _, input := range c.Input {
-		if err = findFiles(c, input.Path, c.Prefix, input.Recursive, &toc, visitedPaths); err != nil {
+		if err := findFiles(c, input.Path, c.Prefix, input.Recursive, &toc, visitedPaths); err != nil {
 			return err
 		}
 	}
