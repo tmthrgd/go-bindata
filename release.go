@@ -73,12 +73,15 @@ func init() {
 		"containsZero": func(data []byte) bool {
 			return bytes.Contains(data, []byte{0})
 		},
-	}).Parse(`{{if $.Config.Compress -}}
+	}).Parse(`
+{{- $unsafeRead := and (not $.Config.Compress) (not $.Config.MemCopy) -}}
 import (
+{{- if $.Config.Compress}}
 	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
+{{- end}}
 {{- if $.Config.Restore}}
 	"io/ioutil"
 {{- end}}
@@ -86,30 +89,17 @@ import (
 {{- if $.Config.Restore}}
 	"path/filepath"
 {{- end}}
-	"strings"
-	"time"
-)
-
-{{else -}}
-import (
-{{- if $.Config.Restore}}
-	"io/ioutil"
-{{- end}}
-	"os"
-{{- if $.Config.Restore}}
-	"path/filepath"
-{{- end}}
-{{- if not $.Config.MemCopy}}
+{{- if $unsafeRead}}
 	"reflect"
 {{- end}}
 	"strings"
 	"time"
-{{- if not $.Config.MemCopy}}
+{{- if $unsafeRead}}
 	"unsafe"
 {{- end}}
 )
 
-{{if not $.Config.MemCopy -}}
+{{if $unsafeRead -}}
 func bindataRead(data string) []byte {
 	var empty [0]byte
 	sx := (*reflect.StringHeader)(unsafe.Pointer(&data))
@@ -121,7 +111,6 @@ func bindataRead(data string) []byte {
 	return b
 }
 
-{{end -}}
 {{end -}}
 
 type asset struct {
