@@ -113,9 +113,11 @@ func Translate(c *Config) error {
 		}
 	}
 
-	out, err := imports.Process(c.Output, buf.Bytes(), nil)
-	if err != nil {
-		return err
+	out := buf.Bytes()
+	if c.Format {
+		if out, err = imports.Process(c.Output, out, nil); err != nil {
+			return err
+		}
 	}
 
 	return ioutil.WriteFile(c.Output, out, 0666)

@@ -189,6 +189,9 @@ type Config struct {
 
 	// When true, the AssetDir API will not be provided.
 	NoAssetDir bool
+
+	// When true, run the output through golang.org/x/tools/imports.
+	Format bool
 }
 
 // NewConfig returns a default configuration struct.
@@ -201,6 +204,7 @@ func NewConfig() *Config {
 	c.Output = "./bindata.go"
 	c.Ignore = make([]*regexp.Regexp, 0)
 	c.HashLength = 16
+	c.Format = true
 	return c
 }
 
