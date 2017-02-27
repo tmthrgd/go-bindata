@@ -37,6 +37,7 @@ func parseArgs() *bindata.Config {
 	var version bool
 	flag.BoolVar(&version, "version", false, "Displays version information.")
 
+	var mode uint
 	c := bindata.NewConfig()
 	flag.BoolVar(&c.Debug, "debug", c.Debug, "Do not embed the assets, but provide the embedding API. Contents will still be loaded from disk.")
 	flag.BoolVar(&c.Dev, "dev", c.Dev, "Similar to debug, but does not emit absolute paths. Expects a rootDir variable to already exist in the generated code's package.")
@@ -46,7 +47,7 @@ func parseArgs() *bindata.Config {
 	flag.BoolVar(&c.MemCopy, "memcopy", c.MemCopy, "Do not use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
 	flag.BoolVar(&c.Compress, "compress", c.Compress, "Assets will be GZIP compressed when this flag is specified.")
 	flag.BoolVar(&c.Metadata, "metadata", c.Metadata, "Assets will preserve size, mode, and modtime info.")
-	flag.UintVar(&c.Mode, "mode", c.Mode, "Optional file mode override for all files.")
+	flag.UintVar(&mode, "mode", uint(c.Mode), "Optional file mode override for all files.")
 	flag.Int64Var(&c.ModTime, "modtime", c.ModTime, "Optional modification unix timestamp override for all files.")
 	flag.BoolVar(&c.Restore, "restore", c.Restore, "[Deprecated]: use github.com/tmthrgd/go-bindata/restore.")
 	flag.StringVar(&c.Output, "o", c.Output, "Optional name of the output file to be generated.")
@@ -79,6 +80,8 @@ func parseArgs() *bindata.Config {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	c.Mode = os.FileMode(mode)
 
 	// Create input configurations.
 	c.Input = make([]bindata.InputConfig, flag.NArg())

@@ -166,7 +166,7 @@ type Config struct {
 	// When false, size, mode and modtime are not preserved from files
 	Metadata bool
 	// When nonzero, use this as mode for all files.
-	Mode uint
+	Mode os.FileMode
 	// When nonzero, use this as unix timestamp for all files.
 	ModTime int64
 
@@ -251,7 +251,7 @@ func (c *Config) validate() error {
 		return errors.New("go-bindata: output path is a directory")
 	}
 
-	if c.Mode&^uint(os.ModePerm) != 0 {
+	if c.Mode&^os.ModePerm != 0 {
 		return errors.New("go-bindata: invalid mode specified")
 	}
 
