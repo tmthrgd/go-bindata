@@ -168,29 +168,29 @@ type bindataFileInfo struct {
 {{end -}}
 }
 
-func (fi bindataFileInfo) Name() string {
+func (fi *bindataFileInfo) Name() string {
 	return fi.name
 }
-func (fi bindataFileInfo) Size() int64 {
+func (fi *bindataFileInfo) Size() int64 {
 	return fi.size
 }
-func (fi bindataFileInfo) Mode() os.FileMode {
+func (fi *bindataFileInfo) Mode() os.FileMode {
 	return fi.mode
 }
-func (fi bindataFileInfo) ModTime() time.Time {
+func (fi *bindataFileInfo) ModTime() time.Time {
 	return fi.modTime
 }
-func (fi bindataFileInfo) IsDir() bool {
+func (fi *bindataFileInfo) IsDir() bool {
 	return false
 }
-func (fi bindataFileInfo) Sys() interface{} {
+func (fi *bindataFileInfo) Sys() interface{} {
 	return nil
 }
 {{- if ne $.Config.HashFormat 0}}
-func (fi bindataFileInfo) OriginalName() string {
+func (fi *bindataFileInfo) OriginalName() string {
 	return fi.original
 }
-func (fi bindataFileInfo) FileHash() string {
+func (fi *bindataFileInfo) FileHash() string {
 	return fi.hash
 }
 {{- end}}
@@ -208,7 +208,7 @@ type FileInfo interface {
 {{range $.Assets -}}
 {{$data := read .Path -}}
 
-var _{{.Func}} = {{if and $.Config.NoMemCopy $.Config.NoCompress -}}
+var _bindata_{{.Func}} = {{if and $.Config.NoMemCopy $.Config.NoCompress -}}
 	"" +
 	{{wrap $data "\t" 28}}
 {{- else if $.Config.NoCompress -}}
@@ -228,45 +228,48 @@ var _{{.Func}} = {{if and $.Config.NoMemCopy $.Config.NoCompress -}}
 	)
 {{- end}}
 
-func {{.Func}}() ([]byte, os.FileInfo, error) {
-{{- if and $.Config.NoCompress (not $.Config.NoMemCopy)}}
-	data := []byte(_{{.Func}})
-{{- else}}
-	data, err := bindataRead(
-		_{{.Func}},
-		{{printf "%q" .Name}},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-{{end}}
-	return data, bindataFileInfo{
-		name: {{printf "%q" .Name}},
+var _bininfo_{{.Func}} = &bindataFileInfo{
+	name: {{printf "%q" .Name}},
 
 {{- if not $.Config.NoMetadata}}
 {{$info := stat .Path}}
-		size:    {{$info.Size}},
+	size:    {{$info.Size}},
 
 	{{- if gt $.Config.Mode 0}}
-		mode:    {{printf "%04o" $.Config.Mode}},
+	mode:    {{printf "%04o" $.Config.Mode}},
 	{{- else}}
-		mode:    {{printf "%04o" $info.Mode}},
+	mode:    {{printf "%04o" $info.Mode}},
 	{{- end -}}
 
 	{{- if gt $.Config.ModTime 0}}
-		modTime: time.Unix($.Config.ModTime, 0),
+	modTime: time.Unix($.Config.ModTime, 0),
 	{{- else -}}
-		{{$mod := $info.ModTime}}
-		modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
+	{{$mod := $info.ModTime}}
+	modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 	{{- end}}
 {{- end}}
 
 {{- if ne $.Config.HashFormat 0}}
 
-		original: {{printf "%q" .OriginalName}},
-		hash: {{wrap .Hash "\t\t\t" 24}},
+	original: {{printf "%q" .OriginalName}},
+	hash: {{wrap .Hash "\t\t" 26}},
 {{- end}}
-	}, nil
+}
+
+func {{.Func}}() ([]byte, os.FileInfo, error) {
+{{- if and $.Config.NoCompress (not $.Config.NoMemCopy)}}
+	return _bindata_{{.Func}}, _bininfo_{{.Func}}, nil
+{{- else}}
+	data, err := bindataRead(
+		_bindata_{{.Func}},
+		{{printf "%q" .Name}},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return data, _bininfo_{{.Func}}, nil
+{{end}}
 }
 
 {{end}}`))
