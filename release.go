@@ -203,7 +203,7 @@ var _bindata = map[string]asset{
 			)
 		{{- end}},
 		&bindataFileInfo{
-			name: {{printf "%q" .Name}},
+			name: {{printf "%q" (name .Name)}},
 
 	{{- if $.Config.Metadata -}}
 		{{- $info := stat .Path}}
