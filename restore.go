@@ -10,27 +10,23 @@ func writeRestore(w io.Writer) error {
 	_, err := io.WriteString(w, `
 // RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
-	data, err := Asset(name)
+	canonicalName := strings.Replace(name, "\\", "/", -1)
+	path := filepath.Join(append([]string{dir}, strings.Split(canonicalName, "/")...)...)
+
+	data, info, err := AssetAndInfo(name)
 	if err != nil {
 		return err
 	}
-	info, err := AssetInfo(name)
-	if err != nil {
+
+	if err = os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
-	if err != nil {
+
+	if err = ioutil.WriteFile(path, data, info.Mode()); err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
-	if err != nil {
-		return err
-	}
-	err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return os.Chtimes(path, info.ModTime(), info.ModTime())
 }
 
 // RestoreAssets restores an asset under the given directory recursively
@@ -40,19 +36,15 @@ func RestoreAssets(dir, name string) error {
 	if err != nil {
 		return RestoreAsset(dir, name)
 	}
+
 	// Dir
 	for _, child := range children {
-		err = RestoreAssets(dir, filepath.Join(name, child))
-		if err != nil {
+		if err = RestoreAssets(dir, filepath.Join(name, child)); err != nil {
 			return err
 		}
 	}
-	return nil
-}
 
-func _filePath(dir, name string) string {
-	canonicalName := strings.Replace(name, "\\", "/", -1)
-	return filepath.Join(append([]string{dir}, strings.Split(canonicalName, "/")...)...)
+	return nil
 }
 `)
 	return err
