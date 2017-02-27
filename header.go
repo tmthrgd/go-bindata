@@ -29,7 +29,5 @@ func init() {
 
 {{end -}}
 
-package {{$.Config.Package}}
-
-`))
+package {{$.Config.Package}}`))
 }

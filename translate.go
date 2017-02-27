@@ -51,21 +51,23 @@ var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
 		return a - b
 	},
 }).Parse(`
-{{- template "header" . -}}
+{{- template "header" .}}
 
-{{- if or $.Config.Debug $.Config.Dev -}}
-	{{- template "debug" . -}}
+{{if or $.Config.Debug $.Config.Dev -}}
+{{- template "debug" . -}}
 {{- else -}}
-	{{- template "release" . -}}
+{{- template "release" . -}}
+{{- end}}
+
+{{template "common" . -}}
+
+{{- if $.Config.AssetDir}}
+
+{{template "tree" . -}}
 {{- end -}}
 
-{{- template "common" . -}}
+{{- if $.Config.Restore}}
 
-{{- if $.Config.AssetDir -}}
-	{{- template "tree" . -}}
-{{- end -}}
-
-{{- if $.Config.Restore -}}
-	{{- template "restore" . -}}
-{{- end -}}
+{{template "restore" . -}}
+{{- end}}
 `))

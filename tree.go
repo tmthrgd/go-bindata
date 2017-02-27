@@ -71,8 +71,7 @@ func init() {
 
 			return tree
 		},
-	}).Parse(`
-// AssetDir returns the file names below a certain
+	}).Parse(`// AssetDir returns the file names below a certain
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
 // following hierarchy:
@@ -112,6 +111,5 @@ func AssetDir(name string) ([]string, error) {
 
 type bintree map[string]bintree
 
-var _bintree = {{template "bintree" (tree .Assets)}}
-`))
+var _bintree = {{template "bintree" (tree .Assets)}}`))
 }

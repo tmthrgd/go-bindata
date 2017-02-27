@@ -7,8 +7,7 @@ package bindata
 import "text/template"
 
 func init() {
-	template.Must(baseTemplate.New("restore").Parse(`
-// RestoreAsset restores an asset under the given directory
+	template.Must(baseTemplate.New("restore").Parse(`// RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
 	canonicalName := strings.Replace(name, "\\", "/", -1)
 	path := filepath.Join(append([]string{dir}, strings.Split(canonicalName, "/")...)...)
@@ -45,6 +44,5 @@ func RestoreAssets(dir, name string) error {
 	}
 
 	return nil
-}
-`))
+}`))
 }
