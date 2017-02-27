@@ -114,6 +114,7 @@ func bindataRead(data string) []byte {
 {{end -}}
 
 type asset struct {
+	name string
 {{- if $.Config.Compress}}
 	data string
 	size int64
@@ -122,11 +123,8 @@ type asset struct {
 {{- end -}}
 {{- if $.Config.Metadata}}
 
-	name    string
 	mode    os.FileMode
 	modTime time.Time
-{{- else}}
-	name string
 {{- end}}
 {{if ne $.Config.HashFormat 0}}
 	original string
@@ -186,6 +184,7 @@ type FileInfo interface {
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]*asset{
 {{range $.Assets}}	{{printf "%q" .Name}}: &asset{
+		name: {{printf "%q" (name .Name)}},
 		data: {{$data := read .Path -}}
 		{{- if $.Config.Compress -}}
 			"" +
@@ -205,13 +204,11 @@ var _bindata = map[string]*asset{
 		{{- end}},
 	{{- if $.Config.Compress}}
 		size: {{len $data}},
-	{{- end}}
+	{{- end -}}
 
 	{{- if $.Config.Metadata -}}
 	{{- $info := stat .Path}}
-
-		name:    {{printf "%q" (name .Name)}},
-	{{- if gt $.Config.Mode 0}}
+	{{if gt $.Config.Mode 0}}
 		mode:    {{printf "%04o" $.Config.Mode}},
 	{{- else}}
 		mode:    {{printf "%04o" $info.Mode}},
@@ -223,8 +220,6 @@ var _bindata = map[string]*asset{
 		{{$mod := $info.ModTime}}
 		modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 	{{- end}}
-	{{- else}}
-		name: {{printf "%q" (name .Name)}},
 	{{- end}}
 
 	{{- if ne $.Config.HashFormat 0}}
