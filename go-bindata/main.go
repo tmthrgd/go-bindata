@@ -67,8 +67,8 @@ func parseArgs() *bindata.Config {
 
 	if version {
 		fmt.Fprintf(os.Stderr, "go-bindata (Go runtime %s).\n", runtime.Version())
-		io.WriteString(os.Stderr, "Copyright (c) 2010-2013 Jim Teeuwen.\n")
-		io.WriteString(os.Stderr, "Copyright (c) 2017 Tom Thorogood.\n")
+		io.WriteString(os.Stderr, "Copyright (c) 2010-2013, Jim Teeuwen.\n")
+		io.WriteString(os.Stderr, "Copyright (c) 2017, Tom Thorogood.\n")
 		os.Exit(0)
 	}
 
