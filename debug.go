@@ -39,5 +39,23 @@ func {{.Func}}() ([]byte, os.FileInfo, error) {
 	return data, fi, nil
 }
 {{- end}}
-`))
+
+// AssetAndInfo loads and returns the asset and asset info for the
+// given name. It returns an error if the asset could not be found
+// or could not be loaded.
+func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
+	if f, ok := _bindata[strings.Replace(name, "\\", "/", -1)]; ok {
+		return f()
+	}
+
+	return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+}
+
+// _bindata is a table, holding each asset generator, mapped to its name.
+var _bindata = map[string]func() ([]byte, os.FileInfo, error){
+{{$max := maxNameLength .Assets -}}
+{{range .Assets}}	{{printf "%q" .Name}}:
+	{{- repeat " " (sub $max (len .Name))}} {{.Func}},
+{{end -}}
+}`))
 }

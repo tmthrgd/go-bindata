@@ -7,18 +7,9 @@ package bindata
 import "text/template"
 
 func init() {
-	template.Must(baseTemplate.New("toc").Funcs(template.FuncMap{
-		"maxNameLength": func(toc []binAsset) int {
-			l := 0
-			for _, asset := range toc {
-				if len(asset.Name) > l {
-					l = len(asset.Name)
-				}
-			}
+	template.Must(baseTemplate.New("common").Parse(`
 
-			return l
-		},
-	}).Parse(`// Asset loads and returns the asset for the given name.
+// Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func Asset(name string) ([]byte, error) {
@@ -45,17 +36,6 @@ func AssetInfo(name string) (os.FileInfo, error) {
 	return info, err
 }
 
-// AssetAndInfo loads and returns the asset and asset info for the
-// given name. It returns an error if the asset could not be found
-// or could not be loaded.
-func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
-	if f, ok := _bindata[strings.Replace(name, "\\", "/", -1)]; ok {
-		return f()
-	}
-
-	return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
-}
-
 // AssetNames returns the names of the assets.
 func AssetNames() []string {
 	names := make([]string, 0, len(_bindata))
@@ -64,14 +44,6 @@ func AssetNames() []string {
 	}
 
 	return names
-}
-
-// _bindata is a table, holding each asset generator, mapped to its name.
-var _bindata = map[string]func() ([]byte, os.FileInfo, error){
-{{$max := maxNameLength .Assets -}}
-{{range .Assets}}	{{printf "%q" .Name}}:
-	{{- repeat " " (sub $max (len .Name))}} {{.Func}},
-{{end -}}
 }
 
 {{- if $.AssetName}}
