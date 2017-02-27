@@ -267,5 +267,9 @@ func (c *Config) validate() error {
 		return fmt.Errorf("HashLength must be between 1 and %d bytes in length.", 2*blake2b.Size)
 	}
 
+	if c.Restore && !c.AssetDir {
+		return fmt.Errorf("Restore cannot be used without AssetDir.")
+	}
+
 	return nil
 }
