@@ -272,10 +272,10 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 // AssetName returns the hashed name associated with an asset of a
 // given name.
 func AssetName(name string) (string, error) {
-	canonicalName := strings.Replace(name, "\\", "/", -1)
-	if hashedName, ok := _hashNames[canonicalName]; ok {
-		return hashedName, nil
+	if name, ok := _hashNames[strings.Replace(name, "\\", "/", -1)]; ok {
+		return name, nil
 	}
+
 	return "", &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 }
 
