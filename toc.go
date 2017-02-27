@@ -48,17 +48,11 @@ func AssetInfo(name string) (os.FileInfo, error) {
 // given name. It returns an error if the asset could not be found
 // or could not be loaded.
 func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
-	f, ok := _bindata[strings.Replace(name, "\\", "/", -1)]
-	if !ok {
-		return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+	if f, ok := _bindata[strings.Replace(name, "\\", "/", -1)]; ok {
+		return f()
 	}
 
-	a, err := f()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return a.bytes, a.info, nil
+	return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 }
 
 // AssetNames returns the names of the assets.
@@ -72,7 +66,7 @@ func AssetNames() []string {
 }
 
 // _bindata is a table, holding each asset generator, mapped to its name.
-var _bindata = map[string]func() (*asset, error){
+var _bindata = map[string]func() ([]byte, os.FileInfo, error){
 {{range .Assets}}	{{printf "%q" .Name}}: {{.Func}},
 {{end -}}
 }

@@ -101,7 +101,7 @@ func AssetDir(name string) ([]string, error) {
 }
 
 type bintree struct {
-	Func     func() (*asset, error)
+	Func     func() ([]byte, os.FileInfo, error)
 	Children map[string]*bintree
 }
 

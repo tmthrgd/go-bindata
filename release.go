@@ -157,21 +157,6 @@ func bindataRead(data []byte, name string) ([]byte, error) {
 
 {{end -}}
 
-type asset struct {
-	bytes []byte
-	info  os.FileInfo
-}
-
-{{- if ne $.Config.HashFormat 0}}
-
-type FileInfo interface {
-	os.FileInfo
-
-	OriginalName() string
-	FileHash() string
-}
-{{- end}}
-
 type bindataFileInfo struct {
 	name    string
 	size    int64
@@ -210,6 +195,16 @@ func (fi bindataFileInfo) FileHash() string {
 }
 {{- end}}
 
+{{- if ne $.Config.HashFormat 0}}
+
+type FileInfo interface {
+	os.FileInfo
+
+	OriginalName() string
+	FileHash() string
+}
+{{- end}}
+
 {{range $.Assets -}}
 {{$data := read .Path -}}
 
@@ -233,47 +228,44 @@ var _{{.Func}} = {{if and $.Config.NoMemCopy $.Config.NoCompress -}}
 	)
 {{- end}}
 
-func {{.Func}}() (*asset, error) {
+func {{.Func}}() ([]byte, os.FileInfo, error) {
 {{- if and $.Config.NoCompress (not $.Config.NoMemCopy)}}
-	bytes := []byte(_{{.Func}})
+	data := []byte(_{{.Func}})
 {{- else}}
-	bytes, err := bindataRead(
+	data, err := bindataRead(
 		_{{.Func}},
 		{{printf "%q" .Name}},
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 {{end}}
-	return &asset{
-		bytes: bytes,
-		info: bindataFileInfo{
-			name: {{printf "%q" .Name}},
+	return data, bindataFileInfo{
+		name: {{printf "%q" .Name}},
 
 {{- if not $.Config.NoMetadata}}
 {{$info := stat .Path}}
-			size:    {{$info.Size}},
+		size:    {{$info.Size}},
 
 	{{- if gt $.Config.Mode 0}}
-			mode:    {{printf "%04o" $.Config.Mode}},
+		mode:    {{printf "%04o" $.Config.Mode}},
 	{{- else}}
-			mode:    {{printf "%04o" $info.Mode}},
+		mode:    {{printf "%04o" $info.Mode}},
 	{{- end -}}
 
 	{{- if gt $.Config.ModTime 0}}
-			modTime: time.Unix($.Config.ModTime, 0),
+		modTime: time.Unix($.Config.ModTime, 0),
 	{{- else -}}
 		{{$mod := $info.ModTime}}
-			modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
+		modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 	{{- end}}
 {{- end}}
 
 {{- if ne $.Config.HashFormat 0}}
 
-			original: {{printf "%q" .OriginalName}},
-			hash: {{wrap .Hash "\t\t\t\t" 22}},
+		original: {{printf "%q" .OriginalName}},
+		hash: {{wrap .Hash "\t\t\t" 24}},
 {{- end}}
-		},
 	}, nil
 }
 

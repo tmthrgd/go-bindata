@@ -26,32 +26,27 @@ var debugTemplate = template.Must(template.New("debug").Parse(`import (
 	"strings"
 )
 
-type asset struct {
-	bytes []byte
-	info  os.FileInfo
-}
-
 {{- range $.Assets}}
 
 // {{.Func}} reads file data from disk. It returns an error on failure.
-func {{.Func}}() (*asset, error) {
+func {{.Func}}() ([]byte, os.FileInfo, error) {
 {{- if $.Config.Dev}}
 	path := filepath.Join(rootDir, {{printf "%q" .Name}})
 {{- else}}
 	path := {{printf "%q" .Path}}
 {{- end}}
 
-	bytes, err := ioutil.ReadFile(path)
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	fi, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &asset{bytes: bytes, info: fi}, nil
+	return data, fi, nil
 }
 {{- end}}
 `))
