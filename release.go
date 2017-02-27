@@ -126,15 +126,18 @@ type asset struct {
 	mode os.FileMode
 {{- end -}}
 
+{{- if ne $.Config.HashFormat 0}}
+	hash []byte
+{{- end -}}
+
 {{- if and $.Config.Metadata (le $.Config.ModTime 0)}}
 
 	modTime time.Time
 {{- end -}}
 
-{{- if ne $.Config.HashFormat 0}}
+{{- if $.AssetName}}
 
 	original string
-	hash     []byte
 {{- end}}
 }
 
@@ -174,7 +177,11 @@ func (*asset) Sys() interface{} {
 }
 {{- if ne $.Config.HashFormat 0}}
 func (a *asset) OriginalName() string {
+{{- if $.AssetName}}
 	return a.original
+{{- else}}
+	return a.name
+{{- end}}
 }
 func (a *asset) FileHash() []byte {
 	return a.hash
@@ -220,18 +227,21 @@ var _bindata = map[string]*asset{
 		mode: {{printf "%04o" (stat .Path).Mode}},
 	{{- end -}}
 
+	{{- if ne $.Config.HashFormat 0}}
+		hash: []byte("" +
+			{{wrap .Hash "\t\t\t" 24 -}}
+		),
+	{{- end -}}
+
 	{{- if and $.Config.Metadata (le $.Config.ModTime 0) -}}
 		{{- $mod := (stat .Path).ModTime}}
 
 		modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
-	{{- end}}
+	{{- end -}}
 
-	{{- if ne $.Config.HashFormat 0}}
+	{{- if $.AssetName}}
 
 		original: {{printf "%q" .OriginalName}},
-		hash: []byte("" +
-			{{wrap .Hash "\t\t\t" 24 -}}
-		),
 	{{- end}}
 	},
 {{end -}}
