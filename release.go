@@ -62,7 +62,6 @@ import (
 {{- if $.Config.Compress}}
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
 {{- end}}
 {{- if $.Config.Restore}}
@@ -240,12 +239,12 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 
 	gz, err := gzip.NewReader(strings.NewReader(a.data))
 	if err != nil {
-		return nil, nil, fmt.Errorf("Read %q: %v", name, err)
+		return nil, nil, err
 	}
 
 	var buf bytes.Buffer
 	if _, err = io.Copy(&buf, gz); err != nil {
-		return nil, nil, fmt.Errorf("Read %q: %v", name, err)
+		return nil, nil, err
 	}
 
 	if err = gz.Close(); err != nil {
