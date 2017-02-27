@@ -215,7 +215,7 @@ func NewConfig() *Config {
 // Part of which means checking if certain file/directory paths exist.
 func (c *Config) validate() error {
 	if len(c.Package) == 0 {
-		return errors.New("Missing package name")
+		return errors.New("go-bindata: missing package name")
 	}
 
 	for _, input := range c.Input {
@@ -247,23 +247,23 @@ func (c *Config) validate() error {
 			}
 		}
 	} else if stat.IsDir() {
-		return errors.New("Output path is a directory.")
+		return errors.New("go-bindata: output path is a directory")
 	}
 
 	if c.Mode&^uint(os.ModePerm) != 0 {
-		return errors.New("Invalid mode specified.")
+		return errors.New("go-bindata: invalid mode specified")
 	}
 
 	if (c.Debug || c.Dev) && c.HashFormat != NoHash {
-		return errors.New("HashFormat is not compatible with Debug and Dev.")
+		return errors.New("go-bindata: HashFormat is not compatible with Debug and Dev")
 	}
 
 	if c.HashFormat != NoHash && (c.HashLength <= 0 || c.HashLength > 2*blake2b.Size) {
-		return fmt.Errorf("HashLength must be between 1 and %d bytes in length.", 2*blake2b.Size)
+		return fmt.Errorf("go-bindata: HashLength must be between 1 and %d bytes in length", 2*blake2b.Size)
 	}
 
 	if c.Restore && !c.AssetDir {
-		return errors.New("Restore cannot be used without AssetDir.")
+		return errors.New("go-bindata: Restore cannot be used without AssetDir")
 	}
 
 	return nil
