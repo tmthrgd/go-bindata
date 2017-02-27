@@ -14,10 +14,10 @@ import (
 )
 
 // AssetAndInfo represents the generated AssetAndInfo method.
-type AssetAndInfo func(string) ([]byte, os.FileInfo, error)
+type AssetAndInfo func(name string) (data []byte, info os.FileInfo, err error)
 
 // AssetDir represents the generated AssetDir method.
-type AssetDir func(string) ([]string, error)
+type AssetDir func(name string) (children []string, err error)
 
 // Asset restores an asset under the given directory
 func Asset(dir, name string, assetAndInfo AssetAndInfo) error {
