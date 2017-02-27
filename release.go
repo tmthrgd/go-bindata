@@ -7,7 +7,6 @@ package bindata
 import (
 	"bytes"
 	"compress/gzip"
-	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -15,73 +14,66 @@ import (
 	"unicode/utf8"
 )
 
-// writeRelease writes the release code file.
-func writeRelease(w io.Writer, c *Config, toc []binAsset) error {
-	return releaseTemplate.Execute(w, struct {
-		Config *Config
-		Assets []binAsset
-	}{c, toc})
-}
+func init() {
+	template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
+		"stat": os.Stat,
+		"read": ioutil.ReadFile,
+		"name": func(name string) string {
+			_, name = path.Split(name)
+			return name
+		},
+		"wrap": func(data []byte, indent string, wrapAt int) string {
+			var buf bytes.Buffer
+			buf.WriteString(`"`)
 
-var releaseTemplate = template.Must(template.New("release").Funcs(template.FuncMap{
-	"stat": os.Stat,
-	"read": ioutil.ReadFile,
-	"name": func(name string) string {
-		_, name = path.Split(name)
-		return name
-	},
-	"wrap": func(data []byte, indent string, wrapAt int) string {
-		var buf bytes.Buffer
-		buf.WriteString(`"`)
+			sw := &stringWriter{
+				Writer: &buf,
+				Indent: indent,
+				WrapAt: wrapAt,
+			}
+			sw.Write(data)
 
-		sw := &stringWriter{
-			Writer: &buf,
-			Indent: indent,
-			WrapAt: wrapAt,
-		}
-		sw.Write(data)
+			buf.WriteString(`"`)
+			return buf.String()
+		},
+		"gzip": func(data []byte, indent string, wrapAt int) (string, error) {
+			var buf bytes.Buffer
+			buf.WriteString(`"`)
 
-		buf.WriteString(`"`)
-		return buf.String()
-	},
-	"gzip": func(data []byte, indent string, wrapAt int) (string, error) {
-		var buf bytes.Buffer
-		buf.WriteString(`"`)
+			gz := gzip.NewWriter(&stringWriter{
+				Writer: &buf,
+				Indent: indent,
+				WrapAt: wrapAt,
+			})
 
-		gz := gzip.NewWriter(&stringWriter{
-			Writer: &buf,
-			Indent: indent,
-			WrapAt: wrapAt,
-		})
+			if _, err := gz.Write(data); err != nil {
+				return "", err
+			}
 
-		if _, err := gz.Write(data); err != nil {
-			return "", err
-		}
+			if err := gz.Close(); err != nil {
+				return "", err
+			}
 
-		if err := gz.Close(); err != nil {
-			return "", err
-		}
+			buf.WriteString(`"`)
+			return buf.String(), nil
+		},
+		// sanitize prepares a valid UTF-8 string as a raw string constant.
+		// Based on https://code.google.com/p/go/source/browse/godoc/static/makestatic.go?repo=tools
+		"sanitize": func(b []byte) []byte {
+			// Replace ` with `+"`"+`
+			b = bytes.Replace(b, []byte("`"), []byte("`+\"`\"+`"), -1)
 
-		buf.WriteString(`"`)
-		return buf.String(), nil
-	},
-	// sanitize prepares a valid UTF-8 string as a raw string constant.
-	// Based on https://code.google.com/p/go/source/browse/godoc/static/makestatic.go?repo=tools
-	"sanitize": func(b []byte) []byte {
-		// Replace ` with `+"`"+`
-		b = bytes.Replace(b, []byte("`"), []byte("`+\"`\"+`"), -1)
-
-		// Replace BOM with `+"\xEF\xBB\xBF"+`
-		// (A BOM is valid UTF-8 but not permitted in Go source files.
-		// I wouldn't bother handling this, but for some insane reason
-		// jquery.js has a BOM somewhere in the middle.)
-		return bytes.Replace(b, []byte("\xEF\xBB\xBF"), []byte("`+\"\\xEF\\xBB\\xBF\"+`"), -1)
-	},
-	"utf8Valid": utf8.Valid,
-	"containsZero": func(data []byte) bool {
-		return bytes.Contains(data, []byte{0})
-	},
-}).Parse(`{{if $.Config.NoCompress -}}
+			// Replace BOM with `+"\xEF\xBB\xBF"+`
+			// (A BOM is valid UTF-8 but not permitted in Go source files.
+			// I wouldn't bother handling this, but for some insane reason
+			// jquery.js has a BOM somewhere in the middle.)
+			return bytes.Replace(b, []byte("\xEF\xBB\xBF"), []byte("`+\"\\xEF\\xBB\\xBF\"+`"), -1)
+		},
+		"utf8Valid": utf8.Valid,
+		"containsZero": func(data []byte) bool {
+			return bytes.Contains(data, []byte{0})
+		},
+	}).Parse(`{{if $.Config.NoCompress -}}
 import (
 {{- if $.Config.Restore}}
 	"io/ioutil"
@@ -274,3 +266,4 @@ func {{.Func}}() ([]byte, os.FileInfo, error) {
 }
 
 {{end}}`))
+}

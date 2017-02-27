@@ -4,20 +4,10 @@
 
 package bindata
 
-import (
-	"io"
-	"text/template"
-)
+import "text/template"
 
-// writeDebug writes the debug code file.
-func writeDebug(w io.Writer, c *Config, toc []binAsset) error {
-	return debugTemplate.Execute(w, struct {
-		Config *Config
-		Assets []binAsset
-	}{c, toc})
-}
-
-var debugTemplate = template.Must(template.New("debug").Parse(`import (
+func init() {
+	template.Must(baseTemplate.New("debug").Parse(`import (
 	"io/ioutil"
 	"os"
 {{- if or $.Config.Dev $.Config.Restore}}
@@ -50,3 +40,4 @@ func {{.Func}}() ([]byte, os.FileInfo, error) {
 }
 {{- end}}
 `))
+}

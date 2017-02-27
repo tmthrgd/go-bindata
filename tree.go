@@ -5,7 +5,6 @@
 package bindata
 
 import (
-	"io"
 	"strings"
 	"text/template"
 )
@@ -33,23 +32,10 @@ func (node *assetTree) child(name string) *assetTree {
 	return rv
 }
 
-func writeTree(w io.Writer, toc []binAsset) error {
-	tree := newAssetTree()
-	for _, asset := range toc {
-		node := tree
-		for _, name := range strings.Split(asset.Name, "/") {
-			node = node.child(name)
-		}
-
-		node.Asset = asset
-	}
-
-	return treeTemplate.Execute(w, tree)
-}
-
-var treeTemplate = template.Must(template.Must(template.New("bintree").Funcs(template.FuncMap{
-	"repeat": strings.Repeat,
-}).Parse(`{
+func init() {
+	template.Must(baseTemplate.New("bintree").Funcs(template.FuncMap{
+		"repeat": strings.Repeat,
+	}).Parse(`{
 {{- if .Asset.Func -}}
 	{{.Asset.Func}}
 {{- else -}}
@@ -63,7 +49,23 @@ var treeTemplate = template.Must(template.Must(template.New("bintree").Funcs(tem
 {{- if .Children -}}
 	{{repeat "\t" .Depth}}
 {{- end -}}
-}}`)).New("tree").Parse(`
+}}`))
+
+	template.Must(baseTemplate.New("tree").Funcs(template.FuncMap{
+		"tree": func(toc []binAsset) *assetTree {
+			tree := newAssetTree()
+			for _, asset := range toc {
+				node := tree
+				for _, name := range strings.Split(asset.Name, "/") {
+					node = node.child(name)
+				}
+
+				node.Asset = asset
+			}
+
+			return tree
+		},
+	}).Parse(`
 // AssetDir returns the file names below a certain
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
@@ -106,5 +108,6 @@ type bintree struct {
 	Children map[string]*bintree
 }
 
-var _bintree = &bintree{{template "bintree" .}}
+var _bintree = &bintree{{template "bintree" (tree .Assets)}}
 `))
+}

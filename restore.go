@@ -4,10 +4,10 @@
 
 package bindata
 
-import "io"
+import "text/template"
 
-func writeRestore(w io.Writer) error {
-	_, err := io.WriteString(w, `
+func init() {
+	template.Must(baseTemplate.New("restore").Parse(`
 // RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
 	canonicalName := strings.Replace(name, "\\", "/", -1)
@@ -46,6 +46,5 @@ func RestoreAssets(dir, name string) error {
 
 	return nil
 }
-`)
-	return err
+`))
 }

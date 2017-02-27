@@ -4,20 +4,10 @@
 
 package bindata
 
-import (
-	"io"
-	"text/template"
-)
+import "text/template"
 
-// writeTOC writes the table of contents file.
-func writeTOC(w io.Writer, toc []binAsset, hashFormat HashFormat) error {
-	return tocTemplate.Execute(w, struct {
-		AssetName bool
-		Assets    []binAsset
-	}{hashFormat != NoHash && hashFormat != NameUnchanged, toc})
-}
-
-var tocTemplate = template.Must(template.New("toc").Parse(`// Asset loads and returns the asset for the given name.
+func init() {
+	template.Must(baseTemplate.New("toc").Parse(`// Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func Asset(name string) ([]byte, error) {
@@ -89,3 +79,4 @@ var _hashNames = map[string]string{
 }
 {{- end}}
 `))
+}

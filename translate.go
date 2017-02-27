@@ -7,6 +7,7 @@ package bindata
 import (
 	"bytes"
 	"io/ioutil"
+	"text/template"
 
 	"golang.org/x/tools/imports"
 )
@@ -34,40 +35,12 @@ func Translate(c *Config) error {
 	}
 
 	var buf bytes.Buffer
-
-	// Write file header.
-	if err := writeHeader(&buf, c, toc); err != nil {
+	if err := baseTemplate.Execute(&buf, struct {
+		Config    *Config
+		AssetName bool
+		Assets    []binAsset
+	}{c, c.HashFormat != NoHash && c.HashFormat != NameUnchanged, toc}); err != nil {
 		return err
-	}
-
-	// Write assets.
-	if c.Debug || c.Dev {
-		err = writeDebug(&buf, c, toc)
-	} else {
-		err = writeRelease(&buf, c, toc)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	// Write table of contents
-	if err := writeTOC(&buf, toc, c.HashFormat); err != nil {
-		return err
-	}
-
-	if c.AssetDir {
-		// Write hierarchical tree of assets
-		if err := writeTree(&buf, toc); err != nil {
-			return err
-		}
-	}
-
-	if c.Restore {
-		// Write restore procedure
-		if err := writeRestore(&buf); err != nil {
-			return err
-		}
 	}
 
 	out := buf.Bytes()
@@ -79,3 +52,23 @@ func Translate(c *Config) error {
 
 	return ioutil.WriteFile(c.Output, out, 0666)
 }
+
+var baseTemplate = template.Must(template.New("base").Parse(`
+{{- template "header" . -}}
+
+{{- if or $.Config.Debug $.Config.Dev -}}
+	{{- template "debug" . -}}
+{{- else -}}
+	{{- template "release" . -}}
+{{- end -}}
+
+{{- template "toc" . -}}
+
+{{- if $.Config.AssetDir -}}
+	{{- template "tree" . -}}
+{{- end -}}
+
+{{- if $.Config.Restore -}}
+	{{- template "restore" . -}}
+{{- end -}}
+`))
