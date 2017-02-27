@@ -10,7 +10,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 
@@ -60,18 +59,10 @@ func parseArgs() *bindata.Config {
 	flag.Var((*hexEncodingValue)(&c.HashKey), "hashkey", "Optional hexadecimal key to use to turn the BLAKE2B hashing into a MAC.")
 	flag.BoolVar(&c.AssetDir, "assetdir", c.AssetDir, "Provide the AssetDir APIs.")
 	flag.BoolVar(&c.Format, "fmt", c.Format, "Run the output through goimports.")
+	flag.Var((*appendRegexValue)(&c.Ignore), "ignore", "Regex pattern to ignore")
 	flag.BoolVar(&version, "version", false, "Displays version information.")
 
-	ignore := make([]string, 0)
-	flag.Var((*AppendSliceValue)(&ignore), "ignore", "Regex pattern to ignore")
-
 	flag.Parse()
-
-	patterns := make([]*regexp.Regexp, 0)
-	for _, pattern := range ignore {
-		patterns = append(patterns, regexp.MustCompile(pattern))
-	}
-	c.Ignore = patterns
 
 	if version {
 		fmt.Fprintf(os.Stderr, "go-bindata (Go runtime %s).\n", runtime.Version())
