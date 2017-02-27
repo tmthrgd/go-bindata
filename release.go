@@ -23,7 +23,7 @@ func writeRelease(w io.Writer, c *Config, toc []binAsset) error {
 	}{c, toc})
 }
 
-var releaseTemplate = template.Must(template.New("debug").Funcs(template.FuncMap{
+var releaseTemplate = template.Must(template.New("release").Funcs(template.FuncMap{
 	"stat": os.Stat,
 	"read": ioutil.ReadFile,
 	"name": func(name string) string {

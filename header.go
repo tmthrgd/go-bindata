@@ -25,7 +25,7 @@ func writeHeader(w io.Writer, c *Config, toc []binAsset) error {
 	}{c, toc, wd})
 }
 
-var headerTemplate = template.Must(template.New("debug").Funcs(template.FuncMap{
+var headerTemplate = template.Must(template.New("header").Funcs(template.FuncMap{
 	"relative": filepath.Rel,
 	"toslash":  filepath.ToSlash,
 }).Parse(`{{- /* This makes e.g. Github ignore diffs in generated files. */ -}}
