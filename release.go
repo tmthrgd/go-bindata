@@ -11,7 +11,6 @@ import (
 	"os"
 	"path"
 	"text/template"
-	"unicode/utf8"
 )
 
 func init() {
@@ -57,22 +56,6 @@ func init() {
 			buf.WriteString(`"`)
 			return buf.String(), nil
 		},
-		// sanitize prepares a valid UTF-8 string as a raw string constant.
-		// Based on https://code.google.com/p/go/source/browse/godoc/static/makestatic.go?repo=tools
-		"sanitize": func(b []byte) []byte {
-			// Replace ` with `+"`"+`
-			b = bytes.Replace(b, []byte("`"), []byte("`+\"`\"+`"), -1)
-
-			// Replace BOM with `+"\xEF\xBB\xBF"+`
-			// (A BOM is valid UTF-8 but not permitted in Go source files.
-			// I wouldn't bother handling this, but for some insane reason
-			// jquery.js has a BOM somewhere in the middle.)
-			return bytes.Replace(b, []byte("\xEF\xBB\xBF"), []byte("`+\"\\xEF\\xBB\\xBF\"+`"), -1)
-		},
-		"utf8Valid": utf8.Valid,
-		"containsZero": func(data []byte) bool {
-			return bytes.Contains(data, []byte{0})
-		},
 	}).Parse(`
 {{- $unsafeRead := and (not $.Config.Compress) (not $.Config.MemCopy) -}}
 import (
@@ -110,6 +93,9 @@ func bindataRead(data string) []byte {
 	bx.Cap = bx.Len
 	return b
 }
+
+{{else if not $.Config.Compress -}}
+type bindataRead []byte
 
 {{end -}}
 
@@ -206,14 +192,6 @@ var _bindata = map[string]*asset{
 		{{- if $.Config.Compress -}}
 			"" +
 			{{gzip $data "\t\t\t" 24}}
-		{{- else if $.Config.MemCopy -}}
-			[]byte(
-			{{- if and (utf8Valid $data) (not (containsZero $data)) -}}
-				` + "`{{printf \"%s\" (sanitize $data)}}`" + `
-			{{- else -}}
-				{{printf "%+q" $data}}
-			{{- end -}}
-			)
 		{{- else -}}
 			bindataRead("" +
 			{{wrap $data "\t\t\t" 24 -}}
