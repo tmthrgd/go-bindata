@@ -82,17 +82,17 @@ import (
 {{- if $.Config.Restore}}
 	"path/filepath"
 {{- end}}
-{{- if $.Config.NoMemCopy}}
+{{- if not $.Config.MemCopy}}
 	"reflect"
 {{- end}}
 	"strings"
 	"time"
-{{- if $.Config.NoMemCopy}}
+{{- if not $.Config.MemCopy}}
 	"unsafe"
 {{- end}}
 )
 
-{{if $.Config.NoMemCopy -}}
+{{if not $.Config.MemCopy -}}
 func bindataRead(data string) []byte {
 	var empty [0]byte
 	sx := (*reflect.StringHeader)(unsafe.Pointer(&data))
@@ -122,14 +122,14 @@ import (
 	"time"
 )
 
-{{- if $.Config.NoMemCopy}}
-
-func bindataRead(data, name string) ([]byte, error) {
-	gz, err := gzip.NewReader(strings.NewReader(data))
-{{- else}}
+{{- if $.Config.MemCopy}}
 
 func bindataRead(data []byte, name string) ([]byte, error) {
 	gz, err := gzip.NewReader(bytes.NewBuffer(data))
+{{- else}}
+
+func bindataRead(data, name string) ([]byte, error) {
+	gz, err := gzip.NewReader(strings.NewReader(data))
 {{- end}}
 	if err != nil {
 		return nil, fmt.Errorf("Read %q: %v", name, err)
@@ -200,11 +200,7 @@ type FileInfo interface {
 {{range $.Assets -}}
 {{$data := read .Path -}}
 
-var _bindata_{{.Func}} = {{if and $.Config.NoMemCopy $.Config.NoCompress -}}
-	bindataRead("" +
-	{{wrap $data "\t" 28 -}}
-	)
-{{- else if $.Config.NoCompress -}}
+var _bindata_{{.Func}} = {{if and $.Config.MemCopy $.Config.NoCompress -}}
 	[]byte(
 	{{- if and (utf8Valid $data) (not (containsZero $data)) -}}
 		` + "`{{printf \"%s\" (sanitize $data)}}`" + `
@@ -212,13 +208,17 @@ var _bindata_{{.Func}} = {{if and $.Config.NoMemCopy $.Config.NoCompress -}}
 		{{printf "%+q" $data}}
 	{{- end -}}
 	)
-{{- else if $.Config.NoMemCopy -}}
-	"" +
-	{{gzip $data "\t" 28}}
-{{- else -}}
+{{- else if $.Config.NoCompress -}}
+	bindataRead("" +
+	{{wrap $data "\t" 28 -}}
+	)
+{{- else if $.Config.MemCopy -}}
 	[]byte("" +
 	{{gzip $data "\t" 28 -}}
 	)
+{{- else -}}
+	"" +
+	{{gzip $data "\t" 28}}
 {{- end}}
 
 var _bininfo_{{.Func}} = &bindataFileInfo{

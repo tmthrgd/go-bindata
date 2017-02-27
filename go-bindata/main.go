@@ -43,7 +43,7 @@ func parseArgs() *bindata.Config {
 	flag.StringVar(&c.Tags, "tags", c.Tags, "Optional set of build tags to include.")
 	flag.StringVar(&c.Prefix, "prefix", c.Prefix, "Optional path prefix to strip off asset names.")
 	flag.StringVar(&c.Package, "pkg", c.Package, "Package name to use in the generated code.")
-	flag.BoolVar(&c.NoMemCopy, "nomemcopy", c.NoMemCopy, "Use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
+	flag.BoolVar(&c.MemCopy, "memcopy", c.MemCopy, "Do not use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
 	flag.BoolVar(&c.NoCompress, "nocompress", c.NoCompress, "Assets will *not* be GZIP compressed when this flag is specified.")
 	flag.BoolVar(&c.NoMetadata, "nometadata", c.NoMetadata, "Assets will not preserve size, mode, and modtime info.")
 	flag.UintVar(&c.Mode, "mode", c.Mode, "Optional file mode override for all files.")
@@ -57,6 +57,10 @@ func parseArgs() *bindata.Config {
 	flag.BoolVar(&c.AssetDir, "assetdir", c.AssetDir, "Provide the AssetDir APIs.")
 	flag.BoolVar(&c.Format, "fmt", c.Format, "Run the output through goimports.")
 	flag.Var((*appendRegexValue)(&c.Ignore), "ignore", "Regex pattern to ignore")
+
+	// Deprecated options
+	var noMemCopy bool
+	flag.BoolVar(&noMemCopy, "nomemcopy", !c.MemCopy, "[Deprecated]: use -memcpy=false.")
 
 	flag.Parse()
 
@@ -80,21 +84,30 @@ func parseArgs() *bindata.Config {
 		c.Input[i] = parseInput(flag.Arg(i))
 	}
 
-	// Change pkg to containing directory of output. If output flag is set and package flag is not.
 	var pkgSet, outputSet bool
+	var memcopySet, nomemcopySet bool
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "pkg":
 			pkgSet = true
 		case "o":
 			outputSet = true
+		case "memcopy":
+			memcopySet = true
+		case "nomemcopy":
+			nomemcopySet = true
 		}
 	})
 
+	// Change pkg to containing directory of output. If output flag is set and package flag is not.
 	if outputSet && !pkgSet {
 		if pkg := filepath.Base(filepath.Dir(c.Output)); pkg != "." && pkg != "/" {
 			c.Package = pkg
 		}
+	}
+
+	if !memcopySet && nomemcopySet {
+		c.MemCopy = !noMemCopy
 	}
 
 	return c

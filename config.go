@@ -91,10 +91,10 @@ type Config struct {
 	// 	go_bindata["templates/foo.html"] = templates_foo_html
 	Prefix string
 
-	// NoMemCopy will alter the way the output file is generated.
+	// MemCopy will alter the way the output file is generated.
 	//
-	// It will employ a hack that allows us to read the file data directly from
-	// the compiled program's `.rodata` section. This ensures that when we call
+	// If false, it will employ a hack that allows us to read the file data directly
+	// from the compiled program's `.rodata` section. This ensures that when we call
 	// call our generated function, we omit unnecessary mem copies.
 	//
 	// The downside of this, is that it requires dependencies on the `reflect` and
@@ -135,7 +135,7 @@ type Config struct {
 	// 		bx.Cap = bx.Len
 	// 		return b
 	// 	}
-	NoMemCopy bool
+	MemCopy bool
 
 	// NoCompress means the assets are /not/ GZIP compressed before being turned
 	// into Go code. The generated function will automatically unzip
@@ -201,7 +201,7 @@ type Config struct {
 func NewConfig() *Config {
 	c := new(Config)
 	c.Package = "main"
-	c.NoMemCopy = false
+	c.MemCopy = true
 	c.NoCompress = false
 	c.Debug = false
 	c.Output = "./bindata.go"
