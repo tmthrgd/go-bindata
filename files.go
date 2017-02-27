@@ -42,15 +42,14 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, v
 		list = []os.FileInfo{fi}
 	} else {
 		visitedPaths[dirpath] = true
+
 		fd, err := os.Open(dirpath)
 		if err != nil {
 			return err
 		}
-
 		defer fd.Close()
 
-		list, err = fd.Readdir(0)
-		if err != nil {
+		if list, err = fd.Readdir(0); err != nil {
 			return err
 		}
 
@@ -58,47 +57,53 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, v
 		sort.Sort(byName(list))
 	}
 
+outer:
 	for _, file := range list {
 		var asset binAsset
 		asset.Path = filepath.Join(dirpath, file.Name())
 		asset.Name = filepath.ToSlash(asset.Path)
 
-		ignoring := false
 		for _, re := range c.Ignore {
 			if re.MatchString(asset.Path) {
-				ignoring = true
-				break
+				continue outer
 			}
-		}
-		if ignoring {
-			continue
 		}
 
 		if file.IsDir() {
-			if recursive {
-				recursivePath := filepath.Join(dir, file.Name())
-				visitedPaths[asset.Path] = true
-				if err = findFiles(c, recursivePath, prefix, recursive, toc, visitedPaths); err != nil {
-					return err
-				}
+			if !recursive {
+				continue
 			}
-			continue
-		} else if file.Mode()&os.ModeSymlink == os.ModeSymlink {
-			var linkPath string
-			if linkPath, err = os.Readlink(asset.Path); err != nil {
+
+			visitedPaths[asset.Path] = true
+
+			path := filepath.Join(dir, file.Name())
+			if err = findFiles(c, path, prefix, recursive, toc, visitedPaths); err != nil {
 				return err
 			}
+
+			continue
+		} else if file.Mode()&os.ModeSymlink == os.ModeSymlink {
+			linkPath, err := os.Readlink(asset.Path)
+			if err != nil {
+				return err
+			}
+
 			if !filepath.IsAbs(linkPath) {
 				if linkPath, err = filepath.Abs(dirpath + "/" + linkPath); err != nil {
 					return err
 				}
 			}
-			if _, ok := visitedPaths[linkPath]; !ok {
-				visitedPaths[linkPath] = true
-				if err = findFiles(c, asset.Path, prefix, recursive, toc, visitedPaths); err != nil {
-					return err
-				}
+
+			if _, ok := visitedPaths[linkPath]; ok {
+				continue
 			}
+
+			visitedPaths[linkPath] = true
+
+			if err = findFiles(c, asset.Path, prefix, recursive, toc, visitedPaths); err != nil {
+				return err
+			}
+
 			continue
 		}
 
@@ -117,9 +122,7 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, v
 		}
 
 		// If we have a leading slash, get rid of it.
-		if len(asset.Name) > 0 && asset.Name[0] == '/' {
-			asset.Name = asset.Name[1:]
-		}
+		asset.Name = strings.TrimPrefix(asset.Name, "/")
 
 		// This shouldn't happen.
 		if len(asset.Name) == 0 {
@@ -128,6 +131,7 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, v
 
 		if c.HashFormat != NoHash {
 			asset.OriginalName = asset.Name
+
 			asset.Name, asset.Hash, err = hashFile(c, asset.Path, asset.Name)
 			if err != nil {
 				return err
