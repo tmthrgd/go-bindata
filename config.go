@@ -5,6 +5,8 @@
 package bindata
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -258,8 +260,19 @@ func (c *Config) validate() error {
 		return errors.New("go-bindata: HashFormat is not compatible with Debug and Dev")
 	}
 
-	if c.HashFormat != NoHash && (c.HashLength <= 0 || c.HashLength > 2*blake2b.Size) {
-		return fmt.Errorf("go-bindata: HashLength must be between 1 and %d bytes in length", 2*blake2b.Size)
+	length := 0
+	switch c.HashEncoding {
+	case HexHash:
+		length = hex.EncodedLen(blake2b.Size)
+	case Base32Hash:
+		length = base32Enc.EncodedLen(blake2b.Size)
+	case Base64Hash:
+		length = base64.RawStdEncoding.EncodedLen(blake2b.Size)
+	}
+
+	if (c.HashFormat != NoHash && c.HashFormat != NameUnchanged) &&
+		(c.HashLength <= 0 || c.HashLength > length) {
+		return fmt.Errorf("go-bindata: HashLength must be between 1 and %d bytes in length", length)
 	}
 
 	if c.Restore && !c.AssetDir {
