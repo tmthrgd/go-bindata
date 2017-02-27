@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/tmthrgd/go-bindata"
@@ -73,7 +74,9 @@ func parseArgs() *bindata.Config {
 	c.Ignore = patterns
 
 	if version {
-		fmt.Printf("%s\n", Version())
+		fmt.Fprintf(os.Stderr, "go-bindata (Go runtime %s).\n", runtime.Version())
+		io.WriteString(os.Stderr, "Copyright (c) 2010-2013 Jim Teeuwen.\n")
+		io.WriteString(os.Stderr, "Copyright (c) 2017 Tom Thorogood.\n")
 		os.Exit(0)
 	}
 
