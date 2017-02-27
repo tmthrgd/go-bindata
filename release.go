@@ -141,7 +141,7 @@ type bindataFileInfo struct {
 	modTime time.Time
 {{if ne $.Config.HashFormat 0}}
 	original string
-	hash     string
+	hash     []byte
 {{end -}}
 }
 
@@ -167,7 +167,7 @@ func (fi *bindataFileInfo) Sys() interface{} {
 func (fi *bindataFileInfo) OriginalName() string {
 	return fi.original
 }
-func (fi *bindataFileInfo) FileHash() string {
+func (fi *bindataFileInfo) FileHash() []byte {
 	return fi.hash
 }
 {{- end}}
@@ -178,7 +178,7 @@ type FileInfo interface {
 	os.FileInfo
 
 	OriginalName() string
-	FileHash() string
+	FileHash() []byte
 }
 {{- end}}
 
@@ -227,7 +227,9 @@ var _bindata = map[string]asset{
 	{{- if ne $.Config.HashFormat 0}}
 
 			original: {{printf "%q" .OriginalName}},
-			hash: {{wrap .Hash "\t\t\t\t" 22}},
+			hash: []byte("" +
+				{{wrap .Hash "\t\t\t\t" 22 -}}
+			),
 	{{- end}}
 		},
 	},
