@@ -73,13 +73,7 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	data, info, err := fh.asset(name)
 	if err != nil {
-		code := http.StatusInternalServerError
-		if os.IsNotExist(err) {
-			code = http.StatusNotFound
-		} else if os.IsPermission(err) {
-			code = http.StatusForbidden
-		}
-
+		code := toHTTPError(err)
 		http.Error(w, http.StatusText(code), code)
 		return
 	}
@@ -123,16 +117,10 @@ func (fh *fileHandler) serveCompressed(w http.ResponseWriter, r *http.Request, i
 			return false
 		}
 
-		if os.IsPermission(err) {
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-			return true
-		}
-
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		code := toHTTPError(err)
+		http.Error(w, http.StatusText(code), code)
 		return true
-	}
-
-	if len(data) >= size {
+	} else if len(data) >= size {
 		return false
 	}
 
@@ -171,4 +159,20 @@ func parseAcceptEncoding(header string) (brotli, gzip bool) {
 	}
 
 	return
+}
+
+// toHTTPError returns a non-specific HTTP error message and status code
+// for a given non-nil error value. It's important that toHTTPError does not
+// actually return err.Error(), since msg and httpStatus are returned to users,
+// and historically Go's ServeContent always returned just "404 Not Found" for
+// all errors. We don't want to start leaking information in error messages.
+func toHTTPError(err error) (code int) {
+	switch {
+	case os.IsNotExist(err):
+		return http.StatusNotFound
+	case os.IsPermission(err):
+		return http.StatusForbidden
+	default:
+		return http.StatusInternalServerError
+	}
 }
