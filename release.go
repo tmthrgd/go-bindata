@@ -182,55 +182,57 @@ type FileInfo interface {
 }
 {{- end}}
 
-{{range $.Assets -}}
-{{$data := read .Path -}}
+// _bindata is a table, holding each asset generator, mapped to its name.
+var _bindata = map[string]asset{
+{{range $.Assets}}	{{printf "%q" .Name}}: {
+		{{$data := read .Path -}}
+		{{- if $.Config.Compress -}}
+			"" +
+			{{gzip $data "\t\t\t" 24}}
+		{{- else if $.Config.MemCopy -}}
+			[]byte(
+			{{- if and (utf8Valid $data) (not (containsZero $data)) -}}
+				` + "`{{printf \"%s\" (sanitize $data)}}`" + `
+			{{- else -}}
+				{{printf "%+q" $data}}
+			{{- end -}}
+			)
+		{{- else -}}
+			bindataRead("" +
+			{{wrap $data "\t\t\t" 24 -}}
+			)
+		{{- end}},
+		&bindataFileInfo{
+			name: {{printf "%q" .Name}},
 
-var _bindata_{{.Func}} = {{if $.Config.Compress -}}
-	"" +
-	{{gzip $data "\t" 28}}
-{{- else if $.Config.MemCopy -}}
-	[]byte(
-	{{- if and (utf8Valid $data) (not (containsZero $data)) -}}
-		` + "`{{printf \"%s\" (sanitize $data)}}`" + `
-	{{- else -}}
-		{{printf "%+q" $data}}
-	{{- end -}}
-	)
-{{- else -}}
-	bindataRead("" +
-	{{wrap $data "\t" 28 -}}
-	)
-{{- end}}
+	{{- if $.Config.Metadata -}}
+		{{- $info := stat .Path}}
 
-var _bininfo_{{.Func}} = &bindataFileInfo{
-	name: {{printf "%q" .Name}},
+			size:    {{$info.Size}},
 
-{{- if $.Config.Metadata}}
-{{$info := stat .Path}}
-	size:    {{$info.Size}},
+		{{- if gt $.Config.Mode 0}}
+			mode:    {{printf "%04o" $.Config.Mode}},
+		{{- else}}
+			mode:    {{printf "%04o" $info.Mode}},
+		{{- end -}}
 
-	{{- if gt $.Config.Mode 0}}
-	mode:    {{printf "%04o" $.Config.Mode}},
-	{{- else}}
-	mode:    {{printf "%04o" $info.Mode}},
-	{{- end -}}
-
-	{{- if gt $.Config.ModTime 0}}
-	modTime: time.Unix($.Config.ModTime, 0),
-	{{- else -}}
-	{{$mod := $info.ModTime}}
-	modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
+		{{- if gt $.Config.ModTime 0}}
+			modTime: time.Unix($.Config.ModTime, 0),
+		{{- else -}}
+			{{$mod := $info.ModTime}}
+			modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
+		{{- end}}
 	{{- end}}
-{{- end}}
 
-{{- if ne $.Config.HashFormat 0}}
+	{{- if ne $.Config.HashFormat 0}}
 
-	original: {{printf "%q" .OriginalName}},
-	hash: {{wrap .Hash "\t\t" 26}},
-{{- end}}
-}
-
+			original: {{printf "%q" .OriginalName}},
+			hash: {{wrap .Hash "\t\t\t\t" 22}},
+	{{- end}}
+		},
+	},
 {{end -}}
+}
 
 // AssetAndInfo loads and returns the asset and asset info for the
 // given name. It returns an error if the asset could not be found
@@ -261,13 +263,5 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 
 	return f.data, f.info, nil
 {{- end}}
-}
-
-// _bindata is a table, holding each asset generator, mapped to its name.
-var _bindata = map[string]asset{
-{{$max := maxNameLength .Assets -}}
-{{range .Assets}}	{{printf "%q" .Name}}:
-	{{- repeat " " (sub $max (len .Name))}} {_bindata_{{.Func}}, _bininfo_{{.Func}}},
-{{end -}}
 }`))
 }

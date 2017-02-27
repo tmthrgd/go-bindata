@@ -7,7 +7,18 @@ package bindata
 import "text/template"
 
 func init() {
-	template.Must(baseTemplate.New("debug").Parse(`import (
+	template.Must(baseTemplate.New("debug").Funcs(template.FuncMap{
+		"maxNameLength": func(toc []binAsset) int {
+			l := 0
+			for _, asset := range toc {
+				if len(asset.Name) > l {
+					l = len(asset.Name)
+				}
+			}
+
+			return l
+		},
+	}).Parse(`import (
 	"io/ioutil"
 	"os"
 {{- if or $.Config.Dev $.Config.Restore}}

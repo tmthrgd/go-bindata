@@ -50,16 +50,6 @@ var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
 	"sub": func(a, b int) int {
 		return a - b
 	},
-	"maxNameLength": func(toc []binAsset) int {
-		l := 0
-		for _, asset := range toc {
-			if len(asset.Name) > l {
-				l = len(asset.Name)
-			}
-		}
-
-		return l
-	},
 }).Parse(`
 {{- template "header" . -}}
 
