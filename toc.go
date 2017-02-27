@@ -21,15 +21,8 @@ var tocTemplate = template.Must(template.New("toc").Parse(`// Asset loads and re
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func Asset(name string) ([]byte, error) {
-	canonicalName := strings.Replace(name, "\\", "/", -1)
-	if f, ok := _bindata[canonicalName]; ok {
-		a, err := f()
-		if err != nil {
-			return nil, err
-		}
-		return a.bytes, nil
-	}
-	return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+	data, _, err := AssetAndInfo(name)
+	return data, err
 }
 
 // MustAsset is like Asset but panics when Asset would return an error.
@@ -47,15 +40,8 @@ func MustAsset(name string) []byte {
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func AssetInfo(name string) (os.FileInfo, error) {
-	canonicalName := strings.Replace(name, "\\", "/", -1)
-	if f, ok := _bindata[canonicalName]; ok {
-		a, err := f()
-		if err != nil {
-			return nil, err
-		}
-		return a.info, nil
-	}
-	return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+	_, info, err := AssetAndInfo(name)
+	return info, err
 }
 
 // AssetAndInfo loads and returns the asset and asset info for the
