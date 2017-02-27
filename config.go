@@ -255,6 +255,10 @@ func (c *Config) validate() error {
 		return fmt.Errorf("Output path is a directory.")
 	}
 
+	if c.Mode&^uint(os.ModePerm) != 0 {
+		return fmt.Errorf("Invalid mode specified.")
+	}
+
 	if (c.Debug || c.Dev) && c.HashFormat != NoHash {
 		return fmt.Errorf("HashFormat is not compatible with Debug and Dev.")
 	}
