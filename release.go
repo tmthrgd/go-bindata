@@ -121,15 +121,21 @@ type asset struct {
 {{- else}}
 	data []byte
 {{- end -}}
-{{- if $.Config.Metadata}}
 
-	mode    os.FileMode
+{{- if and $.Config.Metadata (le $.Config.Mode 0)}}
+	mode os.FileMode
+{{- end -}}
+
+{{- if and $.Config.Metadata (le $.Config.ModTime 0)}}
+
 	modTime time.Time
-{{- end}}
-{{if ne $.Config.HashFormat 0}}
+{{- end -}}
+
+{{- if ne $.Config.HashFormat 0}}
+
 	original string
 	hash     []byte
-{{end -}}
+{{- end}}
 }
 
 func (a *asset) Name() string {
@@ -143,14 +149,18 @@ func (a *asset) Size() int64 {
 {{- end}}
 }
 func (a *asset) Mode() os.FileMode {
-{{- if $.Config.Metadata}}
+{{- if gt $.Config.Mode 0}}
+	return {{printf "%04o" $.Config.Mode}}
+{{- else if $.Config.Metadata}}
 	return a.mode
 {{- else}}
 	return 0
 {{- end}}
 }
 func (a *asset) ModTime() time.Time {
-{{- if $.Config.Metadata}}
+{{- if gt $.Config.ModTime 0}}
+	return time.Unix({{$.Config.ModTime}}, 0)
+{{- else if $.Config.Metadata}}
 	return a.modTime
 {{- else}}
 	return time.Time{}
@@ -206,18 +216,15 @@ var _bindata = map[string]*asset{
 		size: {{len $data}},
 	{{- end -}}
 
-	{{- if $.Config.Metadata -}}
+	{{- if and $.Config.Metadata -}}
 	{{- $info := stat .Path}}
-	{{if gt $.Config.Mode 0}}
-		mode:    {{printf "%04o" $.Config.Mode}},
-	{{- else}}
-		mode:    {{printf "%04o" $info.Mode}},
+	{{- if le $.Config.Mode 0}}
+		mode: {{printf "%04o" $info.Mode}},
 	{{- end -}}
 
-	{{- if gt $.Config.ModTime 0}}
-		modTime: time.Unix({{$.Config.ModTime}}, 0),
-	{{- else -}}
-		{{$mod := $info.ModTime}}
+	{{- if le $.Config.ModTime 0 -}}
+		{{- $mod := $info.ModTime}}
+
 		modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 	{{- end}}
 	{{- end}}
