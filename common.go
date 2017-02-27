@@ -45,23 +45,5 @@ func AssetNames() []string {
 
 	return names
 }
-
-{{- if $.AssetName}}
-
-// AssetName returns the hashed name associated with an asset of a
-// given name.
-func AssetName(name string) (string, error) {
-	canonicalName := strings.Replace(name, "\\", "/", -1)
-	if hashedName, ok := _hashNames[canonicalName]; ok {
-		return hashedName, nil
-	}
-	return "", &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
-}
-
-var _hashNames = map[string]string{
-{{range .Assets}}	{{printf "%q" .OriginalName}}: {{printf "%q" .Name}},
-{{end -}}
-}
-{{- end}}
 `))
 }
