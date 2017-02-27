@@ -101,8 +101,8 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		brotli, gzip := parseAcceptEncoding(r.Header.Get("Accept-Encoding"))
-		if (brotli && fh.serveCompressed(w, r, info, name, ".br", len(data))) ||
-			(gzip && fh.serveCompressed(w, r, info, name, ".gz", len(data))) {
+		if (brotli && fh.serveCompressed(w, r, info, name+".br", "br", len(data))) ||
+			(gzip && fh.serveCompressed(w, r, info, name+".gz", "gzip", len(data))) {
 			return
 		}
 	}
@@ -110,8 +110,8 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
 }
 
-func (fh *fileHandler) serveCompressed(w http.ResponseWriter, r *http.Request, info os.FileInfo, name, ext string, size int) bool {
-	data, _, err := fh.compressed(name + ext)
+func (fh *fileHandler) serveCompressed(w http.ResponseWriter, r *http.Request, info os.FileInfo, name, enc string, size int) bool {
+	data, _, err := fh.compressed(name)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false
@@ -124,7 +124,7 @@ func (fh *fileHandler) serveCompressed(w http.ResponseWriter, r *http.Request, i
 		return false
 	}
 
-	w.Header().Set("Content-Encoding", name)
+	w.Header().Set("Content-Encoding", enc)
 	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
 	return true
 }
