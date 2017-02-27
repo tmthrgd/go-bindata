@@ -211,7 +211,11 @@ var _bindata = map[string]*asset{
 	{{- end -}}
 
 	{{- if ne $.Config.HashFormat 0}}
+	{{- if $.Config.Compress}}
 		hash: []byte("" +
+	{{- else}}
+		hash: bindataRead("" +
+	{{- end}}
 			{{wrap .Hash "\t\t\t" 24 -}}
 		),
 	{{- end}}
