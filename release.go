@@ -101,7 +101,7 @@ import (
 )
 
 {{if $.Config.NoMemCopy -}}
-func bindataRead(data, name string) ([]byte, error) {
+func bindataRead(data string) []byte {
 	var empty [0]byte
 	sx := (*reflect.StringHeader)(unsafe.Pointer(&data))
 	b := empty[:]
@@ -109,7 +109,7 @@ func bindataRead(data, name string) ([]byte, error) {
 	bx.Data = sx.Data
 	bx.Len = len(data)
 	bx.Cap = bx.Len
-	return b, nil
+	return b
 }
 
 {{end -}}
@@ -209,8 +209,9 @@ type FileInfo interface {
 {{$data := read .Path -}}
 
 var _bindata_{{.Func}} = {{if and $.Config.NoMemCopy $.Config.NoCompress -}}
-	"" +
-	{{wrap $data "\t" 28}}
+	bindataRead("" +
+	{{wrap $data "\t" 28 -}}
+	)
 {{- else if $.Config.NoCompress -}}
 	[]byte(
 	{{- if and (utf8Valid $data) (not (containsZero $data)) -}}
@@ -257,7 +258,7 @@ var _bininfo_{{.Func}} = &bindataFileInfo{
 }
 
 func {{.Func}}() ([]byte, os.FileInfo, error) {
-{{- if and $.Config.NoCompress (not $.Config.NoMemCopy)}}
+{{- if $.Config.NoCompress}}
 	return _bindata_{{.Func}}, _bininfo_{{.Func}}, nil
 {{- else}}
 	data, err := bindataRead(
