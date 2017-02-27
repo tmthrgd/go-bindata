@@ -233,9 +233,9 @@ var _bindata = map[string]*asset{
 		),
 	{{- end -}}
 
-	{{- if and $.Config.Metadata (le $.Config.ModTime 0) -}}
-		{{- $mod := (stat .Path).ModTime}}
+	{{- if and $.Config.Metadata (le $.Config.ModTime 0)}}
 
+		{{$mod := (stat .Path).ModTime -}}
 		modTime: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 	{{- end -}}
 
