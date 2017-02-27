@@ -21,10 +21,14 @@ func init() {
 	}).Parse(`import (
 	"io/ioutil"
 	"os"
-{{- if or $.Config.Dev $.Config.Restore}}
+{{- if $.Config.Dev}}
 	"path/filepath"
 {{- end}}
 	"strings"
+{{- if $.Config.Restore}}
+
+	"github.com/tmthrgd/go-bindata/restore"
+{{- end}}
 )
 
 // AssetAndInfo loads and returns the asset and asset info for the

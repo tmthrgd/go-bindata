@@ -64,13 +64,7 @@ import (
 	"compress/gzip"
 	"io"
 {{- end}}
-{{- if $.Config.Restore}}
-	"io/ioutil"
-{{- end}}
 	"os"
-{{- if $.Config.Restore}}
-	"path/filepath"
-{{- end}}
 {{- if $unsafeRead}}
 	"reflect"
 {{- end}}
@@ -81,6 +75,10 @@ import (
 	"time"
 {{- if $unsafeRead}}
 	"unsafe"
+{{- end}}
+{{- if $.Config.Restore}}
+
+	"github.com/tmthrgd/go-bindata/restore"
 {{- end}}
 )
 

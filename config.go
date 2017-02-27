@@ -177,7 +177,7 @@ type Config struct {
 	// This parameter can be provided multiple times.
 	Ignore []*regexp.Regexp
 
-	// When true, the RestoreAsset and RestoreAssets APIs will be provided.
+	// [Deprecated]: use github.com/tmthrgd/go-bindata/restore.
 	Restore bool
 
 	// Which of the given name hashing formats to use.

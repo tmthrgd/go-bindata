@@ -42,5 +42,18 @@ func AssetNames() []string {
 	}
 
 	return names
-}`))
+}
+
+{{- if $.Config.Restore}}
+
+// RestoreAsset restores an asset under the given directory
+func RestoreAsset(dir, name string) error {
+	return restore.Asset(dir, name, AssetAndInfo)
+}
+
+// RestoreAssets restores an asset under the given directory recursively
+func RestoreAssets(dir, name string) error {
+	return restore.Assets(dir, name, AssetDir, AssetAndInfo)
+}
+{{- end}}`))
 }

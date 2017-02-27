@@ -61,10 +61,5 @@ var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
 {{- if $.Config.AssetDir}}
 
 {{template "tree" . -}}
-{{- end -}}
-
-{{- if $.Config.Restore}}
-
-{{template "restore" . -}}
 {{- end}}
 `))
