@@ -3,7 +3,7 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 /*
-bindata converts any file into managable Go source code. Useful for
+Package bindata converts any file into manageable Go source code. Useful for
 embedding binary data into a go program. The file data is optionally gzip
 compressed before being converted to a raw byte slice.
 
@@ -124,6 +124,5 @@ format is specified at build time with the appropriate tags.
 
 The tags are appended to a `// +build` line in the beginning of the output file
 and must follow the build tags syntax specified by the go tool.
-
 */
 package bindata
