@@ -110,6 +110,10 @@ func parseArgs() *bindata.Config {
 		c.MemCopy = !noMemCopy
 	}
 
+	if !c.MemCopy && !c.NoCompress {
+		io.WriteString(os.Stderr, "The use of -memcopy=false without -nocompress is deprecated.\n")
+	}
+
 	return c
 }
 

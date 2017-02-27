@@ -122,15 +122,8 @@ import (
 	"time"
 )
 
-{{- if $.Config.MemCopy}}
-
-func bindataRead(data []byte, name string) ([]byte, error) {
-	gz, err := gzip.NewReader(bytes.NewBuffer(data))
-{{- else}}
-
 func bindataRead(data, name string) ([]byte, error) {
 	gz, err := gzip.NewReader(strings.NewReader(data))
-{{- end}}
 	if err != nil {
 		return nil, fmt.Errorf("Read %q: %v", name, err)
 	}
@@ -211,10 +204,6 @@ var _bindata_{{.Func}} = {{if and $.Config.MemCopy $.Config.NoCompress -}}
 {{- else if $.Config.NoCompress -}}
 	bindataRead("" +
 	{{wrap $data "\t" 28 -}}
-	)
-{{- else if $.Config.MemCopy -}}
-	[]byte("" +
-	{{gzip $data "\t" 28 -}}
 	)
 {{- else -}}
 	"" +
