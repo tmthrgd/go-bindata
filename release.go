@@ -239,7 +239,7 @@ func {{.Func}}() (*asset, error) {
 			name: {{printf "%q" .Name}},
 
 {{- if not $.Config.NoMetadata}}
-	{{$info := stat .Path}}
+{{$info := stat .Path}}
 			size:    {{$info.Size}},
 
 	{{- if gt $.Config.Mode 0}}
