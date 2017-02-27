@@ -7,6 +7,7 @@ package bindata
 import (
 	"bytes"
 	"io/ioutil"
+	"strings"
 	"text/template"
 
 	"golang.org/x/tools/imports"
@@ -53,7 +54,12 @@ func Translate(c *Config) error {
 	return ioutil.WriteFile(c.Output, out, 0666)
 }
 
-var baseTemplate = template.Must(template.New("base").Parse(`
+var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
+	"repeat": strings.Repeat,
+	"sub": func(a, b int) int {
+		return a - b
+	},
+}).Parse(`
 {{- template "header" . -}}
 
 {{- if or $.Config.Debug $.Config.Dev -}}

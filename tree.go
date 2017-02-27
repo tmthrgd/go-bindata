@@ -34,7 +34,16 @@ func (node *assetTree) child(name string) *assetTree {
 
 func init() {
 	template.Must(baseTemplate.New("bintree").Funcs(template.FuncMap{
-		"repeat": strings.Repeat,
+		"maxKeyLength": func(children map[string]*assetTree) int {
+			l := 0
+			for k := range children {
+				if len(k) > l {
+					l = len(k)
+				}
+			}
+
+			return l
+		},
 	}).Parse(`{
 {{- if .Asset.Func -}}
 	{{.Asset.Func}}
@@ -42,8 +51,10 @@ func init() {
 	nil
 {{- end}}, map[string]*bintree{
 {{- if .Children}}
+{{$max := maxKeyLength .Children -}}
 {{range $k, $v := .Children -}}
-{{repeat "\t" $v.Depth}}{{printf "%q" $k}}: {{template "bintree" $v}},
+{{repeat "\t" $v.Depth}}{{printf "%q" $k}}:
+	{{- repeat " " (sub $max (len $k))}} {{template "bintree" $v}},
 {{end -}}
 {{- end -}}
 {{- if .Children -}}

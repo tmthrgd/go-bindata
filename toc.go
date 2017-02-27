@@ -7,7 +7,18 @@ package bindata
 import "text/template"
 
 func init() {
-	template.Must(baseTemplate.New("toc").Parse(`// Asset loads and returns the asset for the given name.
+	template.Must(baseTemplate.New("toc").Funcs(template.FuncMap{
+		"maxNameLength": func(toc []binAsset) int {
+			l := 0
+			for _, asset := range toc {
+				if len(asset.Name) > l {
+					l = len(asset.Name)
+				}
+			}
+
+			return l
+		},
+	}).Parse(`// Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
 func Asset(name string) ([]byte, error) {
@@ -57,7 +68,9 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() ([]byte, os.FileInfo, error){
-{{range .Assets}}	{{printf "%q" .Name}}: {{.Func}},
+{{$max := maxNameLength .Assets -}}
+{{range .Assets}}	{{printf "%q" .Name}}:
+	{{- repeat " " (sub $max (len .Name))}} {{.Func}},
 {{end -}}
 }
 
