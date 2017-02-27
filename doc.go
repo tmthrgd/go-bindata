@@ -82,9 +82,9 @@ generating a runtime error.
 
 Optional compression
 
-The NoCompress option indicates that the supplied assets are *not* GZIP
-compressed before being turned into Go code. The data should still be accessed
-through a function call, so nothing changes in the API.
+The Compress option indicates that the supplied assets are GZIP compressed before
+being turned into Go code. The data should still be accessed through a function
+call, so nothing changes in the API.
 
 This feature is useful if you do not care for compression, or the supplied
 resource is already compressed. Doing it again would not add any value and may

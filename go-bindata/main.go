@@ -44,7 +44,7 @@ func parseArgs() *bindata.Config {
 	flag.StringVar(&c.Prefix, "prefix", c.Prefix, "Optional path prefix to strip off asset names.")
 	flag.StringVar(&c.Package, "pkg", c.Package, "Package name to use in the generated code.")
 	flag.BoolVar(&c.MemCopy, "memcopy", c.MemCopy, "Do not use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
-	flag.BoolVar(&c.NoCompress, "nocompress", c.NoCompress, "Assets will *not* be GZIP compressed when this flag is specified.")
+	flag.BoolVar(&c.Compress, "compress", c.Compress, "Assets will be GZIP compressed when this flag is specified.")
 	flag.BoolVar(&c.NoMetadata, "nometadata", c.NoMetadata, "Assets will not preserve size, mode, and modtime info.")
 	flag.UintVar(&c.Mode, "mode", c.Mode, "Optional file mode override for all files.")
 	flag.Int64Var(&c.ModTime, "modtime", c.ModTime, "Optional modification unix timestamp override for all files.")
@@ -59,8 +59,9 @@ func parseArgs() *bindata.Config {
 	flag.Var((*appendRegexValue)(&c.Ignore), "ignore", "Regex pattern to ignore")
 
 	// Deprecated options
-	var noMemCopy bool
+	var noMemCopy, noCompress bool
 	flag.BoolVar(&noMemCopy, "nomemcopy", !c.MemCopy, "[Deprecated]: use -memcpy=false.")
+	flag.BoolVar(&noCompress, "nocompress", !c.Compress, "[Deprecated]: use -compress=false.")
 
 	flag.Parse()
 
@@ -86,6 +87,7 @@ func parseArgs() *bindata.Config {
 
 	var pkgSet, outputSet bool
 	var memcopySet, nomemcopySet bool
+	var compressSet, nocompressSet bool
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "pkg":
@@ -96,6 +98,10 @@ func parseArgs() *bindata.Config {
 			memcopySet = true
 		case "nomemcopy":
 			nomemcopySet = true
+		case "compress":
+			compressSet = true
+		case "nocompress":
+			nocompressSet = true
 		}
 	})
 
@@ -110,8 +116,12 @@ func parseArgs() *bindata.Config {
 		c.MemCopy = !noMemCopy
 	}
 
-	if !c.MemCopy && !c.NoCompress {
-		io.WriteString(os.Stderr, "The use of -memcopy=false without -nocompress is deprecated.\n")
+	if !compressSet && nocompressSet {
+		c.Compress = !noCompress
+	}
+
+	if !c.MemCopy && c.Compress {
+		io.WriteString(os.Stderr, "The use of -memcopy=false with -compress=false is deprecated.\n")
 	}
 
 	return c

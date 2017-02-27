@@ -137,10 +137,10 @@ type Config struct {
 	// 	}
 	MemCopy bool
 
-	// NoCompress means the assets are /not/ GZIP compressed before being turned
-	// into Go code. The generated function will automatically unzip
-	// the file data when called. Defaults to false.
-	NoCompress bool
+	// Compress means the assets are GZIP compressed before being turned into
+	// Go code. The generated function will automatically unzip the file data
+	// when called. Defaults to true.
+	Compress bool
 
 	// Perform a debug build. This generates an asset file, which
 	// loads the asset contents directly from disk at their original
@@ -202,7 +202,7 @@ func NewConfig() *Config {
 	c := new(Config)
 	c.Package = "main"
 	c.MemCopy = true
-	c.NoCompress = false
+	c.Compress = true
 	c.Debug = false
 	c.Output = "./bindata.go"
 	c.Ignore = make([]*regexp.Regexp, 0)
