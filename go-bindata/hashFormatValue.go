@@ -18,20 +18,7 @@ func (hf *hashFormatValue) String() string {
 		return ""
 	}
 
-	switch bindata.HashFormat(*hf) {
-	case bindata.NoHash:
-		return ""
-	case bindata.DirHash:
-		return "dir"
-	case bindata.NameHashSuffix:
-		return "namesuffix"
-	case bindata.HashWithExt:
-		return "hashext"
-	case bindata.NameUnchanged:
-		return "unchanged"
-	default:
-		panic("invalid HashFormat")
-	}
+	return bindata.HashFormat(*hf).String()
 }
 
 func (hf *hashFormatValue) Set(value string) error {

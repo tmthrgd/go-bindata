@@ -18,16 +18,7 @@ func (he *hashEncodingValue) String() string {
 		return "hex"
 	}
 
-	switch bindata.HashEncoding(*he) {
-	case bindata.HexHash:
-		return "hex"
-	case bindata.Base32Hash:
-		return "base32"
-	case bindata.Base64Hash:
-		return "base64"
-	default:
-		panic("invalid HashFormat")
-	}
+	return bindata.HashEncoding(*he).String()
 }
 
 func (he *hashEncodingValue) Set(value string) error {

@@ -33,6 +33,23 @@ const (
 	NameUnchanged
 )
 
+func (hf HashFormat) String() string {
+	switch hf {
+	case NoHash:
+		return ""
+	case DirHash:
+		return "dir"
+	case NameHashSuffix:
+		return "namesuffix"
+	case HashWithExt:
+		return "hashext"
+	case NameUnchanged:
+		return "unchanged"
+	default:
+		return "unknown"
+	}
+}
+
 // HashEncoding specifies which encoding to use when hashing names.
 type HashEncoding int
 
@@ -46,6 +63,19 @@ const (
 	// defined in RFC 4648.
 	Base64Hash
 )
+
+func (he HashEncoding) String() string {
+	switch he {
+	case HexHash:
+		return "hex"
+	case Base32Hash:
+		return "base32"
+	case Base64Hash:
+		return "base64"
+	default:
+		return "unknown"
+	}
+}
 
 // InputConfig defines options on a asset directory to be convert.
 type InputConfig struct {
