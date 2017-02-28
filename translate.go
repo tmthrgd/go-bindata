@@ -21,8 +21,13 @@ type Generator struct {
 // New returns a new Generator with a given configuration.
 func New(c *Config) (*Generator, error) {
 	g := &Generator{
-		c:       *c,
 		visited: make(map[string]struct{}),
+	}
+
+	if c != nil {
+		g.c = *c
+	} else {
+		g.c.Package = "main"
 	}
 
 	// Ensure our configuration has sane values.
