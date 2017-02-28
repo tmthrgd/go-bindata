@@ -84,6 +84,7 @@ func TestMain(m *testing.M) {
 
 	t := reflect.TypeOf(GenerateOptions{})
 
+	testCases = append(testCases, make([]testCase, 0, *randTestCases)...)
 	for i := uint(0); i < *randTestCases; i++ {
 		rand := rand.New(rand.NewSource(int64(i)))
 
