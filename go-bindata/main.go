@@ -180,20 +180,20 @@ func parseArgs() (c *bindata.Config, output string) {
 
 func validateOutput(output string) error {
 	stat, err := os.Lstat(output)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
+	if err == nil {
+		if stat.IsDir() {
+			return errors.New("output path is a directory")
 		}
 
-		// File does not exist. This is fine, just make
-		// sure the directory it is to be in exists.
-		if dir, _ := filepath.Split(output); dir != "" {
-			if err = os.MkdirAll(dir, 0744); err != nil {
-				return err
-			}
-		}
-	} else if stat.IsDir() {
-		return errors.New("output path is a directory")
+		return nil
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	// File does not exist. This is fine, just make
+	// sure the directory it is to be in exists.
+	if dir, _ := filepath.Split(output); dir != "" {
+		return os.MkdirAll(dir, 0744)
 	}
 
 	return nil
