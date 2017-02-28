@@ -62,7 +62,7 @@ func init() {
 // DO NOT EDIT!
 
 {{if $.Tags -}}
-// +build {{$.Tags}}
+	// +build {{$.Tags}}
 
 {{end -}}
 
