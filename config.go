@@ -221,6 +221,10 @@ func (opts *GenerateOptions) validate() error {
 		return fmt.Errorf("go-bindata: HashLength must be between 1 and %d bytes in length", length)
 	}
 
+	if len(opts.HashKey) > blake2b.Size {
+		return fmt.Errorf("go-bindata: HashKey cannot be longer than %d bytes", blake2b.Size)
+	}
+
 	if opts.Restore && !opts.AssetDir {
 		return errors.New("go-bindata: Restore cannot be used without AssetDir")
 	}
