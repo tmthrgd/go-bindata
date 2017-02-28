@@ -14,7 +14,15 @@ import (
 	"text/template"
 )
 
-var gzipPool sync.Pool
+var (
+	bufPool = &sync.Pool{
+		New: func() interface{} {
+			return new(bytes.Buffer)
+		},
+	}
+
+	gzipPool sync.Pool
+)
 
 func init() {
 	template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
@@ -25,25 +33,29 @@ func init() {
 			return name
 		},
 		"wrap": func(data []byte, indent string, wrapAt int) string {
-			var buf bytes.Buffer
+			buf := bufPool.Get().(*bytes.Buffer)
 			buf.WriteString(`"`)
 
 			sw := &stringWriter{
-				Writer: &buf,
+				Writer: buf,
 				Indent: indent,
 				WrapAt: wrapAt,
 			}
 			sw.Write(data)
 
 			buf.WriteString(`"`)
-			return buf.String()
+			out := buf.String()
+
+			buf.Reset()
+			bufPool.Put(buf)
+			return out
 		},
 		"gzip": func(data []byte, indent string, wrapAt int) (string, error) {
-			var buf bytes.Buffer
+			buf := bufPool.Get().(*bytes.Buffer)
 			buf.WriteString(`"`)
 
 			sw := &stringWriter{
-				Writer: &buf,
+				Writer: buf,
 				Indent: indent,
 				WrapAt: wrapAt,
 			}
@@ -63,10 +75,13 @@ func init() {
 				return "", err
 			}
 
-			gzipPool.Put(gz)
-
 			buf.WriteString(`"`)
-			return buf.String(), nil
+			out := buf.String()
+
+			buf.Reset()
+			bufPool.Put(buf)
+			gzipPool.Put(gz)
+			return out, nil
 		},
 		"maxOriginalNameLength": func(toc []binAsset) int {
 			l := 0
