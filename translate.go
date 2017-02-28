@@ -6,6 +6,7 @@ package bindata
 
 import (
 	"io"
+	"sort"
 	"strings"
 	"text/template"
 )
@@ -41,6 +42,8 @@ func (g *Generator) FindFiles(path string, recursive bool) error {
 
 // WriteTo writes the generated Go code to w.
 func (g *Generator) WriteTo(w io.Writer) (n int64, err error) {
+	sort.Sort(tocSorter(g.toc))
+
 	lw := lenWriter{W: w}
 	err = baseTemplate.Execute(&lw, struct {
 		Config    *Config

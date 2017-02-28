@@ -8,16 +8,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
-
-// Implement sort.Interface for []os.FileInfo based on Name()
-type byName []os.FileInfo
-
-func (v byName) Len() int           { return len(v) }
-func (v byName) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
-func (v byName) Less(i, j int) bool { return v[i].Name() < v[j].Name() }
 
 // findFiles recursively finds all the file paths in the given directory tree.
 // They are added to the given map as keys. Values will be safe function names
@@ -52,9 +44,6 @@ func (g *Generator) findFiles(dir, prefix string, recursive bool) error {
 		if list, err = fd.Readdir(0); err != nil {
 			return err
 		}
-
-		// Sort to make output stable between invocations
-		sort.Sort(byName(list))
 	}
 
 outer:
@@ -129,9 +118,9 @@ outer:
 			return fmt.Errorf("Invalid file: %v", asset.Path)
 		}
 
-		if g.c.HashFormat != NoHash {
-			asset.OriginalName = asset.Name
+		asset.OriginalName = asset.Name
 
+		if g.c.HashFormat != NoHash {
 			if err = hashFile(&g.c, &asset); err != nil {
 				return err
 			}
