@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -17,8 +18,17 @@ import (
 )
 
 func main() {
-	if err := bindata.Translate(parseArgs()); err != nil {
-		fmt.Fprintf(os.Stderr, "bindata: %v\n", err)
+	c, output := parseArgs()
+
+	f, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	if err := bindata.Translate(f, c); err != nil {
+		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -28,7 +38,7 @@ func main() {
 //
 // This function exits the program with an error, if
 // any of the command line options are incorrect.
-func parseArgs() *bindata.Config {
+func parseArgs() (c *bindata.Config, output string) {
 	flag.Usage = func() {
 		fmt.Printf("Usage: %s [options] <input directories>\n\n", os.Args[0])
 		flag.PrintDefaults()
@@ -37,8 +47,10 @@ func parseArgs() *bindata.Config {
 	var version bool
 	flag.BoolVar(&version, "version", false, "Displays version information.")
 
+	flag.StringVar(&output, "o", "./bindata.go", "Optional name of the output file to be generated.")
+
 	var mode uint
-	c := bindata.NewConfig()
+	c = bindata.NewConfig()
 	flag.BoolVar(&c.Debug, "debug", c.Debug, "Do not embed the assets, but provide the embedding API. Contents will still be loaded from disk.")
 	flag.BoolVar(&c.Dev, "dev", c.Dev, "Similar to debug, but does not emit absolute paths. Expects a rootDir variable to already exist in the generated code's package.")
 	flag.StringVar(&c.Tags, "tags", c.Tags, "Optional set of build tags to include.")
@@ -50,7 +62,6 @@ func parseArgs() *bindata.Config {
 	flag.UintVar(&mode, "mode", uint(c.Mode), "Optional file mode override for all files.")
 	flag.Int64Var(&c.ModTime, "modtime", c.ModTime, "Optional modification unix timestamp override for all files.")
 	flag.BoolVar(&c.Restore, "restore", c.Restore, "[Deprecated]: use github.com/tmthrgd/go-bindata/restore.")
-	flag.StringVar(&c.Output, "o", c.Output, "Optional name of the output file to be generated.")
 	flag.Var((*hashFormatValue)(&c.HashFormat), "hash", "Optional the format of name hashing to apply.")
 	flag.IntVar(&c.HashLength, "hashlen", c.HashLength, "Optional length of hashes to be generated.")
 	flag.Var((*hashEncodingValue)(&c.HashEncoding), "hashenc", `Optional the encoding of the hash to use. (default "hex")`)
@@ -116,7 +127,7 @@ func parseArgs() *bindata.Config {
 
 	// Change pkg to containing directory of output. If output flag is set and package flag is not.
 	if outputSet && !pkgSet {
-		if pkg := filepath.Base(filepath.Dir(c.Output)); pkg != "." && pkg != "/" {
+		if pkg := filepath.Base(filepath.Dir(output)); pkg != "." && pkg != "/" {
 			c.Package = pkg
 		}
 	}
@@ -137,7 +148,42 @@ func parseArgs() *bindata.Config {
 		io.WriteString(os.Stderr, "The use of -memcopy=false with -compress is deprecated.\n")
 	}
 
-	return c
+	if err := validateOutput(&output); err != nil {
+		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
+		os.Exit(1)
+	}
+
+	return
+}
+
+func validateOutput(output *string) error {
+	if *output == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+
+		*output = filepath.Join(cwd, "bindata.go")
+	}
+
+	stat, err := os.Lstat(*output)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+
+		// File does not exist. This is fine, just make
+		// sure the directory it is to be in exists.
+		if dir, _ := filepath.Split(*output); dir != "" {
+			if err = os.MkdirAll(dir, 0744); err != nil {
+				return err
+			}
+		}
+	} else if stat.IsDir() {
+		return errors.New("output path is a directory")
+	}
+
+	return nil
 }
 
 // parseRecursive determines whether the given path has a recursive indicator and

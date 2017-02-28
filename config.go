@@ -9,9 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
 	"regexp"
 
 	"golang.org/x/crypto/blake2b"
@@ -103,15 +101,6 @@ type Config struct {
 	// Input defines the directory path, containing all asset files as
 	// well as whether to recursively process assets in any sub directories.
 	Input []InputConfig
-
-	// Output defines the output file for the generated code.
-	// If left empty, this defaults to 'bindata.go' in the current
-	// working directory.
-	Output string
-
-	// OutputWriter defins an writer to output the generated code to.
-	// This takes precedence over Output.
-	OutputWriter io.Writer
 
 	// Prefix defines a path prefix which should be stripped from all
 	// file names when generating the keys in the table of contents.
@@ -239,7 +228,6 @@ func NewConfig() *Config {
 	c.MemCopy = true
 	c.Compress = true
 	c.Metadata = true
-	c.Output = "./bindata.go"
 	c.Restore = true
 	c.HashLength = 16
 	c.AssetDir = true
@@ -257,34 +245,6 @@ func (c *Config) validate() error {
 	for _, input := range c.Input {
 		if _, err := os.Lstat(input.Path); err != nil {
 			return err
-		}
-	}
-
-	if c.OutputWriter != nil {
-		if len(c.Output) == 0 {
-			cwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
-			c.Output = filepath.Join(cwd, "bindata.go")
-		}
-
-		stat, err := os.Lstat(c.Output)
-		if err != nil {
-			if !os.IsNotExist(err) {
-				return err
-			}
-
-			// File does not exist. This is fine, just make
-			// sure the directory it is to be in exists.
-			if dir, _ := filepath.Split(c.Output); dir != "" {
-				if err = os.MkdirAll(dir, 0744); err != nil {
-					return err
-				}
-			}
-		} else if stat.IsDir() {
-			return errors.New("go-bindata: output path is a directory")
 		}
 	}
 

@@ -5,15 +5,14 @@
 package bindata
 
 import (
-	"os"
+	"io"
 	"strings"
 	"text/template"
 )
 
-// Translate reads assets from an input directory, converts them
-// to Go code and writes new files to the output specified
-// in the given configuration.
-func Translate(c *Config) (err error) {
+// Translate reads assets from an input directory, converts
+// them to Go code and writes the generated code to w.
+func Translate(w io.Writer, c *Config) (err error) {
 	// Ensure our configuration has sane values.
 	if err = c.validate(); err != nil {
 		return
@@ -27,14 +26,6 @@ func Translate(c *Config) (err error) {
 		if err = findFiles(c, input.Path, c.Prefix, input.Recursive, &toc, visitedPaths); err != nil {
 			return
 		}
-	}
-
-	w := c.OutputWriter
-	if w == nil {
-		if w, err = os.OpenFile(c.Output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666); err != nil {
-			return err
-		}
-		defer w.(*os.File).Close()
 	}
 
 	return baseTemplate.Execute(w, struct {
