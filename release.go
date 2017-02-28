@@ -94,9 +94,9 @@ func init() {
 			return l
 		},
 	}).Parse(`
-{{- $unsafeRead := and (not $.Opts.Compress) (not $.Opts.MemCopy) -}}
+{{- $unsafeRead := and (not $.Compress) (not $.MemCopy) -}}
 import (
-{{- if $.Opts.Compress}}
+{{- if $.Compress}}
 	"bytes"
 	"compress/gzip"
 	"io"
@@ -106,17 +106,17 @@ import (
 {{- if $unsafeRead}}
 	"reflect"
 {{- end}}
-{{- if or $.Opts.Compress $.Opts.AssetDir}}
+{{- if or $.Compress $.AssetDir}}
 	"strings"
 {{- end}}
-{{- if and $.Opts.Compress $.Opts.DecompressOnce}}
+{{- if and $.Compress $.DecompressOnce}}
 	"sync"
 {{- end}}
 	"time"
 {{- if $unsafeRead}}
 	"unsafe"
 {{- end}}
-{{- if $.Opts.Restore}}
+{{- if $.Restore}}
 
 	"github.com/tmthrgd/go-bindata/restore"
 {{- end}}
@@ -134,32 +134,32 @@ func bindataRead(data string) []byte {
 	return b
 }
 
-{{else if not $.Opts.Compress -}}
+{{else if not $.Compress -}}
 type bindataRead []byte
 
 {{end -}}
 
 type asset struct {
 	name string
-{{- if gt $.Opts.HashFormat 1}}
+{{- if gt $.HashFormat 1}}
 	orig string
 {{- end -}}
-{{- if $.Opts.Compress}}
+{{- if $.Compress}}
 	data string
 	size int64
 {{- else}}
 	data []byte
 {{- end -}}
-{{- if and $.Opts.Metadata (le $.Opts.Mode 0)}}
+{{- if and $.Metadata (le $.Mode 0)}}
 	mode os.FileMode
 {{- end -}}
-{{- if and $.Opts.Metadata (le $.Opts.ModTime 0)}}
+{{- if and $.Metadata (le $.ModTime 0)}}
 	time time.Time
 {{- end -}}
-{{- if ne $.Opts.HashFormat 0}}
+{{- if ne $.HashFormat 0}}
 	hash []byte
 {{- end}}
-{{- if and $.Opts.Compress $.Opts.DecompressOnce}}
+{{- if and $.Compress $.DecompressOnce}}
 
 	once  sync.Once
 	bytes []byte
@@ -172,7 +172,7 @@ func (a *asset) Name() string {
 }
 
 func (a *asset) Size() int64 {
-{{- if $.Opts.Compress}}
+{{- if $.Compress}}
 	return a.size
 {{- else}}
 	return int64(len(a.data))
@@ -180,9 +180,9 @@ func (a *asset) Size() int64 {
 }
 
 func (a *asset) Mode() os.FileMode {
-{{- if gt $.Opts.Mode 0}}
-	return {{printf "%04o" $.Opts.Mode}}
-{{- else if $.Opts.Metadata}}
+{{- if gt $.Mode 0}}
+	return {{printf "%04o" $.Mode}}
+{{- else if $.Metadata}}
 	return a.mode
 {{- else}}
 	return 0
@@ -190,9 +190,9 @@ func (a *asset) Mode() os.FileMode {
 }
 
 func (a *asset) ModTime() time.Time {
-{{- if gt $.Opts.ModTime 0}}
-	return time.Unix({{$.Opts.ModTime}}, 0)
-{{- else if $.Opts.Metadata}}
+{{- if gt $.ModTime 0}}
+	return time.Unix({{$.ModTime}}, 0)
+{{- else if $.Metadata}}
 	return a.time
 {{- else}}
 	return time.Time{}
@@ -207,10 +207,10 @@ func (*asset) Sys() interface{} {
 	return nil
 }
 
-{{- if ne $.Opts.HashFormat 0}}
+{{- if ne $.HashFormat 0}}
 
 func (a *asset) OriginalName() string {
-{{- if gt $.Opts.HashFormat 1}}
+{{- if gt $.HashFormat 1}}
 	return a.orig
 {{- else}}
 	return a.name
@@ -233,11 +233,11 @@ type FileInfo interface {
 var _bindata = map[string]*asset{
 {{range $.Assets}}	{{printf "%q" .Name}}: &asset{
 		name: {{printf "%q" (name .Name)}},
-	{{- if gt $.Opts.HashFormat 1}}
+	{{- if gt $.HashFormat 1}}
 		orig: {{printf "%q" .OriginalName}},
 	{{- end}}
 		data: {{$data := read .Path -}}
-		{{- if $.Opts.Compress -}}
+		{{- if $.Compress -}}
 			"" +
 			{{gzip $data "\t\t\t" 24}}
 		{{- else -}}
@@ -245,21 +245,21 @@ var _bindata = map[string]*asset{
 			{{wrap $data "\t\t\t" 24 -}}
 			)
 		{{- end}},
-	{{- if $.Opts.Compress}}
+	{{- if $.Compress}}
 		size: {{len $data}},
 	{{- end -}}
 
-	{{- if and $.Opts.Metadata (le $.Opts.Mode 0)}}
+	{{- if and $.Metadata (le $.Mode 0)}}
 		mode: {{printf "%04o" (stat .Path).Mode}},
 	{{- end -}}
 
-	{{- if and $.Opts.Metadata (le $.Opts.ModTime 0)}}
+	{{- if and $.Metadata (le $.ModTime 0)}}
 		{{$mod := (stat .Path).ModTime -}}
 		time: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 	{{- end -}}
 
-	{{- if ne $.Opts.HashFormat 0}}
-	{{- if $.Opts.Compress}}
+	{{- if ne $.HashFormat 0}}
+	{{- if $.Compress}}
 		hash: []byte("" +
 	{{- else}}
 		hash: bindataRead("" +
@@ -279,7 +279,7 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 	if !ok {
 		return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}
-{{if and $.Opts.Compress $.Opts.DecompressOnce}}
+{{if and $.Compress $.DecompressOnce}}
 	a.once.Do(func() {
 		var gz *gzip.Reader
 		if gz, a.err = gzip.NewReader(strings.NewReader(a.data)); a.err != nil {
@@ -300,7 +300,7 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 	}
 
 	return a.bytes, a, nil
-{{- else if $.Opts.Compress}}
+{{- else if $.Compress}}
 	gz, err := gzip.NewReader(strings.NewReader(a.data))
 	if err != nil {
 		return nil, nil, &os.PathError{Op: "read", Path: name, Err: err}
@@ -321,7 +321,7 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 {{- end}}
 }
 
-{{- if gt $.Opts.HashFormat 1}}
+{{- if gt $.HashFormat 1}}
 
 var _hashNames = map[string]string{
 {{$max := maxOriginalNameLength .Assets -}}

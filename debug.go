@@ -26,10 +26,10 @@ func init() {
 	"io/ioutil"
 	"os"
 	"path/filepath"
-{{- if $.Opts.AssetDir}}
+{{- if $.AssetDir}}
 	"strings"
 {{- end}}
-{{- if $.Opts.Restore}}
+{{- if $.Restore}}
 
 	"github.com/tmthrgd/go-bindata/restore"
 {{- end}}
@@ -44,7 +44,7 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 		return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}
 
-{{- if $.Opts.Dev}}
+{{- if $.Dev}}
 
 	path = filepath.Join(rootDir, path)
 {{- end}}
@@ -66,7 +66,7 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 var _bindata = map[string]string{
 {{$max := maxNameLength .Assets -}}
 {{range .Assets}}	{{printf "%q" .Name}}:
-	{{- repeat " " (sub $max (len .Name))}} {{if $.Opts.Dev -}}
+	{{- repeat " " (sub $max (len .Name))}} {{if $.Dev -}}
 	{{printf "%q" .Name}}
 {{- else -}}
 	{{printf "%q" (abs .Path)}}

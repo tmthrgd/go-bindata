@@ -44,7 +44,7 @@ func AssetNames() []string {
 	return names
 }
 
-{{- if $.Opts.Restore}}
+{{- if $.Restore}}
 
 // RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
