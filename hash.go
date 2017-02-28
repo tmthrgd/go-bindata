@@ -23,18 +23,19 @@ var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 // hash and any error that occurred. The hash is a BLAKE2B
 // digest of the file contents.
 func hashFile(c *Config, asset *binAsset) error {
-	f, err := os.Open(asset.Path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
 	h, err := blake2b.New512(c.HashKey)
 	if err != nil {
 		return err
 	}
 
-	if _, err = io.Copy(h, f); err != nil {
+	f, err := os.Open(asset.Path)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(h, f)
+	f.Close()
+	if err != nil {
 		return err
 	}
 
