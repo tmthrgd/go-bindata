@@ -1,5 +1,7 @@
 # go-bindata (forked by tmthrgd)
 
+[![Build Status](https://travis-ci.org/tmthrgd/go-bindata.svg?branch=master)](https://travis-ci.org/tmthrgd/go-bindata)
+
 This is a forked version of a forked version of go-bindata. It was forked by [lestrrat](https://github.com/lestrrat/go-bindata) as the original author seems to be either busy in real life or has lost interest on this project. I'm forking once again to add new features.
 
 ## bindata
