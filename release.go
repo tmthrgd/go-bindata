@@ -180,9 +180,6 @@ func (a *asset) OriginalName() string {
 func (a *asset) FileHash() []byte {
 	return a.hash
 }
-{{- end}}
-
-{{- if ne $.Config.HashFormat 0}}
 
 type FileInfo interface {
 	os.FileInfo
