@@ -31,7 +31,7 @@ func TestCorpus(t *testing.T) {
 	if *gencorpus {
 		perms, mode = os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666
 
-		if err := os.Mkdir(*corpus, 0777); err != nil && !os.IsExist(err) {
+		if err := os.MkdirAll(*corpus, 0777); err != nil {
 			t.Fatal(err)
 		}
 
