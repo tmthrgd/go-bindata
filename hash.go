@@ -8,6 +8,7 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -54,7 +55,11 @@ func hashFile(c *Config, asset *binAsset) error {
 	case Base64Hash:
 		enc = base64.RawURLEncoding.EncodeToString(asset.Hash)
 	default:
-		panic("unreachable")
+		return errors.New("invalid HashEncoding")
+	}
+
+	if c.HashLength > len(enc) {
+		return errors.New("invalid HashLength: longer than generated hash")
 	}
 
 	dir, file := filepath.Split(asset.Name)
@@ -70,7 +75,7 @@ func hashFile(c *Config, asset *binAsset) error {
 	case HashWithExt:
 		asset.Name = filepath.Join(dir, enc+ext)
 	default:
-		panic("unreachable")
+		return errors.New("invalid HashFormat")
 	}
 
 	return nil
