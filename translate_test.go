@@ -77,6 +77,11 @@ var testPaths = map[string]*FindFilesOptions{
 	"README.md":       nil,
 }
 
+var (
+	testFiles    Files
+	testFilesErr error
+)
+
 var randTestCases = flag.Uint("randtests", 25, "")
 
 func TestMain(m *testing.M) {
@@ -126,6 +131,18 @@ func TestMain(m *testing.M) {
 		})
 	}
 
+	for path, opts := range testPaths {
+		files, err := FindFiles(path, opts)
+		if err != nil {
+			testFilesErr = err
+			break
+		}
+
+		testFiles = append(testFiles, files...)
+	}
+
+	sort.Sort(testFiles)
+
 	os.Exit(m.Run())
 }
 
@@ -163,20 +180,4 @@ func testDiff(a, b string) (string, error) {
 	}
 
 	return diff.String(), nil
-}
-
-func testFiles() (Files, error) {
-	var all Files
-
-	for path, opts := range testPaths {
-		files, err := FindFiles(path, opts)
-		if err != nil {
-			return nil, err
-		}
-
-		all = append(all, files...)
-	}
-
-	sort.Sort(all)
-	return all, nil
 }

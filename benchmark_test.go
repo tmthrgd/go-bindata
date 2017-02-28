@@ -18,9 +18,8 @@ func BenchmarkFindFiles(b *testing.B) {
 }
 
 func BenchmarkGenerate(b *testing.B) {
-	files, err := testFiles()
-	if err != nil {
-		b.Fatal(err)
+	if testFilesErr != nil {
+		b.Fatal(testFilesErr)
 	}
 
 	for _, test := range testCases {
@@ -32,7 +31,7 @@ func BenchmarkGenerate(b *testing.B) {
 			b.ResetTimer()
 
 			for n := 0; n < b.N; n++ {
-				if err = files.Generate(nopWriter{}, o); err != nil {
+				if err := testFiles.Generate(nopWriter{}, o); err != nil {
 					b.Fatal(err)
 				}
 			}

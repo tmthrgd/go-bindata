@@ -10,13 +10,12 @@ import (
 )
 
 func BenchmarkHashFile(b *testing.B) {
-	files, err := testFiles()
-	if err != nil {
-		b.Fatal(err)
+	if testFilesErr != nil {
+		b.Fatal(testFilesErr)
 	}
 
-	file, size := files[0], int64(0)
-	for _, f := range files {
+	file, size := testFiles[0], int64(0)
+	for _, f := range testFiles {
 		info, err := os.Stat(file.Path)
 		if err != nil {
 			b.Error(err)

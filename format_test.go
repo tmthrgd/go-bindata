@@ -16,9 +16,8 @@ func TestFormatting(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
-	files, err := testFiles()
-	if err != nil {
-		t.Fatal(err)
+	if testFilesErr != nil {
+		t.Fatal(testFilesErr)
 	}
 
 	for _, test := range testCases {
@@ -30,7 +29,7 @@ func TestFormatting(t *testing.T) {
 			test.opts(o)
 
 			var buf bytes.Buffer
-			if err := files.Generate(&buf, o); err != nil {
+			if err := testFiles.Generate(&buf, o); err != nil {
 				t.Fatal(err)
 			}
 
