@@ -20,7 +20,7 @@ func Translate(c *Config) error {
 	}
 
 	var toc []binAsset
-	var visitedPaths = make(map[string]bool)
+	var visitedPaths = make(map[string]struct{})
 
 	// Locate all the assets.
 	for _, input := range c.Input {
