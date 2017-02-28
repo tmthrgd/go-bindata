@@ -33,11 +33,8 @@ var testCases = []testCase{
 		o.MemCopy = true
 		o.Compress = true
 		o.Metadata = true
-		// The AssetDir API currently produces
-		// wrongly formatted code. We're going
-		// to skip it for now.
-		/*o.AssetDir = true
-		o.Restore = true*/
+		o.AssetDir = true
+		o.Restore = true
 		o.DecompressOnce = true
 	}},
 	{"debug", func(o *GenerateOptions) { o.Debug = true }},
@@ -102,10 +99,6 @@ func TestMain(m *testing.M) {
 		vo.Mode &= os.ModePerm
 		vo.HashFormat = HashFormat(int(uint(vo.HashFormat) % uint(HashWithExt+1)))
 		vo.HashEncoding = HashEncoding(int(uint(vo.HashEncoding) % uint(Base64Hash+1)))
-		// The AssetDir API currently produces
-		// wrongly formatted code. We're going
-		// to skip it for now.
-		vo.AssetDir = false
 		vo.Restore = vo.Restore && vo.AssetDir
 
 		if vo.Package == "" {
