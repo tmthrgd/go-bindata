@@ -95,7 +95,7 @@ func parseArgs() (genOpts *bindata.GenerateOptions, findOpts *bindata.FindFilesO
 	flag.Int64Var(&genOpts.ModTime, "modtime", genOpts.ModTime, "Optional modification unix timestamp override for all files.")
 	flag.BoolVar(&genOpts.Restore, "restore", genOpts.Restore, "[Deprecated]: use github.com/tmthrgd/go-bindata/restore.")
 	flag.Var((*hashFormatValue)(&genOpts.HashFormat), "hash", "Optional the format of name hashing to apply.")
-	flag.IntVar(&genOpts.HashLength, "hashlen", genOpts.HashLength, "Optional length of hashes to be generated.")
+	flag.UintVar(&genOpts.HashLength, "hashlen", genOpts.HashLength, "Optional length of hashes to be generated.")
 	flag.Var((*hashEncodingValue)(&genOpts.HashEncoding), "hashenc", `Optional the encoding of the hash to use. (default "hex")`)
 	flag.Var((*hexEncodingValue)(&genOpts.HashKey), "hashkey", "Optional hexadecimal key to use to turn the BLAKE2B hashing into a MAC.")
 	flag.BoolVar(&genOpts.AssetDir, "assetdir", genOpts.AssetDir, "Provide the AssetDir APIs.")

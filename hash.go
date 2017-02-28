@@ -67,7 +67,7 @@ func hashFile(opts *GenerateOptions, asset *binAsset) error {
 		l = 16
 	}
 
-	if l > len(enc) {
+	if l > uint(len(enc)) {
 		return errors.New("invalid HashLength: longer than generated hash")
 	}
 

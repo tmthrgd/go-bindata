@@ -172,7 +172,7 @@ type GenerateOptions struct {
 	// Which of the given name hashing formats to use.
 	HashFormat HashFormat
 	// The length of the hash to use, defaults to 16 characters.
-	HashLength int
+	HashLength uint
 	// The encoding to use to encode the name hash.
 	HashEncoding HashEncoding
 	// The key to use to turn the BLAKE2B hashing into a MAC. Must be between
@@ -185,6 +185,12 @@ type GenerateOptions struct {
 	// When true, only gzip decompress the data on first use.
 	DecompressOnce bool
 }
+
+var (
+	maxHexLength = uint(hex.EncodedLen(blake2b.Size))
+	maxB32Length = uint(base32Enc.EncodedLen(blake2b.Size))
+	maxB64Length = uint(base64.RawStdEncoding.EncodedLen(blake2b.Size))
+)
 
 // validate ensures the config has sane values.
 // Part of which means checking if certain file/directory paths exist.
@@ -201,18 +207,17 @@ func (opts *GenerateOptions) validate() error {
 		return errors.New("go-bindata: HashFormat is not compatible with Debug and Dev")
 	}
 
-	length := 0
+	var length uint
 	switch opts.HashEncoding {
 	case HexHash:
-		length = hex.EncodedLen(blake2b.Size)
+		length = maxHexLength
 	case Base32Hash:
-		length = base32Enc.EncodedLen(blake2b.Size)
+		length = maxB32Length
 	case Base64Hash:
-		length = base64.RawStdEncoding.EncodedLen(blake2b.Size)
+		length = maxB64Length
 	}
 
-	if (opts.HashFormat != NoHash && opts.HashFormat != NameUnchanged) &&
-		(opts.HashLength < 0 || opts.HashLength > length) {
+	if (opts.HashFormat != NoHash && opts.HashFormat != NameUnchanged) && opts.HashLength > length {
 		return fmt.Errorf("go-bindata: HashLength must be between 1 and %d bytes in length", length)
 	}
 
