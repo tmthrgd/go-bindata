@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/pmezard/go-difflib/difflib"
 	"golang.org/x/tools/imports"
 )
 
@@ -44,21 +43,13 @@ func TestFormatting(t *testing.T) {
 				return
 			}
 
-			t.Error("not correctly formatted.")
+			t.Error("not correctly formatted")
 
-			var diff bytes.Buffer
-			diff.WriteString("diff:\n")
-
-			if err := difflib.WriteUnifiedDiff(&diff, difflib.UnifiedDiff{
-				A:       difflib.SplitLines(buf.String()),
-				B:       difflib.SplitLines(string(out)),
-				Context: 2,
-				Eol:     "",
-			}); err != nil {
-				t.Fatal(err)
+			if diff, err := testDiff(buf.String(), string(out)); err != nil {
+				t.Error(err)
+			} else {
+				t.Log(diff)
 			}
-
-			t.Log(diff.String())
 		})
 	}
 }

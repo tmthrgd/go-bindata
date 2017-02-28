@@ -5,11 +5,11 @@
 package bindata
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -17,6 +17,8 @@ import (
 	"testing/quick"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/pmezard/go-difflib/difflib"
 )
 
 type testCase struct {
@@ -75,11 +77,7 @@ var testPaths = map[string]*FindFilesOptions{
 	"README.md":       nil,
 }
 
-var (
-	gencode = flag.String("gencode", "", "write generated code to specified directory")
-
-	randTestCases = flag.Uint("randtests", 25, "")
-)
+var randTestCases = flag.Uint("randtests", 25, "")
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -151,6 +149,22 @@ func identifier(val string) string {
 	}, val), unicode.IsDigit)
 }
 
+func testDiff(a, b string) (string, error) {
+	var diff bytes.Buffer
+	diff.WriteString("diff:\n")
+
+	if err := difflib.WriteUnifiedDiff(&diff, difflib.UnifiedDiff{
+		A:       difflib.SplitLines(a),
+		B:       difflib.SplitLines(b),
+		Context: 2,
+		Eol:     "",
+	}); err != nil {
+		return "", nil
+	}
+
+	return diff.String(), nil
+}
+
 func testFiles() (Files, error) {
 	var all Files
 
@@ -165,40 +179,4 @@ func testFiles() (Files, error) {
 
 	sort.Sort(all)
 	return all, nil
-}
-
-func TestGenerate(t *testing.T) {
-	if *gencode == "" {
-		t.Skip("skipping test as -gencode flag not provided")
-	}
-
-	files, err := testFiles()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.Mkdir(*gencode, 0777); err != nil && !os.IsExist(err) {
-		t.Fatal(err)
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			o := &GenerateOptions{Package: "main"}
-			test.opts(o)
-
-			f, err := os.Create(filepath.Join(*gencode, test.name+".go"))
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			err = files.Generate(f, o)
-			f.Close()
-			if err != nil {
-				t.Error(err)
-			}
-		})
-	}
 }
