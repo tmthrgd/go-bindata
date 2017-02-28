@@ -116,6 +116,13 @@ func parseArgs() (c *bindata.Config, output string) {
 		os.Exit(1)
 	}
 
+	if output == "" {
+		cwd, err := os.Getwd()
+		must(err)
+
+		output = filepath.Join(cwd, "bindata.go")
+	}
+
 	c.Mode = os.FileMode(mode)
 
 	var pkgSet, outputSet bool
@@ -167,21 +174,12 @@ func parseArgs() (c *bindata.Config, output string) {
 		io.WriteString(os.Stderr, "The use of -memcopy=false with -compress is deprecated.\n")
 	}
 
-	must(validateOutput(&output))
+	must(validateOutput(output))
 	return
 }
 
-func validateOutput(output *string) error {
-	if *output == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-
-		*output = filepath.Join(cwd, "bindata.go")
-	}
-
-	stat, err := os.Lstat(*output)
+func validateOutput(output string) error {
+	stat, err := os.Lstat(output)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return err
@@ -189,7 +187,7 @@ func validateOutput(output *string) error {
 
 		// File does not exist. This is fine, just make
 		// sure the directory it is to be in exists.
-		if dir, _ := filepath.Split(*output); dir != "" {
+		if dir, _ := filepath.Split(output); dir != "" {
 			if err = os.MkdirAll(dir, 0744); err != nil {
 				return err
 			}
