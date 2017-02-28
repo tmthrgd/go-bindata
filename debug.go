@@ -21,10 +21,10 @@ func init() {
 	}).Parse(`import (
 	"io/ioutil"
 	"os"
-{{- if $.Config.Dev}}
 	"path/filepath"
-{{- end}}
+{{- if $.Config.AssetDir}}
 	"strings"
+{{- end}}
 {{- if $.Config.Restore}}
 
 	"github.com/tmthrgd/go-bindata/restore"
@@ -35,7 +35,7 @@ func init() {
 // given name. It returns an error if the asset could not be found
 // or could not be loaded.
 func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
-	path, ok := _bindata[strings.Replace(name, "\\", "/", -1)]
+	path, ok := _bindata[filepath.ToSlash(name)]
 	if !ok {
 		return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}

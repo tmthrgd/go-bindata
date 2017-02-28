@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // AssetAndInfo represents the generated AssetAndInfo method.
@@ -21,8 +20,7 @@ type AssetDir func(name string) (children []string, err error)
 
 // Asset restores an asset under the given directory
 func Asset(dir, name string, assetAndInfo AssetAndInfo) error {
-	canonicalName := strings.Replace(name, "\\", "/", -1)
-	path := filepath.Join(append([]string{dir}, strings.Split(canonicalName, "/")...)...)
+	path := filepath.Join(dir, filepath.FromSlash(name))
 
 	data, info, err := assetAndInfo(name)
 	if err != nil {

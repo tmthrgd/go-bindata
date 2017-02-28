@@ -75,10 +75,13 @@ import (
 	"io"
 {{- end}}
 	"os"
+	"path/filepath"
 {{- if $unsafeRead}}
 	"reflect"
 {{- end}}
+{{- if or $.Config.Compress $.Config.AssetDir}}
 	"strings"
+{{- end}}
 {{- if and $.Config.Compress $.Config.DecompressOnce}}
 	"sync"
 {{- end}}
@@ -245,7 +248,7 @@ var _bindata = map[string]*asset{
 // given name. It returns an error if the asset could not be found
 // or could not be loaded.
 func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
-	a, ok := _bindata[strings.Replace(name, "\\", "/", -1)]
+	a, ok := _bindata[filepath.ToSlash(name)]
 	if !ok {
 		return nil, nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 	}
@@ -303,7 +306,7 @@ var _hashNames = map[string]string{
 // AssetName returns the hashed name associated with an asset of a
 // given name.
 func AssetName(name string) (string, error) {
-	if name, ok := _hashNames[strings.Replace(name, "\\", "/", -1)]; ok {
+	if name, ok := _hashNames[filepath.ToSlash(name)]; ok {
 		return name, nil
 	}
 

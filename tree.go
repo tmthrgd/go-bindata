@@ -89,8 +89,7 @@ func AssetDir(name string) ([]string, error) {
 
 	if name != "" {
 		var ok bool
-		canonicalName := strings.Replace(name, "\\", "/", -1)
-		for _, p := range strings.Split(canonicalName, "/") {
+		for _, p := range strings.Split(filepath.ToSlash(name), "/") {
 			if node, ok = node[p]; !ok {
 				return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
 			}
