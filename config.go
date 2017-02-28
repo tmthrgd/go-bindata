@@ -212,7 +212,7 @@ func (opts *GenerateOptions) validate() error {
 	}
 
 	if (opts.HashFormat != NoHash && opts.HashFormat != NameUnchanged) &&
-		(opts.HashLength <= 0 || opts.HashLength > length) {
+		(opts.HashLength < 0 || opts.HashLength > length) {
 		return fmt.Errorf("go-bindata: HashLength must be between 1 and %d bytes in length", length)
 	}
 

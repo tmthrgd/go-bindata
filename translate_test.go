@@ -22,7 +22,6 @@ var testCases = [...]struct {
 		o.MemCopy = true
 		o.Compress = true
 		o.Metadata = true
-		o.HashLength = 16
 		// The AssetDir API currently produces
 		// wrongly formatted code. We're going
 		// to skip it for now.
@@ -38,36 +37,21 @@ var testCases = [...]struct {
 	{"copy", func(o *GenerateOptions) { o.MemCopy = true }},
 	{"metadata", func(o *GenerateOptions) { o.Metadata = true }},
 	{"decompress-once", func(o *GenerateOptions) { o.DecompressOnce = true }},
-	{"hash-dir", func(o *GenerateOptions) {
-		o.HashFormat = DirHash
-		o.HashLength = 16
-	}},
-	{"hash-suffix", func(o *GenerateOptions) {
-		o.HashFormat = NameHashSuffix
-		o.HashLength = 16
-	}},
-	{"hash-hashext", func(o *GenerateOptions) {
-		o.HashFormat = HashWithExt
-		o.HashLength = 16
-	}},
-	{"hash-unchanged", func(o *GenerateOptions) {
-		o.HashFormat = NameUnchanged
-		o.HashLength = 16
-	}},
+	{"hash-dir", func(o *GenerateOptions) { o.HashFormat = DirHash }},
+	{"hash-suffix", func(o *GenerateOptions) { o.HashFormat = NameHashSuffix }},
+	{"hash-hashext", func(o *GenerateOptions) { o.HashFormat = HashWithExt }},
+	{"hash-unchanged", func(o *GenerateOptions) { o.HashFormat = NameUnchanged }},
 	{"hash-enc-b32", func(o *GenerateOptions) {
 		o.HashEncoding = Base32Hash
 		o.HashFormat = DirHash
-		o.HashLength = 16
 	}},
 	{"hash-enc-b64", func(o *GenerateOptions) {
 		o.HashEncoding = Base64Hash
 		o.HashFormat = DirHash
-		o.HashLength = 16
 	}},
 	{"hash-key", func(o *GenerateOptions) {
 		o.HashKey = []byte{0x00, 0x11, 0x22, 0x33}
 		o.HashFormat = DirHash
-		o.HashLength = 16
 	}},
 }
 
