@@ -65,7 +65,7 @@ var _bindata = map[string]string{
 	{{- repeat " " (sub $max (len .Name))}} {{if $.Config.Dev -}}
 	{{printf "%q" .Name}}
 {{- else -}}
-	{{printf "%q" .Path}}
+	{{printf "%q" .AbsPath}}
 {{- end}},
 {{end -}}
 }`))

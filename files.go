@@ -5,121 +5,49 @@
 package bindata
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// findFiles recursively finds all the file paths in the given directory tree.
-// They are added to the given map as keys. Values will be safe function names
-// for each file, which will be used when generating the output code.
-func (g *Generator) findFiles(dir, prefix string, recursive bool) error {
-	dirpath := dir
-	if len(prefix) > 0 {
-		dirpath, _ = filepath.Abs(dirpath)
-		prefix, _ = filepath.Abs(prefix)
-		prefix = filepath.ToSlash(prefix)
-	}
-
-	fi, err := os.Stat(dirpath)
-	if err != nil {
-		return err
-	}
-
-	var list []os.FileInfo
-
-	if !fi.IsDir() {
-		dirpath = filepath.Dir(dirpath)
-		list = []os.FileInfo{fi}
-	} else {
-		g.visited[dirpath] = struct{}{}
-
-		fd, err := os.Open(dirpath)
+// FindFiles adds all files inside a directory to the
+// generated output. If recursive is true, files within
+// subdirectories of path will also be included.
+func (g *Generator) FindFiles(path string, recursive bool) error {
+	return filepath.Walk(path, func(assetPath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		list, err = fd.Readdir(0)
-		fd.Close()
-		if err != nil {
-			return err
-		}
-	}
+		if info.IsDir() {
+			if !recursive && assetPath != path {
+				return filepath.SkipDir
+			}
 
-outer:
-	for _, file := range list {
-		var asset binAsset
-		asset.Path = filepath.Join(dirpath, file.Name())
-		asset.Name = filepath.ToSlash(asset.Path)
+			return nil
+		}
 
 		for _, re := range g.c.Ignore {
-			if re.MatchString(asset.Path) {
-				continue outer
+			if re.MatchString(assetPath) {
+				return nil
 			}
 		}
 
-		if file.IsDir() {
-			if !recursive {
-				continue
-			}
-
-			g.visited[asset.Path] = struct{}{}
-
-			path := filepath.Join(dir, file.Name())
-			if err = g.findFiles(path, prefix, recursive); err != nil {
-				return err
-			}
-
-			continue
-		} else if file.Mode()&os.ModeSymlink == os.ModeSymlink {
-			linkPath, err := os.Readlink(asset.Path)
-			if err != nil {
-				return err
-			}
-
-			if !filepath.IsAbs(linkPath) {
-				if linkPath, err = filepath.Abs(dirpath + "/" + linkPath); err != nil {
-					return err
-				}
-			}
-
-			if _, ok := g.visited[linkPath]; ok {
-				continue
-			}
-
-			g.visited[linkPath] = struct{}{}
-
-			if err = g.findFiles(asset.Path, prefix, recursive); err != nil {
-				return err
-			}
-
-			continue
+		name := strings.TrimPrefix(filepath.ToSlash(
+			strings.TrimPrefix(assetPath, g.c.Prefix)), "/")
+		if name == "" {
+			panic("should be impossible")
 		}
 
-		if strings.HasPrefix(asset.Name, prefix) {
-			asset.Name = asset.Name[len(prefix):]
-		} else if strings.HasSuffix(dir, file.Name()) {
-			// Issue 110: dir is a full path, including
-			// the file name (minus the basedir), so this
-			// is what we have to use.
-			asset.Name = dir
-		} else {
-			// Issue 110: dir is just that, a plain
-			// directory, so we have to add the file's
-			// name to it to form the full asset path.
-			asset.Name = filepath.Join(dir, file.Name())
+		asset := binAsset{
+			Path:         assetPath,
+			Name:         name,
+			OriginalName: name,
 		}
 
-		// If we have a leading slash, get rid of it.
-		asset.Name = strings.TrimPrefix(asset.Name, "/")
-
-		// This shouldn't happen.
-		if len(asset.Name) == 0 {
-			return fmt.Errorf("Invalid file: %v", asset.Path)
+		if g.c.Debug {
+			asset.AbsPath, _ = filepath.Abs(assetPath)
 		}
-
-		asset.OriginalName = asset.Name
 
 		if g.c.HashFormat != NoHash {
 			if err = hashFile(&g.c, &asset); err != nil {
@@ -127,9 +55,7 @@ outer:
 			}
 		}
 
-		asset.Path, _ = filepath.Abs(asset.Path)
 		g.toc = append(g.toc, asset)
-	}
-
-	return nil
+		return nil
+	})
 }

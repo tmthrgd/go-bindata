@@ -13,16 +13,13 @@ import (
 
 // Generator generates Go code that embeds static assets.
 type Generator struct {
-	c       Config
-	toc     []binAsset
-	visited map[string]struct{}
+	c   Config
+	toc []binAsset
 }
 
 // New returns a new Generator with a given configuration.
 func New(c *Config) (*Generator, error) {
-	g := &Generator{
-		visited: make(map[string]struct{}),
-	}
+	g := new(Generator)
 
 	if c != nil {
 		g.c = *c
@@ -36,13 +33,6 @@ func New(c *Config) (*Generator, error) {
 	}
 
 	return g, nil
-}
-
-// FindFiles adds all files inside a directory to the
-// generated output. If recursive is true, files within
-// subdirectories of path will also be included.
-func (g *Generator) FindFiles(path string, recursive bool) error {
-	return g.findFiles(path, g.c.Prefix, recursive)
 }
 
 // WriteTo writes the generated Go code to w.
