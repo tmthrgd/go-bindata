@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -31,27 +32,31 @@ func must(err error) {
 }
 
 func main() {
-	c, ignore, prefix, output := parseArgs()
+	opts, ignore, prefix, output := parseArgs()
 
-	g, err := bindata.New(c)
-	must(err)
+	var all bindata.Files
 
 	for i := 0; i < flag.NArg(); i++ {
 		path, recursive := parseInput(flag.Arg(i))
-		must(g.FindFiles(path, &bindata.FindFilesOptions{
+
+		files, err := bindata.FindFiles(path, &bindata.FindFilesOptions{
 			Prefix:    prefix,
 			Recursive: recursive,
 			Ignore:    ignore,
-		}))
+		})
+		must(err)
+
+		all = append(all, files...)
 	}
+
+	sort.Sort(all)
 
 	f, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	must(err)
 
 	defer f.Close()
 
-	_, err = g.WriteTo(f)
-	must(err)
+	must(all.Generate(f, opts))
 }
 
 // parseArgs create s a new, filled configuration instance
@@ -59,7 +64,7 @@ func main() {
 //
 // This function exits the program with an error, if
 // any of the command line options are incorrect.
-func parseArgs() (c *bindata.Config, ignore []*regexp.Regexp, prefix, output string) {
+func parseArgs() (opts *bindata.GenerateOptions, ignore []*regexp.Regexp, prefix, output string) {
 	flag.Usage = func() {
 		fmt.Printf("Usage: %s [options] <input directories>\n\n", os.Args[0])
 		flag.PrintDefaults()
@@ -70,7 +75,7 @@ func parseArgs() (c *bindata.Config, ignore []*regexp.Regexp, prefix, output str
 
 	flag.StringVar(&output, "o", "./bindata.go", "Optional name of the output file to be generated.")
 
-	c = &bindata.Config{
+	opts = &bindata.GenerateOptions{
 		Package:        "main",
 		MemCopy:        true,
 		Compress:       true,
@@ -82,30 +87,30 @@ func parseArgs() (c *bindata.Config, ignore []*regexp.Regexp, prefix, output str
 	}
 
 	var mode uint
-	flag.BoolVar(&c.Debug, "debug", c.Debug, "Do not embed the assets, but provide the embedding API. Contents will still be loaded from disk.")
-	flag.BoolVar(&c.Dev, "dev", c.Dev, "Similar to debug, but does not emit absolute paths. Expects a rootDir variable to already exist in the generated code's package.")
-	flag.StringVar(&c.Tags, "tags", c.Tags, "Optional set of build tags to include.")
+	flag.BoolVar(&opts.Debug, "debug", opts.Debug, "Do not embed the assets, but provide the embedding API. Contents will still be loaded from disk.")
+	flag.BoolVar(&opts.Dev, "dev", opts.Dev, "Similar to debug, but does not emit absolute paths. Expects a rootDir variable to already exist in the generated code's package.")
+	flag.StringVar(&opts.Tags, "tags", opts.Tags, "Optional set of build tags to include.")
 	flag.StringVar(&prefix, "prefix", "", "Optional path prefix to strip off asset names.")
-	flag.StringVar(&c.Package, "pkg", c.Package, "Package name to use in the generated code.")
-	flag.BoolVar(&c.MemCopy, "memcopy", c.MemCopy, "Do not use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
-	flag.BoolVar(&c.Compress, "compress", c.Compress, "Assets will be GZIP compressed when this flag is specified.")
-	flag.BoolVar(&c.Metadata, "metadata", c.Metadata, "Assets will preserve size, mode, and modtime info.")
-	flag.UintVar(&mode, "mode", uint(c.Mode), "Optional file mode override for all files.")
-	flag.Int64Var(&c.ModTime, "modtime", c.ModTime, "Optional modification unix timestamp override for all files.")
-	flag.BoolVar(&c.Restore, "restore", c.Restore, "[Deprecated]: use github.com/tmthrgd/go-bindata/restore.")
-	flag.Var((*hashFormatValue)(&c.HashFormat), "hash", "Optional the format of name hashing to apply.")
-	flag.IntVar(&c.HashLength, "hashlen", c.HashLength, "Optional length of hashes to be generated.")
-	flag.Var((*hashEncodingValue)(&c.HashEncoding), "hashenc", `Optional the encoding of the hash to use. (default "hex")`)
-	flag.Var((*hexEncodingValue)(&c.HashKey), "hashkey", "Optional hexadecimal key to use to turn the BLAKE2B hashing into a MAC.")
-	flag.BoolVar(&c.AssetDir, "assetdir", c.AssetDir, "Provide the AssetDir APIs.")
+	flag.StringVar(&opts.Package, "pkg", opts.Package, "Package name to use in the generated code.")
+	flag.BoolVar(&opts.MemCopy, "memcopy", opts.MemCopy, "Do not use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
+	flag.BoolVar(&opts.Compress, "compress", opts.Compress, "Assets will be GZIP compressed when this flag is specified.")
+	flag.BoolVar(&opts.Metadata, "metadata", opts.Metadata, "Assets will preserve size, mode, and modtime info.")
+	flag.UintVar(&mode, "mode", uint(opts.Mode), "Optional file mode override for all files.")
+	flag.Int64Var(&opts.ModTime, "modtime", opts.ModTime, "Optional modification unix timestamp override for all files.")
+	flag.BoolVar(&opts.Restore, "restore", opts.Restore, "[Deprecated]: use github.com/tmthrgd/go-bindata/restore.")
+	flag.Var((*hashFormatValue)(&opts.HashFormat), "hash", "Optional the format of name hashing to apply.")
+	flag.IntVar(&opts.HashLength, "hashlen", opts.HashLength, "Optional length of hashes to be generated.")
+	flag.Var((*hashEncodingValue)(&opts.HashEncoding), "hashenc", `Optional the encoding of the hash to use. (default "hex")`)
+	flag.Var((*hexEncodingValue)(&opts.HashKey), "hashkey", "Optional hexadecimal key to use to turn the BLAKE2B hashing into a MAC.")
+	flag.BoolVar(&opts.AssetDir, "assetdir", opts.AssetDir, "Provide the AssetDir APIs.")
 	flag.Var((*appendRegexValue)(&ignore), "ignore", "Regex pattern to ignore")
-	flag.BoolVar(&c.DecompressOnce, "once", c.DecompressOnce, "Only GZIP decompress the resource once.")
+	flag.BoolVar(&opts.DecompressOnce, "once", opts.DecompressOnce, "Only GZIP decompress the resource once.")
 
 	// Deprecated options
 	var noMemCopy, noCompress, noMetadata bool
-	flag.BoolVar(&noMemCopy, "nomemcopy", !c.MemCopy, "[Deprecated]: use -memcpy=false.")
-	flag.BoolVar(&noCompress, "nocompress", !c.Compress, "[Deprecated]: use -compress=false.")
-	flag.BoolVar(&noMetadata, "nometadata", !c.Metadata, "[Deprecated]: use -metadata=false.")
+	flag.BoolVar(&noMemCopy, "nomemcopy", !opts.MemCopy, "[Deprecated]: use -memcpy=false.")
+	flag.BoolVar(&noCompress, "nocompress", !opts.Compress, "[Deprecated]: use -compress=false.")
+	flag.BoolVar(&noMetadata, "nometadata", !opts.Metadata, "[Deprecated]: use -metadata=false.")
 
 	flag.Parse()
 
@@ -130,7 +135,7 @@ func parseArgs() (c *bindata.Config, ignore []*regexp.Regexp, prefix, output str
 		output = filepath.Join(cwd, "bindata.go")
 	}
 
-	c.Mode = os.FileMode(mode)
+	opts.Mode = os.FileMode(mode)
 
 	var pkgSet, outputSet bool
 	var memcopySet, nomemcopySet bool
@@ -161,23 +166,23 @@ func parseArgs() (c *bindata.Config, ignore []*regexp.Regexp, prefix, output str
 	if outputSet && !pkgSet {
 		pkg := identifier(filepath.Base(filepath.Dir(output)))
 		if pkg != "" {
-			c.Package = pkg
+			opts.Package = pkg
 		}
 	}
 
 	if !memcopySet && nomemcopySet {
-		c.MemCopy = !noMemCopy
+		opts.MemCopy = !noMemCopy
 	}
 
 	if !compressSet && nocompressSet {
-		c.Compress = !noCompress
+		opts.Compress = !noCompress
 	}
 
 	if !metadataSet && nometadataSet {
-		c.Metadata = !noMetadata
+		opts.Metadata = !noMetadata
 	}
 
-	if !c.MemCopy && c.Compress {
+	if !opts.MemCopy && opts.Compress {
 		io.WriteString(os.Stderr, "The use of -memcopy=false with -compress is deprecated.\n")
 	}
 
