@@ -3,7 +3,27 @@
 [![GoDoc](https://godoc.org/github.com/tmthrgd/go-bindata?status.svg)](https://godoc.org/github.com/tmthrgd/go-bindata)
 [![Build Status](https://travis-ci.org/tmthrgd/go-bindata.svg?branch=master)](https://travis-ci.org/tmthrgd/go-bindata)
 
-This is a forked version of a forked version of go-bindata. It was forked by [lestrrat](https://github.com/lestrrat/go-bindata) as the original author seems to be either busy in real life or has lost interest on this project. I'm forking once again to add new features.
+This is a rewrite of go-bindata that started life as fork of a fork. It
+was forked by [lestrrat](https://github.com/lestrrat/go-bindata) as
+[jteeuwen](https://github.com/jteeuwen/go-bindata) seemed to have
+abandoned the project.
+
+Since that fork, go-bindata has been
+[largely rewritten](https://github.com/tmthrgd/go-bindata/compare/3adb6a8b66f07a123c3d44e8f6c7e78bbdd029c2...master)
+and has become a standalone project. While the generated code has changed,
+the generated API remains backwards compatible. The CLI also remains
+backwards compatible. The
+[package API](https://godoc.org/github.com/tmthrgd/go-bindata) is not
+backwards compatible.
+
+The suggested way of using go-bindata is through the
+[package API](https://godoc.org/github.com/tmthrgd/go-bindata) from a
+single .go file with an ignore build tag (`// +build ignore`) run with
+`//go:generate go run path/to/generate.go`.
+
+*Nota bene*: Most of the README that follows has not been updated to match
+the changes made since rewriting go-bindata and likely does not accurately
+represent the state of go-bindata.
 
 ## bindata
 
