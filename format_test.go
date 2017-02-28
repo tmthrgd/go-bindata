@@ -48,6 +48,10 @@ func TestFormatting(t *testing.T) {
 
 			t.Error("not correctly formatted")
 
+			if !testing.Verbose() {
+				return
+			}
+
 			if diff, err := testDiff(buf.String(), string(out)); err != nil {
 				t.Error(err)
 			} else {

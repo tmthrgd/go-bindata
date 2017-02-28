@@ -79,7 +79,11 @@ func TestCorpus(t *testing.T) {
 				return
 			}
 
-			t.Fail()
+			t.Error("output differs")
+
+			if !testing.Verbose() {
+				return
+			}
 
 			if diff, err := testDiff(string(expect), generated.String()); err != nil {
 				t.Error(err)
