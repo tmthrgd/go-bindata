@@ -22,7 +22,7 @@ func (v byName) Less(i, j int) bool { return v[i].Name() < v[j].Name() }
 // findFiles recursively finds all the file paths in the given directory tree.
 // They are added to the given map as keys. Values will be safe function names
 // for each file, which will be used when generating the output code.
-func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, visitedPaths map[string]struct{}) error {
+func (g *Generator) findFiles(dir, prefix string, recursive bool) error {
 	dirpath := dir
 	if len(prefix) > 0 {
 		dirpath, _ = filepath.Abs(dirpath)
@@ -41,7 +41,7 @@ func findFiles(c *Config, dir, prefix string, recursive bool, toc *[]binAsset, v
 		dirpath = filepath.Dir(dirpath)
 		list = []os.FileInfo{fi}
 	} else {
-		visitedPaths[dirpath] = struct{}{}
+		g.visited[dirpath] = struct{}{}
 
 		fd, err := os.Open(dirpath)
 		if err != nil {
@@ -63,7 +63,7 @@ outer:
 		asset.Path = filepath.Join(dirpath, file.Name())
 		asset.Name = filepath.ToSlash(asset.Path)
 
-		for _, re := range c.Ignore {
+		for _, re := range g.c.Ignore {
 			if re.MatchString(asset.Path) {
 				continue outer
 			}
@@ -74,10 +74,10 @@ outer:
 				continue
 			}
 
-			visitedPaths[asset.Path] = struct{}{}
+			g.visited[asset.Path] = struct{}{}
 
 			path := filepath.Join(dir, file.Name())
-			if err = findFiles(c, path, prefix, recursive, toc, visitedPaths); err != nil {
+			if err = g.findFiles(path, prefix, recursive); err != nil {
 				return err
 			}
 
@@ -94,13 +94,13 @@ outer:
 				}
 			}
 
-			if _, ok := visitedPaths[linkPath]; ok {
+			if _, ok := g.visited[linkPath]; ok {
 				continue
 			}
 
-			visitedPaths[linkPath] = struct{}{}
+			g.visited[linkPath] = struct{}{}
 
-			if err = findFiles(c, asset.Path, prefix, recursive, toc, visitedPaths); err != nil {
+			if err = g.findFiles(asset.Path, prefix, recursive); err != nil {
 				return err
 			}
 
@@ -129,16 +129,16 @@ outer:
 			return fmt.Errorf("Invalid file: %v", asset.Path)
 		}
 
-		if c.HashFormat != NoHash {
+		if g.c.HashFormat != NoHash {
 			asset.OriginalName = asset.Name
 
-			if err = hashFile(c, &asset); err != nil {
+			if err = hashFile(&g.c, &asset); err != nil {
 				return err
 			}
 		}
 
 		asset.Path, _ = filepath.Abs(asset.Path)
-		*toc = append(*toc, asset)
+		g.toc = append(g.toc, asset)
 	}
 
 	return nil

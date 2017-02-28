@@ -36,7 +36,7 @@ func New(c *Config) (*Generator, error) {
 // generated output. If recursive is true, files within
 // subdirectories of path will also be included.
 func (g *Generator) FindFiles(path string, recursive bool) error {
-	return findFiles(&g.c, path, g.c.Prefix, recursive, &g.toc, g.visited)
+	return g.findFiles(path, g.c.Prefix, recursive)
 }
 
 // WriteTo writes the generated Go code to w.
