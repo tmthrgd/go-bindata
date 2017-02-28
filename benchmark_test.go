@@ -7,55 +7,32 @@ package bindata
 import "testing"
 
 func BenchmarkFindFiles(b *testing.B) {
-	for _, test := range testCases {
-		test := test
-		b.Run(test.name, func(b *testing.B) {
-			c := &Config{Package: "main"}
-			test.config(c)
-
-			g, err := New(c)
-			if err != nil {
-				b.Fatal(err)
-			}
-
-			b.ResetTimer()
-
-			for n := 0; n < b.N; n++ {
-				if err = g.FindFiles("testdata", &FindFilesOptions{
-					Prefix:    "testdata",
-					Recursive: true,
-				}); err != nil {
-					b.Fatal(err)
-				}
-
-				g.toc = nil
-			}
-		})
+	for n := 0; n < b.N; n++ {
+		if _, err := FindFiles("testdata", &FindFilesOptions{
+			Prefix:    "testdata",
+			Recursive: true,
+		}); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
-func BenchmarkWriteTo(b *testing.B) {
+func BenchmarkGenerate(b *testing.B) {
+	files, err := testFiles()
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	for _, test := range testCases {
 		test := test
 		b.Run(test.name, func(b *testing.B) {
-			c := &Config{Package: "main"}
-			test.config(c)
-
-			g, err := New(c)
-			if err != nil {
-				b.Fatal(err)
-			}
-
-			for path, opts := range testPaths {
-				if err = g.FindFiles(path, opts); err != nil {
-					b.Fatal(err)
-				}
-			}
+			o := &GenerateOptions{Package: "main"}
+			test.opts(o)
 
 			b.ResetTimer()
 
 			for n := 0; n < b.N; n++ {
-				if _, err = g.WriteTo(nopWriter{}); err != nil {
+				if err = files.Generate(nopWriter{}, o); err != nil {
 					b.Fatal(err)
 				}
 			}

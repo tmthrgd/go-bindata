@@ -6,57 +6,40 @@ package bindata
 
 import (
 	"io"
-	"sort"
 	"strings"
 	"text/template"
 )
 
-// Generator generates Go code that embeds static assets.
-type Generator struct {
-	c   Config
-	toc []binAsset
-}
-
-// New returns a new Generator with a given configuration.
-func New(c *Config) (*Generator, error) {
-	g := new(Generator)
-
-	if c != nil {
-		g.c = *c
-	} else {
-		g.c.Package = "main"
+// Generate writes the generated Go code to w.
+func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
+	if opts == nil {
+		opts = &GenerateOptions{Package: "main"}
 	}
 
-	// Ensure our configuration has sane values.
-	if err := g.c.validate(); err != nil {
-		return nil, err
+	if err := opts.validate(); err != nil {
+		return err
 	}
 
-	return g, nil
-}
+	assets := make([]binAsset, 0, len(f))
+	for _, file := range f {
+		asset := binAsset{
+			Path:         file.path,
+			AbsPath:      file.abs,
+			Name:         file.name,
+			OriginalName: file.name,
+		}
+		if err := hashFile(opts, &asset); err != nil {
+			return err
+		}
 
-// WriteTo writes the generated Go code to w.
-func (g *Generator) WriteTo(w io.Writer) (n int64, err error) {
-	sort.Sort(tocSorter(g.toc))
+		assets = append(assets, asset)
+	}
 
-	lw := lenWriter{W: w}
-	err = baseTemplate.Execute(&lw, struct {
-		Config    *Config
+	return baseTemplate.Execute(w, struct {
+		Config    *GenerateOptions
 		AssetName bool
 		Assets    []binAsset
-	}{&g.c, g.c.HashFormat != NoHash && g.c.HashFormat != NameUnchanged, g.toc})
-	return lw.N, err
-}
-
-type lenWriter struct {
-	W io.Writer
-	N int64
-}
-
-func (lw *lenWriter) Write(p []byte) (n int, err error) {
-	n, err = lw.W.Write(p)
-	lw.N += int64(n)
-	return
+	}{opts, opts.HashFormat != NoHash && opts.HashFormat != NameUnchanged, assets})
 }
 
 var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{

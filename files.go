@@ -11,6 +11,31 @@ import (
 	"strings"
 )
 
+// File represents a single asset file.
+type File struct {
+	name string // Key used in TOC -- name by which asset is referenced.
+	path string // Relative path.
+	abs  string // Absolute path, only used for Debug.
+}
+
+// Files represents a collection of asset files.
+type Files []*File
+
+// Len implements sort.Interface.
+func (f Files) Len() int {
+	return len(f)
+}
+
+// Less implements sort.Interface.
+func (f Files) Less(i, j int) bool {
+	return f[i].name < f[j].name
+}
+
+// Swap implements sort.Interface.
+func (f Files) Swap(i, j int) {
+	f[i], f[j] = f[j], f[i]
+}
+
 // FindFilesOptions defines a set of options to use
 // when searching for files.
 type FindFilesOptions struct {
@@ -41,12 +66,12 @@ type FindFilesOptions struct {
 
 // FindFiles adds all files inside a directory to the
 // generated output.
-func (g *Generator) FindFiles(path string, opts *FindFilesOptions) error {
+func FindFiles(path string, opts *FindFilesOptions) (files Files, err error) {
 	if opts == nil {
 		opts = new(FindFilesOptions)
 	}
 
-	return filepath.Walk(path, func(assetPath string, info os.FileInfo, err error) error {
+	if err = filepath.Walk(path, func(assetPath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -71,23 +96,16 @@ func (g *Generator) FindFiles(path string, opts *FindFilesOptions) error {
 			panic("should be impossible")
 		}
 
-		asset := binAsset{
-			Path:         assetPath,
-			Name:         name,
-			OriginalName: name,
-		}
-
-		if g.c.Debug {
-			asset.AbsPath, _ = filepath.Abs(assetPath)
-		}
-
-		if g.c.HashFormat != NoHash {
-			if err = hashFile(&g.c, &asset); err != nil {
-				return err
-			}
-		}
-
-		g.toc = append(g.toc, asset)
+		abs, _ := filepath.Abs(assetPath)
+		files = append(files, &File{
+			name: name,
+			path: assetPath,
+			abs:  abs,
+		})
 		return nil
-	})
+	}); err != nil {
+		return nil, err
+	}
+
+	return
 }

@@ -6,45 +6,69 @@ package bindata
 
 import (
 	"flag"
-	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 )
 
 var testCases = [...]struct {
-	name   string
-	config func(*Config)
+	name string
+	opts func(*GenerateOptions)
 }{
-	{"default", func(*Config) {}},
-	{"old-default", func(c *Config) {
-		c.Package = "main"
-		c.MemCopy = true
-		c.Compress = true
-		c.Metadata = true
-		c.HashLength = 16
+	{"default", func(*GenerateOptions) {}},
+	{"old-default", func(o *GenerateOptions) {
+		o.Package = "main"
+		o.MemCopy = true
+		o.Compress = true
+		o.Metadata = true
+		o.HashLength = 16
 		// The AssetDir API currently produces
 		// wrongly formatted code. We're going
 		// to skip it for now.
-		/*c.AssetDir = true
-		c.Restore = true*/
-		c.DecompressOnce = true
+		/*o.AssetDir = true
+		o.Restore = true*/
+		o.DecompressOnce = true
 	}},
-	{"debug", func(c *Config) { c.Debug = true }},
-	{"dev", func(c *Config) { c.Dev = true }},
-	{"tags", func(c *Config) { c.Tags = "!x" }},
-	{"package", func(c *Config) { c.Package = "test" }},
-	{"compress", func(c *Config) { c.Compress = true }},
-	{"copy", func(c *Config) { c.MemCopy = true }},
-	{"metadata", func(c *Config) { c.Metadata = true }},
-	{"decompress-once", func(c *Config) { c.DecompressOnce = true }},
-	{"hash-dir", func(c *Config) { c.HashFormat = DirHash; c.HashLength = 16 }},
-	{"hash-suffix", func(c *Config) { c.HashFormat = NameHashSuffix; c.HashLength = 16 }},
-	{"hash-hashext", func(c *Config) { c.HashFormat = HashWithExt; c.HashLength = 16 }},
-	{"hash-unchanged", func(c *Config) { c.HashFormat = NameUnchanged; c.HashLength = 16 }},
-	{"hash-enc-b32", func(c *Config) { c.HashEncoding = Base32Hash; c.HashFormat = DirHash; c.HashLength = 16 }},
-	{"hash-enc-b64", func(c *Config) { c.HashEncoding = Base64Hash; c.HashFormat = DirHash; c.HashLength = 16 }},
-	{"hash-key", func(c *Config) { c.HashKey = []byte{0x00, 0x11, 0x22, 0x33}; c.HashFormat = DirHash; c.HashLength = 16 }},
+	{"debug", func(o *GenerateOptions) { o.Debug = true }},
+	{"dev", func(o *GenerateOptions) { o.Dev = true }},
+	{"tags", func(o *GenerateOptions) { o.Tags = "!x" }},
+	{"package", func(o *GenerateOptions) { o.Package = "test" }},
+	{"compress", func(o *GenerateOptions) { o.Compress = true }},
+	{"copy", func(o *GenerateOptions) { o.MemCopy = true }},
+	{"metadata", func(o *GenerateOptions) { o.Metadata = true }},
+	{"decompress-once", func(o *GenerateOptions) { o.DecompressOnce = true }},
+	{"hash-dir", func(o *GenerateOptions) {
+		o.HashFormat = DirHash
+		o.HashLength = 16
+	}},
+	{"hash-suffix", func(o *GenerateOptions) {
+		o.HashFormat = NameHashSuffix
+		o.HashLength = 16
+	}},
+	{"hash-hashext", func(o *GenerateOptions) {
+		o.HashFormat = HashWithExt
+		o.HashLength = 16
+	}},
+	{"hash-unchanged", func(o *GenerateOptions) {
+		o.HashFormat = NameUnchanged
+		o.HashLength = 16
+	}},
+	{"hash-enc-b32", func(o *GenerateOptions) {
+		o.HashEncoding = Base32Hash
+		o.HashFormat = DirHash
+		o.HashLength = 16
+	}},
+	{"hash-enc-b64", func(o *GenerateOptions) {
+		o.HashEncoding = Base64Hash
+		o.HashFormat = DirHash
+		o.HashLength = 16
+	}},
+	{"hash-key", func(o *GenerateOptions) {
+		o.HashKey = []byte{0x00, 0x11, 0x22, 0x33}
+		o.HashFormat = DirHash
+		o.HashLength = 16
+	}},
 }
 
 var testPaths = map[string]*FindFilesOptions{
@@ -55,25 +79,30 @@ var testPaths = map[string]*FindFilesOptions{
 
 var gencode = flag.String("gencode", "", "write generated code to specified directory")
 
-func testGenerate(w io.Writer, c *Config) error {
-	g, err := New(c)
-	if err != nil {
-		return err
-	}
+func testFiles() (Files, error) {
+	var all Files
 
 	for path, opts := range testPaths {
-		if err = g.FindFiles(path, opts); err != nil {
-			return err
+		files, err := FindFiles(path, opts)
+		if err != nil {
+			return nil, err
 		}
+
+		all = append(all, files...)
 	}
 
-	_, err = g.WriteTo(w)
-	return err
+	sort.Sort(all)
+	return all, nil
 }
 
 func TestGenerate(t *testing.T) {
 	if *gencode == "" {
 		t.Skip("skipping test as -gencode flag not provided")
+	}
+
+	files, err := testFiles()
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	if err := os.Mkdir(*gencode, 0777); err != nil && !os.IsExist(err) {
@@ -85,15 +114,15 @@ func TestGenerate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			c := &Config{Package: "main"}
-			test.config(c)
+			o := &GenerateOptions{Package: "main"}
+			test.opts(o)
 
 			f, err := os.Create(filepath.Join(*gencode, test.name+".go"))
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			err = testGenerate(f, c)
+			err = files.Generate(f, o)
 			f.Close()
 			if err != nil {
 				t.Error(err)

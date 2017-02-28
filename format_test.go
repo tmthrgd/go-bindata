@@ -17,16 +17,21 @@ func TestFormatting(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
+	files, err := testFiles()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, test := range testCases {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			c := &Config{Package: "main"}
-			test.config(c)
+			o := &GenerateOptions{Package: "main"}
+			test.opts(o)
 
 			var buf bytes.Buffer
-			if err := testGenerate(&buf, c); err != nil {
+			if err := files.Generate(&buf, o); err != nil {
 				t.Fatal(err)
 			}
 

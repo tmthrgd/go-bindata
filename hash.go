@@ -23,8 +23,12 @@ var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 // length and encoding. It returns the hashed name, the
 // hash and any error that occurred. The hash is a BLAKE2B
 // digest of the file contents.
-func hashFile(c *Config, asset *binAsset) error {
-	h, err := blake2b.New512(c.HashKey)
+func hashFile(opts *GenerateOptions, asset *binAsset) error {
+	if opts.HashFormat == NoHash {
+		return nil
+	}
+
+	h, err := blake2b.New512(opts.HashKey)
 	if err != nil {
 		return err
 	}
@@ -42,12 +46,12 @@ func hashFile(c *Config, asset *binAsset) error {
 
 	asset.Hash = h.Sum(nil)
 
-	if c.HashFormat == NameUnchanged {
+	if opts.HashFormat == NameUnchanged {
 		return nil
 	}
 
 	var enc string
-	switch c.HashEncoding {
+	switch opts.HashEncoding {
 	case HexHash:
 		enc = hex.EncodeToString(asset.Hash)
 	case Base32Hash:
@@ -58,15 +62,15 @@ func hashFile(c *Config, asset *binAsset) error {
 		return errors.New("invalid HashEncoding")
 	}
 
-	if c.HashLength > len(enc) {
+	if opts.HashLength > len(enc) {
 		return errors.New("invalid HashLength: longer than generated hash")
 	}
 
 	dir, file := filepath.Split(asset.Name)
 	ext := filepath.Ext(file)
-	enc = enc[:c.HashLength]
+	enc = enc[:opts.HashLength]
 
-	switch c.HashFormat {
+	switch opts.HashFormat {
 	case DirHash:
 		asset.Name = filepath.Join(dir, enc, file)
 	case NameHashSuffix:

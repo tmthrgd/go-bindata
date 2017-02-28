@@ -75,8 +75,9 @@ func (he HashEncoding) String() string {
 	}
 }
 
-// Config defines a set of options for the asset conversion.
-type Config struct {
+// GenerateOptions defines a set of options to use
+// when generating the Go code.
+type GenerateOptions struct {
 	// Name of the package to use. Defaults to 'main'.
 	Package string
 
@@ -187,21 +188,21 @@ type Config struct {
 
 // validate ensures the config has sane values.
 // Part of which means checking if certain file/directory paths exist.
-func (c *Config) validate() error {
-	if len(c.Package) == 0 {
+func (opts *GenerateOptions) validate() error {
+	if len(opts.Package) == 0 {
 		return errors.New("go-bindata: missing package name")
 	}
 
-	if c.Mode&^os.ModePerm != 0 {
+	if opts.Mode&^os.ModePerm != 0 {
 		return errors.New("go-bindata: invalid mode specified")
 	}
 
-	if (c.Debug || c.Dev) && c.HashFormat != NoHash {
+	if (opts.Debug || opts.Dev) && opts.HashFormat != NoHash {
 		return errors.New("go-bindata: HashFormat is not compatible with Debug and Dev")
 	}
 
 	length := 0
-	switch c.HashEncoding {
+	switch opts.HashEncoding {
 	case HexHash:
 		length = hex.EncodedLen(blake2b.Size)
 	case Base32Hash:
@@ -210,12 +211,12 @@ func (c *Config) validate() error {
 		length = base64.RawStdEncoding.EncodedLen(blake2b.Size)
 	}
 
-	if (c.HashFormat != NoHash && c.HashFormat != NameUnchanged) &&
-		(c.HashLength <= 0 || c.HashLength > length) {
+	if (opts.HashFormat != NoHash && opts.HashFormat != NameUnchanged) &&
+		(opts.HashLength <= 0 || opts.HashLength > length) {
 		return fmt.Errorf("go-bindata: HashLength must be between 1 and %d bytes in length", length)
 	}
 
-	if c.Restore && !c.AssetDir {
+	if opts.Restore && !opts.AssetDir {
 		return errors.New("go-bindata: Restore cannot be used without AssetDir")
 	}
 
