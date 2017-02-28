@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -107,6 +108,10 @@ type Config struct {
 	// If left empty, this defaults to 'bindata.go' in the current
 	// working directory.
 	Output string
+
+	// OutputWriter defins an writer to output the generated code to.
+	// This takes precedence over Output.
+	OutputWriter io.Writer
 
 	// Prefix defines a path prefix which should be stripped from all
 	// file names when generating the keys in the table of contents.
@@ -255,30 +260,32 @@ func (c *Config) validate() error {
 		}
 	}
 
-	if len(c.Output) == 0 {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-
-		c.Output = filepath.Join(cwd, "bindata.go")
-	}
-
-	stat, err := os.Lstat(c.Output)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-
-		// File does not exist. This is fine, just make
-		// sure the directory it is to be in exists.
-		if dir, _ := filepath.Split(c.Output); dir != "" {
-			if err = os.MkdirAll(dir, 0744); err != nil {
+	if c.OutputWriter != nil {
+		if len(c.Output) == 0 {
+			cwd, err := os.Getwd()
+			if err != nil {
 				return err
 			}
+
+			c.Output = filepath.Join(cwd, "bindata.go")
 		}
-	} else if stat.IsDir() {
-		return errors.New("go-bindata: output path is a directory")
+
+		stat, err := os.Lstat(c.Output)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return err
+			}
+
+			// File does not exist. This is fine, just make
+			// sure the directory it is to be in exists.
+			if dir, _ := filepath.Split(c.Output); dir != "" {
+				if err = os.MkdirAll(dir, 0744); err != nil {
+					return err
+				}
+			}
+		} else if stat.IsDir() {
+			return errors.New("go-bindata: output path is a directory")
+		}
 	}
 
 	if c.Mode&^os.ModePerm != 0 {

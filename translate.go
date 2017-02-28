@@ -13,10 +13,10 @@ import (
 // Translate reads assets from an input directory, converts them
 // to Go code and writes new files to the output specified
 // in the given configuration.
-func Translate(c *Config) error {
+func Translate(c *Config) (err error) {
 	// Ensure our configuration has sane values.
-	if err := c.validate(); err != nil {
-		return err
+	if err = c.validate(); err != nil {
+		return
 	}
 
 	var toc []binAsset
@@ -24,18 +24,20 @@ func Translate(c *Config) error {
 
 	// Locate all the assets.
 	for _, input := range c.Input {
-		if err := findFiles(c, input.Path, c.Prefix, input.Recursive, &toc, visitedPaths); err != nil {
-			return err
+		if err = findFiles(c, input.Path, c.Prefix, input.Recursive, &toc, visitedPaths); err != nil {
+			return
 		}
 	}
 
-	out, err := os.OpenFile(c.Output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		return err
+	w := c.OutputWriter
+	if w == nil {
+		if w, err = os.OpenFile(c.Output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666); err != nil {
+			return err
+		}
+		defer w.(*os.File).Close()
 	}
-	defer out.Close()
 
-	return baseTemplate.Execute(out, struct {
+	return baseTemplate.Execute(w, struct {
 		Config    *Config
 		AssetName bool
 		Assets    []binAsset
