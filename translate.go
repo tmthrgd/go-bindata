@@ -10,6 +10,14 @@ import (
 	"text/template"
 )
 
+// binAsset holds information about a single asset to be processed.
+type binAsset struct {
+	Path         string // Relative path.
+	Name         string // Key used in TOC -- name by which asset is referenced.
+	OriginalName string // Original Name before hashing applied to Name.
+	Hash         []byte // Generated hash of file.
+}
+
 // Generate writes the generated Go code to w.
 func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	if opts == nil {
