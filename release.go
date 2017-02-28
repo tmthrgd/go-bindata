@@ -293,6 +293,13 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 
 {{- if $.AssetName}}
 
+var _hashNames = map[string]string{
+{{$max := maxOriginalNameLength .Assets -}}
+{{range .Assets}}	{{printf "%q" .OriginalName}}:
+	{{- repeat " " (sub $max (len .OriginalName))}} {{printf "%q" .Name}},
+{{end -}}
+}
+
 // AssetName returns the hashed name associated with an asset of a
 // given name.
 func AssetName(name string) (string, error) {
@@ -301,13 +308,6 @@ func AssetName(name string) (string, error) {
 	}
 
 	return "", &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
-}
-
-var _hashNames = map[string]string{
-{{$max := maxOriginalNameLength .Assets -}}
-{{range .Assets}}	{{printf "%q" .OriginalName}}:
-	{{- repeat " " (sub $max (len .OriginalName))}} {{printf "%q" .Name}},
-{{end -}}
 }
 {{- end}}`))
 }
