@@ -10,8 +10,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sync"
 	"text/template"
 )
+
+var gzipPool sync.Pool
 
 func init() {
 	template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
@@ -39,11 +42,18 @@ func init() {
 			var buf bytes.Buffer
 			buf.WriteString(`"`)
 
-			gz := gzip.NewWriter(&stringWriter{
+			sw := &stringWriter{
 				Writer: &buf,
 				Indent: indent,
 				WrapAt: wrapAt,
-			})
+			}
+
+			gz, _ := gzipPool.Get().(*gzip.Writer)
+			if gz == nil {
+				gz = gzip.NewWriter(sw)
+			} else {
+				gz.Reset(sw)
+			}
 
 			if _, err := gz.Write(data); err != nil {
 				return "", err
@@ -52,6 +62,8 @@ func init() {
 			if err := gz.Close(); err != nil {
 				return "", err
 			}
+
+			gzipPool.Put(gz)
 
 			buf.WriteString(`"`)
 			return buf.String(), nil
