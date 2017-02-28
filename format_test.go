@@ -7,17 +7,26 @@ package bindata
 import (
 	"bytes"
 	"flag"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/pmezard/go-difflib/difflib"
 	"golang.org/x/tools/imports"
 )
 
-var gencode = flag.Bool("gencode", false, "will log the generated go code")
+var gencode = flag.String("gencode", "", "write generated code to specified directory")
 
 func TestFormatting(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
+	}
+
+	if *gencode != "" {
+		if err := os.Mkdir(*gencode, 0777); err != nil && !os.IsExist(err) {
+			t.Error(err)
+		}
 	}
 
 	for _, test := range [...]struct {
@@ -75,8 +84,10 @@ func TestFormatting(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if *gencode {
-				t.Log(buf.String())
+			if *gencode != "" {
+				if err := ioutil.WriteFile(filepath.Join(*gencode, test.name+".go"), buf.Bytes(), 0666); err != nil {
+					t.Error(err)
+				}
 			}
 
 			out, err := imports.Process("bindata.go", buf.Bytes(), nil)
