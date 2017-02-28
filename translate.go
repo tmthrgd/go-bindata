@@ -31,9 +31,9 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	assets := make([]binAsset, 0, len(f))
 	for _, file := range f {
 		asset := binAsset{
-			Path:         file.path,
-			Name:         file.name,
-			OriginalName: file.name,
+			Path:         file.Path,
+			Name:         file.Name,
+			OriginalName: file.Name,
 		}
 		if err := hashFile(opts, &asset); err != nil {
 			return err

@@ -13,8 +13,8 @@ import (
 
 // File represents a single asset file.
 type File struct {
-	name string // Key used in TOC -- name by which asset is referenced.
-	path string // Relative path.
+	Name string // Key used in TOC -- name by which asset is referenced.
+	Path string // Relative path.
 }
 
 // Files represents a collection of asset files.
@@ -27,7 +27,7 @@ func (f Files) Len() int {
 
 // Less implements sort.Interface.
 func (f Files) Less(i, j int) bool {
-	return f[i].name < f[j].name
+	return f[i].Name < f[j].Name
 }
 
 // Swap implements sort.Interface.
@@ -95,10 +95,7 @@ func FindFiles(path string, opts *FindFilesOptions) (files Files, err error) {
 			panic("should be impossible")
 		}
 
-		files = append(files, &File{
-			name: name,
-			path: assetPath,
-		})
+		files = append(files, &File{name, assetPath})
 		return nil
 	}); err != nil {
 		return nil, err
