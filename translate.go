@@ -43,10 +43,9 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	}
 
 	return baseTemplate.Execute(w, struct {
-		Opts      *GenerateOptions
-		AssetName bool
-		Assets    []binAsset
-	}{opts, opts.HashFormat != NoHash && opts.HashFormat != NameUnchanged, assets})
+		Opts   *GenerateOptions
+		Assets []binAsset
+	}{opts, assets})
 }
 
 var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{

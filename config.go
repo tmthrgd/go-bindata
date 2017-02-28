@@ -20,15 +20,15 @@ type HashFormat int
 const (
 	// NoHash disables name hashing.
 	NoHash HashFormat = iota
+	// NameUnchanged generates the file hash but does not change
+	// the asset name.
+	NameUnchanged
 	// DirHash formats names like path/to/hash/name.ext.
 	DirHash
 	// NameHashSuffix formats names like path/to/name-hash.ext.
 	NameHashSuffix
 	// HashWithExt formats names like path/to/hash.ext.
 	HashWithExt
-	// NameUnchanged generates the file hash but does not change
-	// the asset name.
-	NameUnchanged
 )
 
 func (hf HashFormat) String() string {
