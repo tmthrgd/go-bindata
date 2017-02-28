@@ -76,17 +76,6 @@ func (he HashEncoding) String() string {
 	}
 }
 
-// InputConfig defines options on a asset directory to be convert.
-type InputConfig struct {
-	// Path defines a directory containing asset files to be included
-	// in the generated output.
-	Path string
-
-	// Recursive defines whether subdirectories of Path
-	// should be recursively included in the conversion.
-	Recursive bool
-}
-
 // Config defines a set of options for the asset conversion.
 type Config struct {
 	// Name of the package to use. Defaults to 'main'.
@@ -97,10 +86,6 @@ type Config struct {
 	// `// +build` line in the beginning of the output file
 	// and must follow the build tags syntax specified by the go tool.
 	Tags string
-
-	// Input defines the directory path, containing all asset files as
-	// well as whether to recursively process assets in any sub directories.
-	Input []InputConfig
 
 	// Prefix defines a path prefix which should be stripped from all
 	// file names when generating the keys in the table of contents.
@@ -230,12 +215,6 @@ func (c *Config) validate() error {
 
 	if len(c.Package) == 0 {
 		return errors.New("go-bindata: missing package name")
-	}
-
-	for _, input := range c.Input {
-		if _, err := os.Lstat(input.Path); err != nil {
-			return err
-		}
 	}
 
 	if c.Mode&^os.ModePerm != 0 {

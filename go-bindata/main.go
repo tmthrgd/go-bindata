@@ -22,6 +22,20 @@ import (
 func main() {
 	c, output := parseArgs()
 
+	g, err := bindata.New(c)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
+		os.Exit(1)
+	}
+
+	for i := 0; i < flag.NArg(); i++ {
+		path, recursive := parseInput(flag.Arg(i))
+		if err = g.FindFiles(path, recursive); err != nil {
+			fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	f, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
@@ -29,7 +43,7 @@ func main() {
 	}
 	defer f.Close()
 
-	if err := bindata.Translate(f, c); err != nil {
+	if _, err = g.WriteTo(f); err != nil {
 		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
 		os.Exit(1)
 	}
@@ -105,12 +119,6 @@ func parseArgs() (c *bindata.Config, output string) {
 	}
 
 	c.Mode = os.FileMode(mode)
-
-	// Create input configurations.
-	c.Input = make([]bindata.InputConfig, flag.NArg())
-	for i := range c.Input {
-		c.Input[i] = parseInput(flag.Arg(i))
-	}
 
 	var pkgSet, outputSet bool
 	var memcopySet, nomemcopySet bool
@@ -199,17 +207,15 @@ func validateOutput(output *string) error {
 	return nil
 }
 
-// parseRecursive determines whether the given path has a recursive indicator and
+// parseInput determines whether the given path has a recursive indicator and
 // returns a new path with the recursive indicator chopped off if it does.
 //
 //  ex:
 //      /path/to/foo/...    -> (/path/to/foo, true)
 //      /path/to/bar        -> (/path/to/bar, false)
-func parseInput(path string) bindata.InputConfig {
-	return bindata.InputConfig{
-		Path:      filepath.Clean(strings.TrimSuffix(path, "/...")),
-		Recursive: strings.HasSuffix(path, "/..."),
-	}
+func parseInput(input string) (path string, recursive bool) {
+	return filepath.Clean(strings.TrimSuffix(input, "/...")),
+		strings.HasSuffix(input, "/...")
 }
 
 // identifier removes all characters from a string that are not valid in

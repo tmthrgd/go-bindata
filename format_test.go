@@ -58,19 +58,20 @@ func TestFormatting(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			c := &Config{
-				Package: "main",
-				Input: []InputConfig{
-					{
-						Path:      "testdata",
-						Recursive: true,
-					},
-				},
-			}
+			c := &Config{Package: "main"}
 			test.config(c)
 
+			g, err := New(c)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if err = g.FindFiles("testdata", true); err != nil {
+				t.Fatal(err)
+			}
+
 			var buf bytes.Buffer
-			if err := Translate(&buf, c); err != nil {
+			if _, err := g.WriteTo(&buf); err != nil {
 				t.Fatal(err)
 			}
 
