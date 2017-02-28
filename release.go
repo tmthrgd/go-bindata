@@ -6,7 +6,7 @@ package bindata
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"io/ioutil"
 	"os"
 	"path"
@@ -21,7 +21,7 @@ var (
 		},
 	}
 
-	gzipPool sync.Pool
+	flatePool sync.Pool
 )
 
 func init() {
@@ -50,7 +50,7 @@ func init() {
 			bufPool.Put(buf)
 			return out
 		},
-		"gzip": func(data []byte, indent string, wrapAt int) (string, error) {
+		"flate": func(data []byte, indent string, wrapAt int) (out string, err error) {
 			buf := bufPool.Get().(*bytes.Buffer)
 			buf.WriteString(`"`)
 
@@ -60,27 +60,27 @@ func init() {
 				WrapAt: wrapAt,
 			}
 
-			gz, _ := gzipPool.Get().(*gzip.Writer)
-			if gz == nil {
-				gz = gzip.NewWriter(sw)
-			} else {
-				gz.Reset(sw)
+			fw, _ := flatePool.Get().(*flate.Writer)
+			if fw != nil {
+				fw.Reset(sw)
+			} else if fw, err = flate.NewWriter(sw, flate.BestCompression); err != nil {
+				return
 			}
 
-			if _, err := gz.Write(data); err != nil {
+			if _, err = fw.Write(data); err != nil {
 				return "", err
 			}
 
-			if err := gz.Close(); err != nil {
+			if err = fw.Close(); err != nil {
 				return "", err
 			}
 
 			buf.WriteString(`"`)
-			out := buf.String()
+			out = buf.String()
 
 			buf.Reset()
 			bufPool.Put(buf)
-			gzipPool.Put(gz)
+			flatePool.Put(fw)
 			return out, nil
 		},
 		"maxOriginalNameLength": func(toc []binAsset) int {
@@ -98,7 +98,7 @@ func init() {
 import (
 {{- if $.Compress}}
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"io"
 {{- end}}
 	"os"
@@ -239,7 +239,7 @@ var _bindata = map[string]*asset{
 		data: {{$data := read .Path -}}
 		{{- if $.Compress -}}
 			"" +
-			{{gzip $data "\t\t\t" 24}}
+			{{flate $data "\t\t\t" 24}}
 		{{- else -}}
 			bindataRead("" +
 			{{wrap $data "\t\t\t" 24 -}}
@@ -281,17 +281,14 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 	}
 {{if and $.Compress $.DecompressOnce}}
 	a.once.Do(func() {
-		var gz *gzip.Reader
-		if gz, a.err = gzip.NewReader(strings.NewReader(a.data)); a.err != nil {
-			return
-		}
+		fr := flate.NewReader(strings.NewReader(a.data))
 
 		var buf bytes.Buffer
-		if _, a.err = io.Copy(&buf, gz); a.err != nil {
+		if _, a.err = io.Copy(&buf, fr); a.err != nil {
 			return
 		}
 
-		if a.err = gz.Close(); a.err == nil {
+		if a.err = fr.Close(); a.err == nil {
 			a.bytes = buf.Bytes()
 		}
 	})
@@ -301,17 +298,14 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 
 	return a.bytes, a, nil
 {{- else if $.Compress}}
-	gz, err := gzip.NewReader(strings.NewReader(a.data))
-	if err != nil {
-		return nil, nil, &os.PathError{Op: "read", Path: name, Err: err}
-	}
+	fr := flate.NewReader(strings.NewReader(a.data))
 
 	var buf bytes.Buffer
-	if _, err = io.Copy(&buf, gz); err != nil {
+	if _, err := io.Copy(&buf, fr); err != nil {
 		return nil, nil, &os.PathError{Op: "read", Path: name, Err: err}
 	}
 
-	if err = gz.Close(); err != nil {
+	if err := fr.Close(); err != nil {
 		return nil, nil, &os.PathError{Op: "read", Path: name, Err: err}
 	}
 
