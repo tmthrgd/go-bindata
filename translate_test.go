@@ -72,9 +72,10 @@ var testCases = [...]struct {
 }
 
 var testPaths = map[string]*FindFilesOptions{
-	"testdata":  {Recursive: true},
-	"LICENSE":   nil,
-	"README.md": nil,
+	"testdata":        {Recursive: true},
+	"CONTRIBUTING.md": nil,
+	"LICENSE":         nil,
+	"README.md":       nil,
 }
 
 var gencode = flag.String("gencode", "", "write generated code to specified directory")
