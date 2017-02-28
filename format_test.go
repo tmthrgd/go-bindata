@@ -79,6 +79,14 @@ func TestFormatting(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			if err = g.FindFiles("LICENSE", false); err != nil {
+				t.Fatal(err)
+			}
+
+			if err = g.FindFiles("README.md", false); err != nil {
+				t.Fatal(err)
+			}
+
 			var buf bytes.Buffer
 			if _, err := g.WriteTo(&buf); err != nil {
 				t.Fatal(err)
