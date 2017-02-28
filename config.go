@@ -238,6 +238,10 @@ func NewConfig() *Config {
 // validate ensures the config has sane values.
 // Part of which means checking if certain file/directory paths exist.
 func (c *Config) validate() error {
+	if c == nil {
+		return errors.New("go-bindata: Config not provided")
+	}
+
 	if len(c.Package) == 0 {
 		return errors.New("go-bindata: missing package name")
 	}
