@@ -36,7 +36,7 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	}
 
 	return baseTemplate.Execute(w, struct {
-		Config    *GenerateOptions
+		Opts      *GenerateOptions
 		AssetName bool
 		Assets    []binAsset
 	}{opts, opts.HashFormat != NoHash && opts.HashFormat != NameUnchanged, assets})
@@ -50,7 +50,7 @@ var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
 }).Parse(`
 {{- template "header" .}}
 
-{{if or $.Config.Debug $.Config.Dev -}}
+{{if or $.Opts.Debug $.Opts.Dev -}}
 {{- template "debug" . -}}
 {{- else -}}
 {{- template "release" . -}}
@@ -58,7 +58,7 @@ var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
 
 {{template "common" . -}}
 
-{{- if $.Config.AssetDir}}
+{{- if $.Opts.AssetDir}}
 
 {{template "tree" . -}}
 {{- end}}
