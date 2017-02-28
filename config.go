@@ -207,6 +207,12 @@ func (opts *GenerateOptions) validate() error {
 		return errors.New("go-bindata: HashFormat is not compatible with Debug and Dev")
 	}
 
+	switch opts.HashFormat {
+	case NoHash, NameUnchanged, DirHash, NameHashSuffix, HashWithExt:
+	default:
+		return errors.New("go-bindata: invalid HashFormat specified")
+	}
+
 	var length uint
 	switch opts.HashEncoding {
 	case HexHash:
@@ -215,10 +221,12 @@ func (opts *GenerateOptions) validate() error {
 		length = maxB32Length
 	case Base64Hash:
 		length = maxB64Length
+	default:
+		return errors.New("go-bindata: invalid HashEncoding specified")
 	}
 
-	if (opts.HashFormat != NoHash && opts.HashFormat != NameUnchanged) && opts.HashLength > length {
-		return fmt.Errorf("go-bindata: HashLength must be between 1 and %d bytes in length", length)
+	if opts.HashLength > length {
+		return fmt.Errorf("go-bindata: HashLength must be less than %d bytes", length)
 	}
 
 	if len(opts.HashKey) > blake2b.Size {
