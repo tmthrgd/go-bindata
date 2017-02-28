@@ -39,9 +39,10 @@ func (g *Generator) findFiles(dir, prefix string, recursive bool) error {
 		if err != nil {
 			return err
 		}
-		defer fd.Close()
 
-		if list, err = fd.Readdir(0); err != nil {
+		list, err = fd.Readdir(0)
+		fd.Close()
+		if err != nil {
 			return err
 		}
 	}
