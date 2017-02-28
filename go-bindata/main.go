@@ -19,34 +19,32 @@ import (
 	"github.com/tmthrgd/go-bindata"
 )
 
+func must(err error) {
+	if err == nil {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
+	os.Exit(1)
+}
+
 func main() {
 	c, output := parseArgs()
 
 	g, err := bindata.New(c)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
-		os.Exit(1)
-	}
+	must(err)
 
 	for i := 0; i < flag.NArg(); i++ {
-		path, recursive := parseInput(flag.Arg(i))
-		if err = g.FindFiles(path, recursive); err != nil {
-			fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
-			os.Exit(1)
-		}
+		must(g.FindFiles(parseInput(flag.Arg(i))))
 	}
 
 	f, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
-		os.Exit(1)
-	}
+	must(err)
+
 	defer f.Close()
 
-	if _, err = g.WriteTo(f); err != nil {
-		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
-		os.Exit(1)
-	}
+	_, err = g.WriteTo(f)
+	must(err)
 }
 
 // parseArgs create s a new, filled configuration instance
@@ -169,11 +167,7 @@ func parseArgs() (c *bindata.Config, output string) {
 		io.WriteString(os.Stderr, "The use of -memcopy=false with -compress is deprecated.\n")
 	}
 
-	if err := validateOutput(&output); err != nil {
-		fmt.Fprintf(os.Stderr, "go-bindata: %v\n", err)
-		os.Exit(1)
-	}
-
+	must(validateOutput(&output))
 	return
 }
 
