@@ -221,20 +221,6 @@ type Config struct {
 	DecompressOnce bool
 }
 
-// NewConfig returns a default configuration struct.
-func NewConfig() *Config {
-	c := new(Config)
-	c.Package = "main"
-	c.MemCopy = true
-	c.Compress = true
-	c.Metadata = true
-	c.Restore = true
-	c.HashLength = 16
-	c.AssetDir = true
-	c.DecompressOnce = true
-	return c
-}
-
 // validate ensures the config has sane values.
 // Part of which means checking if certain file/directory paths exist.
 func (c *Config) validate() error {

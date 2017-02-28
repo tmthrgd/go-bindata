@@ -24,42 +24,49 @@ func TestFormatting(t *testing.T) {
 		name   string
 		config func(*Config)
 	}{
-		{"default", func(c *Config) {}},
+		{"default", func(*Config) {}},
+		{"old-default", func(c *Config) {
+			c.Package = "main"
+			c.MemCopy = true
+			c.Compress = true
+			c.Metadata = true
+			c.HashLength = 16
+			// The AssetDir API currently produces
+			// wrongly formatted code. We're going
+			// to skip it for now.
+			/*c.AssetDir = true
+			c.Restore = true*/
+			c.DecompressOnce = true
+		}},
 		{"debug", func(c *Config) { c.Debug = true }},
 		{"dev", func(c *Config) { c.Dev = true }},
 		{"tags", func(c *Config) { c.Tags = "!x" }},
 		{"package", func(c *Config) { c.Package = "test" }},
-		{"no-compress", func(c *Config) { c.Compress = false }},
-		{"no-copy", func(c *Config) { c.MemCopy = false; c.Compress = false }},
-		{"no-metadata", func(c *Config) { c.Metadata = false }},
-		{"decompress-always", func(c *Config) { c.DecompressOnce = false }},
-		{"hash-dir", func(c *Config) { c.HashFormat = DirHash }},
-		{"hash-suffix", func(c *Config) { c.HashFormat = NameHashSuffix }},
-		{"hash-hashext", func(c *Config) { c.HashFormat = HashWithExt }},
-		{"hash-unchanged", func(c *Config) { c.HashFormat = NameUnchanged }},
-		{"hash-length", func(c *Config) { c.HashLength = 12; c.HashFormat = DirHash }},
-		{"hash-enc-b32", func(c *Config) { c.HashEncoding = Base32Hash; c.HashFormat = DirHash }},
-		{"hash-enc-b64", func(c *Config) { c.HashEncoding = Base64Hash; c.HashFormat = DirHash }},
-		{"hash-key", func(c *Config) { c.HashKey = []byte{0x00, 0x11, 0x22, 0x33}; c.HashFormat = DirHash }},
+		{"compress", func(c *Config) { c.Compress = true }},
+		{"copy", func(c *Config) { c.MemCopy = true }},
+		{"metadata", func(c *Config) { c.Metadata = true }},
+		{"decompress-once", func(c *Config) { c.DecompressOnce = true }},
+		{"hash-dir", func(c *Config) { c.HashFormat = DirHash; c.HashLength = 16 }},
+		{"hash-suffix", func(c *Config) { c.HashFormat = NameHashSuffix; c.HashLength = 16 }},
+		{"hash-hashext", func(c *Config) { c.HashFormat = HashWithExt; c.HashLength = 16 }},
+		{"hash-unchanged", func(c *Config) { c.HashFormat = NameUnchanged; c.HashLength = 16 }},
+		{"hash-enc-b32", func(c *Config) { c.HashEncoding = Base32Hash; c.HashFormat = DirHash; c.HashLength = 16 }},
+		{"hash-enc-b64", func(c *Config) { c.HashEncoding = Base64Hash; c.HashFormat = DirHash; c.HashLength = 16 }},
+		{"hash-key", func(c *Config) { c.HashKey = []byte{0x00, 0x11, 0x22, 0x33}; c.HashFormat = DirHash; c.HashLength = 16 }},
 	} {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			c := NewConfig()
-			c.Input = []InputConfig{
-				{
-					Path:      "testdata",
-					Recursive: true,
+			c := &Config{
+				Package: "main",
+				Input: []InputConfig{
+					{
+						Path:      "testdata",
+						Recursive: true,
+					},
 				},
 			}
-
-			// The AssetDir API currently produces
-			// wrongly formatted code. We're going
-			// to skip it for now.
-			c.AssetDir = false
-			c.Restore = false
-
 			test.config(c)
 
 			var buf bytes.Buffer
