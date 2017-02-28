@@ -46,7 +46,7 @@ func init() {
 {{- if ne $.HashFormat 0 -}}
 	//  hash-format: {{$.HashFormat}}
 {{end -}}
-{{- if ne $.HashLength 16 -}}
+{{- if and (ne $.HashLength 0) (ne $.HashLength 16) -}}
 	//  hash-length: {{$.HashLength}}
 {{end -}}
 {{- if ne $.HashEncoding 0 -}}
