@@ -7,7 +7,7 @@ package bindata
 import (
 	"bytes"
 	"flag"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -63,15 +63,29 @@ var testPaths = [...]struct {
 
 var gencode = flag.String("gencode", "", "write generated code to specified directory")
 
-func TestFormatting(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
+func testGenerate(w io.Writer, c *Config) error {
+	g, err := New(c)
+	if err != nil {
+		return err
 	}
 
-	if *gencode != "" {
-		if err := os.Mkdir(*gencode, 0777); err != nil && !os.IsExist(err) {
-			t.Error(err)
+	for _, path := range testPaths {
+		if err = g.FindFiles(path.path, path.recursive); err != nil {
+			return err
 		}
+	}
+
+	_, err = g.WriteTo(w)
+	return err
+}
+
+func TestGenerate(t *testing.T) {
+	if *gencode == "" {
+		t.Skip("skipping test as -gencode flag not provided")
+	}
+
+	if err := os.Mkdir(*gencode, 0777); err != nil && !os.IsExist(err) {
+		t.Fatal(err)
 	}
 
 	for _, test := range testCases {
@@ -82,26 +96,36 @@ func TestFormatting(t *testing.T) {
 			c := &Config{Package: "main"}
 			test.config(c)
 
-			g, err := New(c)
+			f, err := os.Create(filepath.Join(*gencode, test.name+".go"))
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			for _, path := range testPaths {
-				if err = g.FindFiles(path.path, path.recursive); err != nil {
-					t.Fatal(err)
-				}
+			err = testGenerate(f, c)
+			f.Close()
+			if err != nil {
+				t.Error(err)
 			}
+		})
+	}
+}
+
+func TestFormatting(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := &Config{Package: "main"}
+			test.config(c)
 
 			var buf bytes.Buffer
-			if _, err := g.WriteTo(&buf); err != nil {
+			if err := testGenerate(&buf, c); err != nil {
 				t.Fatal(err)
-			}
-
-			if *gencode != "" {
-				if err := ioutil.WriteFile(filepath.Join(*gencode, test.name+".go"), buf.Bytes(), 0666); err != nil {
-					t.Error(err)
-				}
 			}
 
 			out, err := imports.Process("bindata.go", buf.Bytes(), nil)
