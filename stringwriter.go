@@ -4,10 +4,7 @@
 
 package bindata
 
-import (
-	"fmt"
-	"io"
-)
+import "io"
 
 type stringWriter struct {
 	io.Writer
@@ -37,7 +34,15 @@ func (w *stringWriter) Write(p []byte) (n int, err error) {
 			continue
 		}
 
-		if _, err = fmt.Fprintf(w.Writer, "\" +\n%s\"", w.Indent); err != nil {
+		if _, err = w.Writer.Write([]byte("\" +\n")); err != nil {
+			return
+		}
+
+		if _, err = io.WriteString(w.Writer, w.Indent); err != nil {
+			return
+		}
+
+		if _, err = w.Writer.Write([]byte(`"`)); err != nil {
 			return
 		}
 	}
