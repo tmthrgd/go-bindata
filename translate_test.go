@@ -36,7 +36,10 @@ var testCases = [...]struct {
 	{"compress", func(o *GenerateOptions) { o.Compress = true }},
 	{"copy", func(o *GenerateOptions) { o.MemCopy = true }},
 	{"metadata", func(o *GenerateOptions) { o.Metadata = true }},
-	{"decompress-once", func(o *GenerateOptions) { o.DecompressOnce = true }},
+	{"decompress-once", func(o *GenerateOptions) {
+		o.Compress = true
+		o.DecompressOnce = true
+	}},
 	{"hash-dir", func(o *GenerateOptions) { o.HashFormat = DirHash }},
 	{"hash-suffix", func(o *GenerateOptions) { o.HashFormat = NameHashSuffix }},
 	{"hash-hashext", func(o *GenerateOptions) { o.HashFormat = HashWithExt }},
