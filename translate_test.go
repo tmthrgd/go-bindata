@@ -57,6 +57,7 @@ var testCases = [...]struct {
 
 var testPaths = map[string]*FindFilesOptions{
 	"testdata":        {Recursive: true},
+	"testdata/ogqS":   {Prefix: "testdata"},
 	"CONTRIBUTING.md": nil,
 	"LICENSE":         nil,
 	"README.md":       nil,
