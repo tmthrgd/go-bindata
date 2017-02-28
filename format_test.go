@@ -51,6 +51,7 @@ func TestFormatting(t *testing.T) {
 		{"dev", func(c *Config) { c.Dev = true }},
 		{"tags", func(c *Config) { c.Tags = "!x" }},
 		{"package", func(c *Config) { c.Package = "test" }},
+		{"prefix", func(c *Config) { c.Prefix = "testdata" }},
 		{"compress", func(c *Config) { c.Compress = true }},
 		{"copy", func(c *Config) { c.MemCopy = true }},
 		{"metadata", func(c *Config) { c.Metadata = true }},
