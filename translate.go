@@ -24,7 +24,6 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	for _, file := range f {
 		asset := binAsset{
 			Path:         file.path,
-			AbsPath:      file.abs,
 			Name:         file.name,
 			OriginalName: file.name,
 		}

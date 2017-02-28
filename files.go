@@ -15,7 +15,6 @@ import (
 type File struct {
 	name string // Key used in TOC -- name by which asset is referenced.
 	path string // Relative path.
-	abs  string // Absolute path, only used for Debug.
 }
 
 // Files represents a collection of asset files.
@@ -96,11 +95,9 @@ func FindFiles(path string, opts *FindFilesOptions) (files Files, err error) {
 			panic("should be impossible")
 		}
 
-		abs, _ := filepath.Abs(assetPath)
 		files = append(files, &File{
 			name: name,
 			path: assetPath,
-			abs:  abs,
 		})
 		return nil
 	}); err != nil {

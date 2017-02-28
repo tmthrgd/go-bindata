@@ -4,10 +4,14 @@
 
 package bindata
 
-import "text/template"
+import (
+	"path/filepath"
+	"text/template"
+)
 
 func init() {
 	template.Must(baseTemplate.New("debug").Funcs(template.FuncMap{
+		"abs": filepath.Abs,
 		"maxNameLength": func(toc []binAsset) int {
 			l := 0
 			for _, asset := range toc {
@@ -65,7 +69,7 @@ var _bindata = map[string]string{
 	{{- repeat " " (sub $max (len .Name))}} {{if $.Opts.Dev -}}
 	{{printf "%q" .Name}}
 {{- else -}}
-	{{printf "%q" .AbsPath}}
+	{{printf "%q" (abs .Path)}}
 {{- end}},
 {{end -}}
 }`))
