@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/tmthrgd/go-bindata"
 )
@@ -127,7 +129,8 @@ func parseArgs() (c *bindata.Config, output string) {
 
 	// Change pkg to containing directory of output. If output flag is set and package flag is not.
 	if outputSet && !pkgSet {
-		if pkg := filepath.Base(filepath.Dir(output)); pkg != "." && pkg != "/" {
+		pkg := identifier(filepath.Base(filepath.Dir(output)))
+		if pkg != "" {
 			c.Package = pkg
 		}
 	}
@@ -197,4 +200,24 @@ func parseInput(path string) bindata.InputConfig {
 		Path:      filepath.Clean(strings.TrimSuffix(path, "/...")),
 		Recursive: strings.HasSuffix(path, "/..."),
 	}
+}
+
+// identifier removes all characters from a string that are not valid in
+// an identifier according to the Go Programming Language Specification.
+//
+// The logic in the switch statement aws taken from go/source package:
+// https://github.com/golang/go/blob/a1a688fa0012f7ce3a37e9ac0070461fe8e3f28e/src/go/scanner/scanner.go#L257-#L271
+func identifier(val string) string {
+	return strings.Map(func(ch rune) rune {
+		switch {
+		case 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' ||
+			ch >= utf8.RuneSelf && unicode.IsLetter(ch):
+			return ch
+		case '0' <= ch && ch <= '9' ||
+			ch >= utf8.RuneSelf && unicode.IsDigit(ch):
+			return ch
+		default:
+			return -1
+		}
+	}, val)
 }
