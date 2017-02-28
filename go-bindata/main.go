@@ -224,7 +224,7 @@ func parseInput(input string) (path string, recursive bool) {
 // The logic in the switch statement aws taken from go/source package:
 // https://github.com/golang/go/blob/a1a688fa0012f7ce3a37e9ac0070461fe8e3f28e/src/go/scanner/scanner.go#L257-#L271
 func identifier(val string) string {
-	return strings.Map(func(ch rune) rune {
+	return strings.TrimLeftFunc(strings.Map(func(ch rune) rune {
 		switch {
 		case 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' ||
 			ch >= utf8.RuneSelf && unicode.IsLetter(ch):
@@ -235,5 +235,5 @@ func identifier(val string) string {
 		default:
 			return -1
 		}
-	}, val)
+	}, val), unicode.IsDigit)
 }
