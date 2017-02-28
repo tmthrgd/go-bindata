@@ -21,7 +21,10 @@ func BenchmarkFindFiles(b *testing.B) {
 			b.ResetTimer()
 
 			for n := 0; n < b.N; n++ {
-				if err = g.FindFiles("testdata", true); err != nil {
+				if err = g.FindFiles("testdata", &FindFilesOptions{
+					Prefix:    "testdata",
+					Recursive: true,
+				}); err != nil {
 					b.Fatal(err)
 				}
 
@@ -43,8 +46,8 @@ func BenchmarkWriteTo(b *testing.B) {
 				b.Fatal(err)
 			}
 
-			for _, path := range testPaths {
-				if err = g.FindFiles(path.path, path.recursive); err != nil {
+			for path, opts := range testPaths {
+				if err = g.FindFiles(path, opts); err != nil {
 					b.Fatal(err)
 				}
 			}

@@ -16,6 +16,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"regexp"
+
 	"github.com/tmthrgd/go-bindata"
 )
 
@@ -29,13 +31,18 @@ func must(err error) {
 }
 
 func main() {
-	c, output := parseArgs()
+	c, ignore, prefix, output := parseArgs()
 
 	g, err := bindata.New(c)
 	must(err)
 
 	for i := 0; i < flag.NArg(); i++ {
-		must(g.FindFiles(parseInput(flag.Arg(i))))
+		path, recursive := parseInput(flag.Arg(i))
+		must(g.FindFiles(path, &bindata.FindFilesOptions{
+			Prefix:    prefix,
+			Recursive: recursive,
+			Ignore:    ignore,
+		}))
 	}
 
 	f, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
@@ -52,7 +59,7 @@ func main() {
 //
 // This function exits the program with an error, if
 // any of the command line options are incorrect.
-func parseArgs() (c *bindata.Config, output string) {
+func parseArgs() (c *bindata.Config, ignore []*regexp.Regexp, prefix, output string) {
 	flag.Usage = func() {
 		fmt.Printf("Usage: %s [options] <input directories>\n\n", os.Args[0])
 		flag.PrintDefaults()
@@ -78,7 +85,7 @@ func parseArgs() (c *bindata.Config, output string) {
 	flag.BoolVar(&c.Debug, "debug", c.Debug, "Do not embed the assets, but provide the embedding API. Contents will still be loaded from disk.")
 	flag.BoolVar(&c.Dev, "dev", c.Dev, "Similar to debug, but does not emit absolute paths. Expects a rootDir variable to already exist in the generated code's package.")
 	flag.StringVar(&c.Tags, "tags", c.Tags, "Optional set of build tags to include.")
-	flag.StringVar(&c.Prefix, "prefix", c.Prefix, "Optional path prefix to strip off asset names.")
+	flag.StringVar(&prefix, "prefix", "", "Optional path prefix to strip off asset names.")
 	flag.StringVar(&c.Package, "pkg", c.Package, "Package name to use in the generated code.")
 	flag.BoolVar(&c.MemCopy, "memcopy", c.MemCopy, "Do not use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
 	flag.BoolVar(&c.Compress, "compress", c.Compress, "Assets will be GZIP compressed when this flag is specified.")
@@ -91,7 +98,7 @@ func parseArgs() (c *bindata.Config, output string) {
 	flag.Var((*hashEncodingValue)(&c.HashEncoding), "hashenc", `Optional the encoding of the hash to use. (default "hex")`)
 	flag.Var((*hexEncodingValue)(&c.HashKey), "hashkey", "Optional hexadecimal key to use to turn the BLAKE2B hashing into a MAC.")
 	flag.BoolVar(&c.AssetDir, "assetdir", c.AssetDir, "Provide the AssetDir APIs.")
-	flag.Var((*appendRegexValue)(&c.Ignore), "ignore", "Regex pattern to ignore")
+	flag.Var((*appendRegexValue)(&ignore), "ignore", "Regex pattern to ignore")
 	flag.BoolVar(&c.DecompressOnce, "once", c.DecompressOnce, "Only GZIP decompress the resource once.")
 
 	// Deprecated options
