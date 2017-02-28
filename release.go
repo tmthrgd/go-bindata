@@ -56,6 +56,16 @@ func init() {
 			buf.WriteString(`"`)
 			return buf.String(), nil
 		},
+		"maxOriginalNameLength": func(toc []binAsset) int {
+			l := 0
+			for _, asset := range toc {
+				if len(asset.OriginalName) > l {
+					l = len(asset.OriginalName)
+				}
+			}
+
+			return l
+		},
 	}).Parse(`
 {{- $unsafeRead := and (not $.Config.Compress) (not $.Config.MemCopy) -}}
 import (
@@ -294,7 +304,9 @@ func AssetName(name string) (string, error) {
 }
 
 var _hashNames = map[string]string{
-{{range .Assets}}	{{printf "%q" .OriginalName}}: {{printf "%q" .Name}},
+{{$max := maxOriginalNameLength .Assets -}}
+{{range .Assets}}	{{printf "%q" .OriginalName}}:
+	{{- repeat " " (sub $max (len .OriginalName))}} {{printf "%q" .Name}},
 {{end -}}
 }
 {{- end}}`))
