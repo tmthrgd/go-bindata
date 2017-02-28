@@ -12,13 +12,11 @@ import (
 	"os"
 	"reflect"
 	"sort"
-	"strings"
 	"testing"
 	"testing/quick"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/tmthrgd/go-bindata/internal/identifier"
 )
 
 type testCase struct {
@@ -95,7 +93,7 @@ func TestMain(m *testing.M) {
 		}
 
 		vo := v.Addr().Interface().(*GenerateOptions)
-		vo.Package = identifier(vo.Package)
+		vo.Package = identifier.Identifier(vo.Package)
 		vo.Mode &= os.ModePerm
 		vo.HashFormat = HashFormat(int(uint(vo.HashFormat) % uint(HashWithExt+1)))
 		vo.HashEncoding = HashEncoding(int(uint(vo.HashEncoding) % uint(Base64Hash+1)))
@@ -137,26 +135,6 @@ func TestMain(m *testing.M) {
 	sort.Sort(testFiles)
 
 	os.Exit(m.Run())
-}
-
-// identifier removes all characters from a string that are not valid in
-// an identifier according to the Go Programming Language Specification.
-//
-// The logic in the switch statement was taken from go/source package:
-// https://github.com/golang/go/blob/a1a688fa0012f7ce3a37e9ac0070461fe8e3f28e/src/go/scanner/scanner.go#L257-#L271
-func identifier(val string) string {
-	return strings.TrimLeftFunc(strings.Map(func(ch rune) rune {
-		switch {
-		case 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' ||
-			ch >= utf8.RuneSelf && unicode.IsLetter(ch):
-			return ch
-		case '0' <= ch && ch <= '9' ||
-			ch >= utf8.RuneSelf && unicode.IsDigit(ch):
-			return ch
-		default:
-			return -1
-		}
-	}, val), unicode.IsDigit)
 }
 
 func testDiff(a, b string) (string, error) {
