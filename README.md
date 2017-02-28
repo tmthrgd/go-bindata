@@ -187,3 +187,12 @@ format is specified at build time with the appropriate tags.
 
 The tags are appended to a `// +build` line in the beginning of the output file
 and must follow the build tags syntax specified by the go tool.
+
+## Testing
+
+To execute the test case, use the following:
+
+	go test github.com/tmthrgd/go-bindata
+
+The `testdata` directory was generated with a shell script created by Stack 
+Overflow user [sdaau](http://stackoverflow.com/a/19878455).
