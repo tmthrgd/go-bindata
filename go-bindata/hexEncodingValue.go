@@ -4,7 +4,7 @@
 
 package main
 
-import "encoding/hex"
+import "github.com/tmthrgd/go-hex"
 
 type hexEncodingValue []byte
 

@@ -7,13 +7,13 @@ package bindata
 import (
 	"encoding/base32"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/tmthrgd/go-hex"
 	"golang.org/x/crypto/blake2b"
 )
 

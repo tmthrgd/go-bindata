@@ -6,11 +6,11 @@ package bindata
 
 import (
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
 
+	"github.com/tmthrgd/go-hex"
 	"golang.org/x/crypto/blake2b"
 )
 
