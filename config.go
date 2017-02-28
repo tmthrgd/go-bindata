@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/tmthrgd/go-bindata/internal/identifier"
 	"github.com/tmthrgd/go-hex"
 	"golang.org/x/crypto/blake2b"
 )
@@ -197,6 +198,10 @@ var (
 func (opts *GenerateOptions) validate() error {
 	if len(opts.Package) == 0 {
 		return errors.New("go-bindata: missing package name")
+	}
+
+	if identifier.Identifier(opts.Package) != opts.Package {
+		return errors.New("go-bindata: package name is not valid identifier")
 	}
 
 	if opts.Mode&^os.ModePerm != 0 {
