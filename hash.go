@@ -38,8 +38,13 @@ func hashFile(opts *GenerateOptions, asset *binAsset) error {
 		return err
 	}
 
-	_, err = io.Copy(h, f)
+	buf := getSizedBuffer(f)
+
+	_, err = io.CopyBuffer(h, f, buf.Bytes()[:buf.Cap()])
+
 	f.Close()
+	bufPool.Put(buf)
+
 	if err != nil {
 		return err
 	}
