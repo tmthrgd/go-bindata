@@ -4,7 +4,11 @@
 
 package bindata
 
-import "testing"
+import (
+	"testing"
+
+	"golang.org/x/crypto/blake2b"
+)
 
 func BenchmarkHashFile(b *testing.B) {
 	if testFilesErr != nil {
@@ -41,13 +45,22 @@ func BenchmarkHashFile(b *testing.B) {
 						first = false
 					}
 
+					h, err := blake2b.New512(opts.HashKey)
+					if err != nil {
+						b.Fatal(err)
+					}
+
 					for n := 0; n < b.N; n++ {
 						asset := binAsset{
 							File: file,
 							Name: file.Name(),
 						}
 
-						if err := asset.hashFile(opts); err != nil {
+						if n != 0 {
+							h.Reset()
+						}
+
+						if err := asset.hashFile(h, opts); err != nil {
 							b.Fatal(err)
 						}
 

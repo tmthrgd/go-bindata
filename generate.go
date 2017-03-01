@@ -5,8 +5,11 @@
 package bindata
 
 import (
+	"hash"
 	"io"
 	"text/template"
+
+	"golang.org/x/crypto/blake2b"
 )
 
 // binAsset holds information about a single asset to be processed.
@@ -23,18 +26,33 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 		opts = &GenerateOptions{Package: "main"}
 	}
 
-	if err := opts.validate(); err != nil {
+	err := opts.validate()
+	if err != nil {
 		return err
 	}
 
+	var h hash.Hash
+	if opts.HashFormat != NoHash {
+		if h, err = blake2b.New512(opts.HashKey); err != nil {
+			return err
+		}
+	}
+
 	assets := make([]binAsset, 0, len(f))
-	for _, file := range f {
+	for i, file := range f {
 		asset := binAsset{
 			File: file,
 			Name: file.Name(),
 		}
-		if err := asset.hashFile(opts); err != nil {
-			return err
+
+		if opts.HashFormat != NoHash {
+			if i != 0 {
+				h.Reset()
+			}
+
+			if err = asset.hashFile(h, opts); err != nil {
+				return err
+			}
 		}
 
 		assets = append(assets, asset)

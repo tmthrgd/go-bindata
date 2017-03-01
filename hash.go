@@ -8,12 +8,12 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"errors"
+	"hash"
 	"io"
 	"path/filepath"
 	"strings"
 
 	"github.com/tmthrgd/go-hex"
-	"golang.org/x/crypto/blake2b"
 )
 
 var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
@@ -22,16 +22,7 @@ var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 // length and encoding. It returns the hashed name, the
 // hash and any error that occurred. The hash is a BLAKE2B
 // digest of the file contents.
-func (asset *binAsset) hashFile(opts *GenerateOptions) error {
-	if opts.HashFormat == NoHash {
-		return nil
-	}
-
-	h, err := blake2b.New512(opts.HashKey)
-	if err != nil {
-		return err
-	}
-
+func (asset *binAsset) hashFile(h hash.Hash, opts *GenerateOptions) error {
 	rc, err := asset.Open()
 	if err != nil {
 		return err
