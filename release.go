@@ -7,6 +7,7 @@ package bindata
 import (
 	"bytes"
 	"compress/flate"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -23,6 +24,20 @@ var (
 
 	flatePool sync.Pool
 )
+
+func getSizedBuffer(f *os.File) *bytes.Buffer {
+	var n int
+	if fi, err := f.Stat(); err == nil {
+		// Don't preallocate a huge buffer, just in case.
+		if size := fi.Size(); size < 1e9 {
+			n = int(size)
+		}
+	}
+
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.Grow(n + bytes.MinRead)
+	return buf
+}
 
 func init() {
 	template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
@@ -67,17 +82,21 @@ func init() {
 				return
 			}
 
-			data, err := ioutil.ReadFile(path)
+			f, err := os.Open(path)
 			if err != nil {
-				return "", err
+				return
 			}
 
-			if _, err = fw.Write(data); err != nil {
-				return "", err
+			buf2 := getSizedBuffer(f)
+
+			_, err = io.CopyBuffer(fw, f, buf2.Bytes()[:buf2.Cap()])
+			f.Close()
+			if err != nil {
+				return
 			}
 
 			if err = fw.Close(); err != nil {
-				return "", err
+				return
 			}
 
 			buf.WriteString(`"`)
@@ -85,8 +104,10 @@ func init() {
 
 			buf.Reset()
 			bufPool.Put(buf)
+			buf2.Reset()
+			bufPool.Put(buf2)
 			flatePool.Put(fw)
-			return out, nil
+			return
 		},
 		"maxOriginalNameLength": func(toc []binAsset) int {
 			l := 0
