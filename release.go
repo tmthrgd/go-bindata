@@ -245,18 +245,19 @@ var _bindata = map[string]*asset{
 			{{wrap $data "\t\t\t" 24 -}}
 			)
 		{{- end}},
-	{{- if $.Compress}}
-		size: {{len $data}},
-	{{- end -}}
 
-	{{- if $.Metadata -}}
+	{{- if or $.Metadata $.Compress -}}
 		{{- $info := stat .Path -}}
 
-		{{- if not $.Mode}}
+		{{- if $.Compress}}
+		size: {{$info.Size}},
+		{{- end -}}
+
+		{{- if and $.Metadata (not $.Mode)}}
 		mode: {{printf "%04o" $info.Mode}},
 		{{- end -}}
 
-		{{- if not $.ModTime}}
+		{{- if and $.Metadata (not $.ModTime)}}
 		{{$mod := $info.ModTime -}}
 		time: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 		{{- end -}}
