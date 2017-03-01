@@ -249,7 +249,7 @@ var _bindata = map[string]*asset{
 		size: {{len $data}},
 	{{- end -}}
 
-	{{- if and $.Metadata (not (and $.Mode $.ModTime)) -}}
+	{{- if $.Metadata -}}
 		{{- $info := stat .Path -}}
 
 		{{- if not $.Mode}}
