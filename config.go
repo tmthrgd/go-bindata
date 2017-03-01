@@ -160,15 +160,21 @@ type GenerateOptions struct {
 	// repository.
 	Dev bool
 
+	// When true, the AssetDir API will be provided.
+	AssetDir bool
+
+	// When true, only gzip decompress the data on first use.
+	DecompressOnce bool
+
+	// [Deprecated]: use github.com/tmthrgd/go-bindata/restore.
+	Restore bool
+
 	// When false, size, mode and modtime are not preserved from files
 	Metadata bool
 	// When nonzero, use this as mode for all files.
 	Mode os.FileMode
 	// When nonzero, use this as unix timestamp for all files.
 	ModTime int64
-
-	// [Deprecated]: use github.com/tmthrgd/go-bindata/restore.
-	Restore bool
 
 	// Which of the given name hashing formats to use.
 	HashFormat HashFormat
@@ -179,12 +185,6 @@ type GenerateOptions struct {
 	// The key to use to turn the BLAKE2B hashing into a MAC. Must be between
 	// zero and 64 bytes long.
 	HashKey []byte
-
-	// When true, the AssetDir API will be provided.
-	AssetDir bool
-
-	// When true, only gzip decompress the data on first use.
-	DecompressOnce bool
 }
 
 var (
