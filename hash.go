@@ -62,13 +62,12 @@ func (asset *binAsset) hashFile(h hash.Hash, opts *GenerateOptions) error {
 		l = 16
 	}
 
-	if l > uint(len(enc)) {
-		return errors.New("invalid HashLength: longer than generated hash")
+	if l < uint(len(enc)) {
+		enc = enc[:l]
 	}
 
 	dir, file := filepath.Split(asset.Name)
 	ext := filepath.Ext(file)
-	enc = enc[:l]
 
 	switch opts.HashFormat {
 	case DirHash:

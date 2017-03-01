@@ -101,15 +101,6 @@ func TestMain(m *testing.M) {
 			vo.Package = "main"
 		}
 
-		switch vo.HashEncoding {
-		case HexHash:
-			vo.HashLength %= maxHexLength
-		case Base32Hash:
-			vo.HashLength %= maxB32Length
-		case Base64Hash:
-			vo.HashLength %= maxB64Length
-		}
-
 		if vo.Debug || vo.Dev {
 			vo.HashFormat = NoHash
 		}

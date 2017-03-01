@@ -5,13 +5,10 @@
 package bindata
 
 import (
-	"encoding/base64"
 	"errors"
-	"fmt"
 	"os"
 
 	"github.com/tmthrgd/go-bindata/internal/identifier"
-	"github.com/tmthrgd/go-hex"
 	"golang.org/x/crypto/blake2b"
 )
 
@@ -187,12 +184,6 @@ type GenerateOptions struct {
 	HashKey []byte
 }
 
-var (
-	maxHexLength = uint(hex.EncodedLen(blake2b.Size))
-	maxB32Length = uint(base32Enc.EncodedLen(blake2b.Size))
-	maxB64Length = uint(base64.RawStdEncoding.EncodedLen(blake2b.Size))
-)
-
 // validate ensures the config has sane values.
 // Part of which means checking if certain file/directory paths exist.
 func (opts *GenerateOptions) validate() error {
@@ -220,22 +211,6 @@ func (opts *GenerateOptions) validate() error {
 	case NoHash, NameUnchanged, DirHash, NameHashSuffix, HashWithExt:
 	default:
 		return errors.New("go-bindata: invalid HashFormat specified")
-	}
-
-	var length uint
-	switch opts.HashEncoding {
-	case HexHash:
-		length = maxHexLength
-	case Base32Hash:
-		length = maxB32Length
-	case Base64Hash:
-		length = maxB64Length
-	default:
-		return errors.New("go-bindata: invalid HashEncoding specified")
-	}
-
-	if opts.HashLength > length {
-		return fmt.Errorf("go-bindata: HashLength must be less than %d bytes", length)
 	}
 
 	if len(opts.HashKey) > blake2b.Size {
