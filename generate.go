@@ -82,12 +82,42 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	return nil
 }
 
-var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
+var baseTemplate = template.New("base").Funcs(template.FuncMap{
 	"repeat": strings.Repeat,
 	"sub": func(a, b int) int {
 		return a - b
 	},
-}).Parse(`
+})
+
+func init() {
+	template.Must(baseTemplate.Funcs(template.FuncMap{
+		"format": func(name string, data interface{}) (string, error) {
+			buf := bufPool.Get().(*bytes.Buffer)
+			buf.WriteString("package main;")
+
+			if err := baseTemplate.ExecuteTemplate(buf, name, data); err != nil {
+				return "", err
+			}
+
+			fset := token.NewFileSet()
+
+			f, err := parser.ParseFile(fset, "", buf, parser.ParseComments)
+			if err != nil {
+				return "", err
+			}
+
+			buf.Reset()
+
+			if err = printerConfig.Fprint(buf, fset, f); err != nil {
+				return "", err
+			}
+
+			out := string(bytes.TrimSpace(buf.Bytes()[len("package main\n"):]))
+			buf.Reset()
+			bufPool.Put(buf)
+			return out, nil
+		},
+	}).Parse(`
 {{- template "header" .}}
 
 {{if or $.Debug $.Dev -}}
@@ -103,3 +133,4 @@ var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
 {{template "tree" . -}}
 {{- end}}
 `))
+}

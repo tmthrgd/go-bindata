@@ -44,7 +44,10 @@ func init() {
 
 			return l
 		},
-	}).Parse(`bintree{
+	}).Parse(`
+{{- if not .Depth -}}
+var _bintree = {{end -}}
+bintree{
 {{- if .Children}}
 {{$max := maxKeyLength .Children -}}
 {{range $k, $v := .Children -}}
@@ -110,5 +113,5 @@ func AssetDir(name string) ([]string, error) {
 
 type bintree map[string]bintree
 
-var _bintree = {{template "bintree" (tree .Assets)}}`))
+{{format "bintree" (tree .Assets)}}`))
 }
