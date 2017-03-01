@@ -46,13 +46,13 @@ func init() {
 {{- if ne $.HashFormat 0 -}}
 	//  hash-format: {{$.HashFormat}}
 {{end -}}
-{{- if and (ne $.HashLength 0) (ne $.HashLength 16) -}}
+{{- if and (ne $.HashFormat 0) (ne $.HashLength 0) (ne $.HashLength 16) -}}
 	//  hash-length: {{$.HashLength}}
 {{end -}}
-{{- if ne $.HashEncoding 0 -}}
+{{- if and (ne $.HashFormat 0) (ne $.HashEncoding 0) -}}
 	//  hash-encoding: {{$.HashEncoding}}
 {{end -}}
-{{- if $.HashKey -}}
+{{- if and (ne $.HashFormat 0) $.HashKey -}}
 	//  hash-key: <omitted>
 {{end -}}
 // sources:
