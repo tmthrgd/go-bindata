@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"compress/flate"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"sync"
@@ -42,7 +41,6 @@ func getSizedBuffer(f *os.File) *bytes.Buffer {
 func init() {
 	template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
 		"stat": os.Stat,
-		"read": ioutil.ReadFile,
 		"name": func(name string) string {
 			_, name = path.Split(name)
 			return name
@@ -64,6 +62,36 @@ func init() {
 			buf.Reset()
 			bufPool.Put(buf)
 			return out
+		},
+		"read": func(path, indent string, wrapAt int) (string, error) {
+			buf := bufPool.Get().(*bytes.Buffer)
+			buf.WriteString(`"`)
+
+			sw := &stringWriter{
+				Writer: buf,
+				Indent: indent,
+				WrapAt: wrapAt,
+			}
+
+			f, err := os.Open(path)
+			if err != nil {
+				return "", err
+			}
+
+			buf2 := getSizedBuffer(f)
+
+			_, err = io.CopyBuffer(sw, f, buf2.Bytes()[:buf2.Cap()])
+			f.Close()
+			if err != nil {
+				return "", err
+			}
+
+			buf.WriteString(`"`)
+			out := buf.String()
+
+			buf.Reset()
+			bufPool.Put(buf)
+			return out, nil
 		},
 		"flate": func(path, indent string, wrapAt int) (out string, err error) {
 			buf := bufPool.Get().(*bytes.Buffer)
@@ -267,7 +295,7 @@ var _bindata = map[string]*asset{
 			{{flate .Path "\t\t\t" 24}}
 		{{- else -}}
 			bindataRead("" +
-			{{wrap (read .Path) "\t\t\t" 24 -}}
+			{{read .Path "\t\t\t" 24 -}}
 			)
 		{{- end}},
 
