@@ -14,10 +14,14 @@ import (
 
 // File represents a single asset file.
 type File interface {
+	// Name returns the name by which asset is referenced.
 	Name() string
+	// Path returns the the path to the file.
 	Path() string
 
+	// Open returns an io.ReadCloser for reading the file.
 	Open() (io.ReadCloser, error)
+	// Stat returns an os.FileInfo interface representing the file.
 	Stat() (os.FileInfo, error)
 }
 
