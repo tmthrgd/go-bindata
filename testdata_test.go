@@ -71,24 +71,25 @@ func testPopulateDirectory(fs afero.Fs, base string, rand *rand.Rand) error {
 		panic("quick.Value failed")
 	}
 
-	var fe firstError
-
 	for name, file := range v.Interface().(testFileMap) {
 		path := filepath.FromSlash(filepath.Join(base, string(name)))
 
-		fe.Set(afero.WriteFile(fs, path, file.Data, os.FileMode(file.Mode)))
-		fe.Set(fs.Chtimes(path, time.Time(file.ModTime), time.Time(file.ModTime)))
+		if err := afero.WriteFile(fs, path, file.Data, os.FileMode(file.Mode)); err != nil {
+			return err
+		}
+
+		if err := fs.Chtimes(path, time.Time(file.ModTime), time.Time(file.ModTime)); err != nil {
+			return err
+		}
 	}
 
-	return fe.Err
+	return nil
 }
 
 var fs = afero.NewMemMapFs()
 
 func testStubFileSystem() error {
 	rand := rand.New(rand.NewSource(0))
-
-	var fe firstError
 
 	dirName := path.Join("/", testRandomName(rand))
 	testPaths[dirName] = &FindFilesOptions{
@@ -99,7 +100,9 @@ func testStubFileSystem() error {
 		dirName,
 		path.Join("/", testRandomName(rand)),
 	} {
-		fe.Set(testPopulateDirectory(fs, dir, rand))
+		if err := testPopulateDirectory(fs, dir, rand); err != nil {
+			return err
+		}
 	}
 
 	af := afero.Afero{Fs: fs}
@@ -121,15 +124,5 @@ func testStubFileSystem() error {
 		return af.Open(name)
 	}
 	stat = af.Stat
-	return fe.Err
-}
-
-type firstError struct {
-	Err error
-}
-
-func (e *firstError) Set(err error) {
-	if e.Err == nil {
-		e.Err = err
-	}
+	return nil
 }
