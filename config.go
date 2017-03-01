@@ -204,6 +204,10 @@ func (opts *GenerateOptions) validate() error {
 		return errors.New("go-bindata: package name is not valid identifier")
 	}
 
+	if opts.Metadata && (opts.Mode != 0 && opts.ModTime != 0) {
+		return errors.New("go-bindata: if Metadata is true, one of Mode or ModTime must be zero")
+	}
+
 	if opts.Mode&^os.ModePerm != 0 {
 		return errors.New("go-bindata: invalid mode specified")
 	}

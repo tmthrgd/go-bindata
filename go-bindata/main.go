@@ -174,6 +174,10 @@ func parseArgs() (genOpts *bindata.GenerateOptions, findOpts *bindata.FindFilesO
 		genOpts.Metadata = !noMetadata
 	}
 
+	if genOpts.Mode != 0 && genOpts.ModTime != 0 {
+		genOpts.Metadata = false
+	}
+
 	if !genOpts.MemCopy && genOpts.Compress {
 		io.WriteString(os.Stderr, "The use of -memcopy=false with -compress is deprecated.\n")
 	}

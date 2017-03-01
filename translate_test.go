@@ -92,6 +92,7 @@ func TestMain(m *testing.M) {
 		vo := v.Addr().Interface().(*GenerateOptions)
 		vo.Package = identifier.Identifier(vo.Package)
 		vo.Mode &= os.ModePerm
+		vo.Metadata = vo.Metadata && (vo.Mode == 0 || vo.ModTime == 0)
 		vo.HashFormat = HashFormat(int(uint(vo.HashFormat) % uint(HashWithExt+1)))
 		vo.HashEncoding = HashEncoding(int(uint(vo.HashEncoding) % uint(Base64Hash+1)))
 		vo.Restore = vo.Restore && vo.AssetDir
