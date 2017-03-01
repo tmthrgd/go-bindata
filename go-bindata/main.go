@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 
 	"github.com/tmthrgd/go-bindata"
@@ -42,8 +41,6 @@ func main() {
 
 		all = append(all, files...)
 	}
-
-	sort.Sort(all)
 
 	f, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	must(err)

@@ -20,21 +20,6 @@ type File struct {
 // Files represents a collection of asset files.
 type Files []*File
 
-// Len implements sort.Interface.
-func (f Files) Len() int {
-	return len(f)
-}
-
-// Less implements sort.Interface.
-func (f Files) Less(i, j int) bool {
-	return f[i].Name < f[j].Name
-}
-
-// Swap implements sort.Interface.
-func (f Files) Swap(i, j int) {
-	f[i], f[j] = f[j], f[i]
-}
-
 // FindFilesOptions defines a set of options to use
 // when searching for files.
 type FindFilesOptions struct {

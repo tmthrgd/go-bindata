@@ -116,8 +116,15 @@ func TestMain(m *testing.M) {
 		testCases[fmt.Sprintf("random-#%d", i+1)] = func(o *GenerateOptions) { *o = *vo }
 	}
 
-	for path, opts := range testPaths {
-		files, err := FindFiles(path, opts)
+	paths := make([]string, 0, len(testPaths))
+	for path := range testPaths {
+		paths = append(paths, path)
+	}
+
+	sort.Strings(paths)
+
+	for _, path := range paths {
+		files, err := FindFiles(path, testPaths[path])
 		if err != nil {
 			testFilesErr = err
 			break
@@ -125,8 +132,6 @@ func TestMain(m *testing.M) {
 
 		testFiles = append(testFiles, files...)
 	}
-
-	sort.Sort(testFiles)
 
 	os.Exit(m.Run())
 }
