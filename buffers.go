@@ -6,6 +6,7 @@ package bindata
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"sync"
 )
@@ -16,12 +17,16 @@ var bufPool = &sync.Pool{
 	},
 }
 
-func getSizedBuffer(f *os.File) *bytes.Buffer {
+func getSizedBuffer(rc io.ReadCloser) *bytes.Buffer {
 	var n int
-	if fi, err := f.Stat(); err == nil {
-		// Don't preallocate a huge buffer, just in case.
-		if size := fi.Size(); size < 1e9 {
-			n = int(size)
+	if s, ok := rc.(interface {
+		Stat() (os.FileInfo, error)
+	}); ok {
+		if fi, err := s.Stat(); err == nil {
+			// Don't preallocate a huge buffer, just in case.
+			if size := fi.Size(); size < 1e9 {
+				n = int(size)
+			}
 		}
 	}
 

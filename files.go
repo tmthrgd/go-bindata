@@ -5,6 +5,7 @@
 package bindata
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,13 +13,37 @@ import (
 )
 
 // File represents a single asset file.
-type File struct {
-	Name string // Key used in TOC -- name by which asset is referenced.
-	Path string // Relative path.
+type File interface {
+	Name() string
+	Path() string
+
+	Open() (io.ReadCloser, error)
+	Stat() (os.FileInfo, error)
 }
 
 // Files represents a collection of asset files.
-type Files []*File
+type Files []File
+
+type osFile struct {
+	name string
+	path string
+}
+
+func (f *osFile) Name() string {
+	return f.name
+}
+
+func (f *osFile) Path() string {
+	return f.path
+}
+
+func (f *osFile) Open() (io.ReadCloser, error) {
+	return os.Open(f.path)
+}
+
+func (f *osFile) Stat() (os.FileInfo, error) {
+	return os.Stat(f.path)
+}
 
 // FindFilesOptions defines a set of options to use
 // when searching for files.
@@ -80,7 +105,7 @@ func FindFiles(path string, opts *FindFilesOptions) (files Files, err error) {
 			panic("should be impossible")
 		}
 
-		files = append(files, &File{name, assetPath})
+		files = append(files, &osFile{name, assetPath})
 		return nil
 	}); err != nil {
 		return nil, err

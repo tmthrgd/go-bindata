@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"compress/flate"
 	"io"
-	"os"
 	"path"
 	"sync"
 	"text/template"
@@ -18,7 +17,6 @@ var flatePool sync.Pool
 
 func init() {
 	template.Must(template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
-		"stat": os.Stat,
 		"name": func(name string) string {
 			_, name = path.Split(name)
 			return name
@@ -41,7 +39,7 @@ func init() {
 			bufPool.Put(buf)
 			return out
 		},
-		"read": func(path, indent string, wrapAt int) (string, error) {
+		"read": func(asset binAsset, indent string, wrapAt int) (string, error) {
 			buf := bufPool.Get().(*bytes.Buffer)
 			buf.WriteString(`"`)
 
@@ -51,15 +49,15 @@ func init() {
 				WrapAt: wrapAt,
 			}
 
-			f, err := os.Open(path)
+			rc, err := asset.Open()
 			if err != nil {
 				return "", err
 			}
 
-			buf2 := getSizedBuffer(f)
+			buf2 := getSizedBuffer(rc)
 
-			_, err = io.CopyBuffer(sw, f, buf2.Bytes()[:buf2.Cap()])
-			f.Close()
+			_, err = io.CopyBuffer(sw, rc, buf2.Bytes()[:buf2.Cap()])
+			rc.Close()
 			if err != nil {
 				return "", err
 			}
@@ -71,7 +69,7 @@ func init() {
 			bufPool.Put(buf)
 			return out, nil
 		},
-		"flate": func(path, indent string, wrapAt int) (out string, err error) {
+		"flate": func(asset binAsset, indent string, wrapAt int) (out string, err error) {
 			buf := bufPool.Get().(*bytes.Buffer)
 			buf.WriteString(`"`)
 
@@ -88,15 +86,15 @@ func init() {
 				return
 			}
 
-			f, err := os.Open(path)
+			rc, err := asset.Open()
 			if err != nil {
 				return
 			}
 
-			buf2 := getSizedBuffer(f)
+			buf2 := getSizedBuffer(rc)
 
-			_, err = io.CopyBuffer(fw, f, buf2.Bytes()[:buf2.Cap()])
-			f.Close()
+			_, err = io.CopyBuffer(fw, rc, buf2.Bytes()[:buf2.Cap()])
+			rc.Close()
 			if err != nil {
 				return
 			}
@@ -258,19 +256,19 @@ var _bindata = map[string]*asset{
 	{{- end}}
 		data: {{if $.Compress -}}
 			"" +
-			{{flate .Path "\t\t\t" 24}}
+			{{flate . "\t\t\t" 24}}
 		{{- else -}}
 		{{- if $unsafeRead -}}
 			bindataRead("" +
 		{{- else -}}
 			[]byte("" +
 		{{- end}}
-			{{read .Path "\t\t\t" 24 -}}
+			{{read . "\t\t\t" 24 -}}
 			)
 		{{- end}},
 
 	{{- if or $.Metadata $.Compress -}}
-		{{- $info := stat .Path -}}
+		{{- $info := .Stat -}}
 
 		{{- if $.Compress}}
 		size: {{$info.Size}},

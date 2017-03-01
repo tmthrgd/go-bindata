@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -33,16 +32,16 @@ func (asset *binAsset) hashFile(opts *GenerateOptions) error {
 		return err
 	}
 
-	f, err := os.Open(asset.Path)
+	rc, err := asset.Open()
 	if err != nil {
 		return err
 	}
 
-	buf := getSizedBuffer(f)
+	buf := getSizedBuffer(rc)
 
-	_, err = io.CopyBuffer(h, f, buf.Bytes()[:buf.Cap()])
+	_, err = io.CopyBuffer(h, rc, buf.Bytes()[:buf.Cap()])
 
-	f.Close()
+	rc.Close()
 	bufPool.Put(buf)
 
 	if err != nil {

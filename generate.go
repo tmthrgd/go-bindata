@@ -11,7 +11,8 @@ import (
 
 // binAsset holds information about a single asset to be processed.
 type binAsset struct {
-	Path         string // Relative path.
+	File
+
 	Name         string // Key used in TOC -- name by which asset is referenced.
 	OriginalName string // Original Name before hashing applied to Name.
 	Hash         []byte // Generated hash of file.
@@ -30,9 +31,9 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	assets := make([]binAsset, 0, len(f))
 	for _, file := range f {
 		asset := binAsset{
-			Path:         file.Path,
-			Name:         file.Name,
-			OriginalName: file.Name,
+			File:         file,
+			Name:         file.Name(),
+			OriginalName: file.Name(),
 		}
 		if err := asset.hashFile(opts); err != nil {
 			return err

@@ -4,10 +4,7 @@
 
 package bindata
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 func BenchmarkHashFile(b *testing.B) {
 	if testFilesErr != nil {
@@ -16,7 +13,7 @@ func BenchmarkHashFile(b *testing.B) {
 
 	file, size := testFiles[0], int64(0)
 	for _, f := range testFiles {
-		info, err := os.Stat(file.Path)
+		info, err := file.Stat()
 		if err != nil {
 			b.Error(err)
 			continue
@@ -46,15 +43,15 @@ func BenchmarkHashFile(b *testing.B) {
 
 					for n := 0; n < b.N; n++ {
 						asset := binAsset{
-							Path: file.Path,
-							Name: file.Name,
+							File: file,
+							Name: file.Name(),
 						}
 
 						if err := asset.hashFile(opts); err != nil {
 							b.Fatal(err)
 						}
 
-						if asset.Hash == nil || (fmt != NameUnchanged && asset.Name == file.Name) {
+						if asset.Hash == nil || (fmt != NameUnchanged && asset.Name == file.Name()) {
 							b.Fatal("hashFile failed")
 						}
 					}
