@@ -4,14 +4,13 @@
 
 package bindata
 
-import (
-	"path/filepath"
-	"text/template"
-)
+import "text/template"
 
 func init() {
 	template.Must(baseTemplate.New("bindata-debug").Funcs(template.FuncMap{
-		"abs": filepath.Abs,
+		"abs": func(path string) (string, error) {
+			return abs(path)
+		},
 		"maxNameLength": func(toc []binAsset) int {
 			l := 0
 			for _, asset := range toc {

@@ -36,7 +36,9 @@ func init() {
 }`))
 
 	template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
-		"stat": os.Stat,
+		"stat": func(path string) (os.FileInfo, error) {
+			return stat(path)
+		},
 		"name": func(name string) string {
 			_, name = path.Split(name)
 			return name
@@ -69,7 +71,7 @@ func init() {
 				WrapAt: wrapAt,
 			}
 
-			f, err := os.Open(path)
+			f, err := open(path)
 			if err != nil {
 				return "", err
 			}
@@ -106,7 +108,7 @@ func init() {
 				return
 			}
 
-			f, err := os.Open(path)
+			f, err := open(path)
 			if err != nil {
 				return
 			}

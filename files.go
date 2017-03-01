@@ -55,7 +55,7 @@ func FindFiles(path string, opts *FindFilesOptions) (files Files, err error) {
 		opts = new(FindFilesOptions)
 	}
 
-	if err = filepath.Walk(path, func(assetPath string, info os.FileInfo, err error) error {
+	if err = walk(path, func(assetPath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
