@@ -16,8 +16,9 @@ import (
 type binAsset struct {
 	File
 
-	Name string // Key used in TOC -- name by which asset is referenced.
-	Hash []byte // Generated hash of file.
+	opts        *GenerateOptions
+	Hash        []byte // Generated hash of file.
+	mangledName string
 }
 
 // Generate writes the generated Go code to w.
@@ -42,7 +43,8 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	for i, file := range f {
 		asset := binAsset{
 			File: file,
-			Name: file.Name(),
+
+			opts: opts,
 		}
 
 		if opts.HashFormat != NoHash {
@@ -55,12 +57,6 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 			}
 
 			asset.Hash = h.Sum(nil)
-		}
-
-		if opts.HashFormat > NameUnchanged {
-			if err = asset.mangleName(opts); err != nil {
-				return err
-			}
 		}
 
 		assets = append(assets, asset)

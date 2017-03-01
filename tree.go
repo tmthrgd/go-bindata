@@ -38,7 +38,7 @@ func init() {
 			tree := newAssetTree()
 			for _, asset := range toc {
 				node := tree
-				for _, name := range strings.Split(asset.Name, "/") {
+				for _, name := range strings.Split(asset.Name(), "/") {
 					node = node.child(name)
 				}
 

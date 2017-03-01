@@ -7,7 +7,6 @@ package bindata
 import (
 	"encoding/base32"
 	"encoding/base64"
-	"errors"
 	"path/filepath"
 	"strings"
 
@@ -16,12 +15,18 @@ import (
 
 var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 
-// mangleName applies name hashing with a given format,
-// length and encoding. It replaces asset.Name with the
-// mangled name.
-func (asset *binAsset) mangleName(opts *GenerateOptions) error {
+// Name applies name hashing if required. It returns the original
+// name for NoHash and NameUnchanged and returns the mangledName
+// otherwise.
+func (asset *binAsset) Name() string {
+	if asset.opts.HashFormat <= NameUnchanged {
+		return asset.File.Name()
+	} else if asset.mangledName != "" {
+		return asset.mangledName
+	}
+
 	var enc string
-	switch opts.HashEncoding {
+	switch asset.opts.HashEncoding {
 	case HexHash:
 		enc = hex.EncodeToString(asset.Hash)
 	case Base32Hash:
@@ -29,10 +34,10 @@ func (asset *binAsset) mangleName(opts *GenerateOptions) error {
 	case Base64Hash:
 		enc = base64.RawURLEncoding.EncodeToString(asset.Hash)
 	default:
-		return errors.New("invalid HashEncoding")
+		panic("unreachable")
 	}
 
-	l := opts.HashLength
+	l := asset.opts.HashLength
 	if l == 0 {
 		l = 16
 	}
@@ -41,20 +46,20 @@ func (asset *binAsset) mangleName(opts *GenerateOptions) error {
 		enc = enc[:l]
 	}
 
-	dir, file := filepath.Split(asset.Name)
+	dir, file := filepath.Split(asset.File.Name())
 	ext := filepath.Ext(file)
 
-	switch opts.HashFormat {
+	switch asset.opts.HashFormat {
 	case DirHash:
-		asset.Name = filepath.Join(dir, enc, file)
+		asset.mangledName = filepath.Join(dir, enc, file)
 	case NameHashSuffix:
 		file = strings.TrimSuffix(file, ext)
-		asset.Name = filepath.Join(dir, file+"-"+enc+ext)
+		asset.mangledName = filepath.Join(dir, file+"-"+enc+ext)
 	case HashWithExt:
-		asset.Name = filepath.Join(dir, enc+ext)
+		asset.mangledName = filepath.Join(dir, enc+ext)
 	default:
-		return errors.New("invalid HashFormat")
+		panic("unreachable")
 	}
 
-	return nil
+	return asset.mangledName
 }
