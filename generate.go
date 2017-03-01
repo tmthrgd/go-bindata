@@ -6,7 +6,6 @@ package bindata
 
 import (
 	"io"
-	"strings"
 	"text/template"
 )
 
@@ -48,12 +47,7 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	}{opts, assets})
 }
 
-var baseTemplate = template.Must(template.New("base").Funcs(template.FuncMap{
-	"repeat": strings.Repeat,
-	"sub": func(a, b int) int {
-		return a - b
-	},
-}).Parse(`
+var baseTemplate = template.Must(template.New("base").Parse(`
 {{- template "header" .}}
 
 {{if or $.Debug $.Dev -}}

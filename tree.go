@@ -33,34 +33,7 @@ func (node *assetTree) child(name string) *assetTree {
 }
 
 func init() {
-	template.Must(baseTemplate.New("bintree").Funcs(template.FuncMap{
-		"maxKeyLength": func(children map[string]*assetTree) int {
-			l := 0
-			for k := range children {
-				if len(k) > l {
-					l = len(k)
-				}
-			}
-
-			return l
-		},
-	}).Parse(`
-{{- if not .Depth -}}
-var _bintree = {{end -}}
-bintree{
-{{- if .Children}}
-{{$max := maxKeyLength .Children -}}
-{{range $k, $v := .Children -}}
-{{repeat "\t" $v.Depth}}{{printf "%q" $k}}:
-	{{- repeat " " (sub $max (len $k))}} {{template "bintree" $v}},
-{{end -}}
-{{- end -}}
-{{- if .Children -}}
-	{{repeat "\t" .Depth}}
-{{- end -}}
-}`))
-
-	template.Must(baseTemplate.New("tree").Funcs(template.FuncMap{
+	template.Must(template.Must(baseTemplate.New("tree").Funcs(template.FuncMap{
 		"tree": func(toc []binAsset) *assetTree {
 			tree := newAssetTree()
 			for _, asset := range toc {
@@ -114,5 +87,12 @@ func AssetDir(name string) ([]string, error) {
 
 type bintree map[string]bintree
 
-{{format "bintree" (tree .Assets)}}`))
+{{format "bintree" (tree .Assets)}}`)).New("bintree").Parse(`
+{{- if not .Depth -}}
+var _bintree = {{end -}}
+bintree{
+{{range $k, $v := .Children -}}
+	{{printf "%q" $k}}: {{template "bintree" $v}},
+{{end -}}
+}`))
 }

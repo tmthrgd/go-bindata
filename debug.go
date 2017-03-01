@@ -10,30 +10,7 @@ import (
 )
 
 func init() {
-	template.Must(baseTemplate.New("bindata-debug").Funcs(template.FuncMap{
-		"abs": filepath.Abs,
-		"maxNameLength": func(toc []binAsset) int {
-			l := 0
-			for _, asset := range toc {
-				if len(asset.Name) > l {
-					l = len(asset.Name)
-				}
-			}
-
-			return l
-		},
-	}).Parse(`var _bindata = map[string]string{
-{{$max := maxNameLength .Assets -}}
-{{range .Assets}}	{{printf "%q" .Name}}:
-	{{- repeat " " (sub $max (len .Name))}} {{if $.Dev -}}
-	{{printf "%q" .Name}}
-{{- else -}}
-	{{printf "%q" (abs .Path)}}
-{{- end}},
-{{end -}}
-}`))
-
-	template.Must(baseTemplate.New("debug").Funcs(template.FuncMap{
+	template.Must(template.Must(baseTemplate.New("debug").Funcs(template.FuncMap{
 		"format": formatTemplate,
 	}).Parse(`import (
 	"io/ioutil"
@@ -76,5 +53,17 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 }
 
 // _bindata is a table, mapping each file to its path.
-{{format "bindata-debug" $}}`))
+{{format "bindata-debug" $}}`)).New("bindata-debug").Funcs(template.FuncMap{
+		"abs": filepath.Abs,
+	}).Parse(`
+var _bindata = map[string]string{
+{{range .Assets -}}
+	{{printf "%q" .Name}}:
+	{{- if $.Dev -}}
+		{{printf "%q" .Name}}
+	{{- else -}}
+		{{printf "%q" (abs .Path)}}
+	{{- end}},
+{{end -}}
+}`))
 }
