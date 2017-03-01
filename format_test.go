@@ -28,10 +28,6 @@ func TestFormatting(t *testing.T) {
 			o := &GenerateOptions{Package: "main"}
 			opts(o)
 
-			if o.AssetDir {
-				t.Skip("skipping test as the AssetDir API produces known wrongly formatted code")
-			}
-
 			var buf bytes.Buffer
 			if err := testFiles.Generate(&buf, o); err != nil {
 				t.Fatal(err)
