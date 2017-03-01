@@ -14,29 +14,7 @@ import (
 	"text/template"
 )
 
-var (
-	bufPool = &sync.Pool{
-		New: func() interface{} {
-			return new(bytes.Buffer)
-		},
-	}
-
-	flatePool sync.Pool
-)
-
-func getSizedBuffer(f *os.File) *bytes.Buffer {
-	var n int
-	if fi, err := f.Stat(); err == nil {
-		// Don't preallocate a huge buffer, just in case.
-		if size := fi.Size(); size < 1e9 {
-			n = int(size)
-		}
-	}
-
-	buf := bufPool.Get().(*bytes.Buffer)
-	buf.Grow(n + bytes.MinRead)
-	return buf
-}
+var flatePool sync.Pool
 
 func init() {
 	template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
