@@ -31,7 +31,7 @@ func init() {
 {{- if $.Metadata -}}
 	//  metadata: true
 {{end -}}
-{{- if gt $.Mode 0 -}}
+{{- if $.Mode -}}
 	//  mode: {{printf "%04o" $.Mode}}
 {{end -}}
 {{- if gt $.ModTime 0 -}}
@@ -43,16 +43,16 @@ func init() {
 {{- if $.Restore -}}
 	//  restore: true
 {{end -}}
-{{- if ne $.HashFormat 0 -}}
+{{- if $.HashFormat -}}
 	//  hash-format: {{$.HashFormat}}
 {{end -}}
-{{- if and (ne $.HashFormat 0) (ne $.HashLength 0) (ne $.HashLength 16) -}}
+{{- if and $.HashFormat $.HashLength (ne $.HashLength 16) -}}
 	//  hash-length: {{$.HashLength}}
 {{end -}}
-{{- if and (ne $.HashFormat 0) (ne $.HashEncoding 0) -}}
+{{- if and $.HashFormat $.HashEncoding -}}
 	//  hash-encoding: {{$.HashEncoding}}
 {{end -}}
-{{- if and (ne $.HashFormat 0) $.HashKey -}}
+{{- if and $.HashFormat $.HashKey -}}
 	//  hash-key: <omitted>
 {{end -}}
 // sources:

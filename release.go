@@ -156,7 +156,7 @@ type asset struct {
 {{- if and $.Metadata (le $.ModTime 0)}}
 	time time.Time
 {{- end -}}
-{{- if ne $.HashFormat 0}}
+{{- if $.HashFormat}}
 	hash []byte
 {{- end}}
 {{- if and $.Compress $.DecompressOnce}}
@@ -180,7 +180,7 @@ func (a *asset) Size() int64 {
 }
 
 func (a *asset) Mode() os.FileMode {
-{{- if gt $.Mode 0}}
+{{- if $.Mode}}
 	return {{printf "%04o" $.Mode}}
 {{- else if $.Metadata}}
 	return a.mode
@@ -207,7 +207,7 @@ func (*asset) Sys() interface{} {
 	return nil
 }
 
-{{- if ne $.HashFormat 0}}
+{{- if $.HashFormat}}
 
 func (a *asset) OriginalName() string {
 {{- if gt $.HashFormat 1}}
@@ -258,7 +258,7 @@ var _bindata = map[string]*asset{
 		time: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 	{{- end -}}
 
-	{{- if ne $.HashFormat 0}}
+	{{- if $.HashFormat}}
 	{{- if $.Compress}}
 		hash: []byte("" +
 	{{- else}}
