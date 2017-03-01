@@ -50,7 +50,13 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 				h.Reset()
 			}
 
-			if err = asset.hashFile(h, opts); err != nil {
+			if asset.Hash, err = asset.hashFile(h); err != nil {
+				return err
+			}
+		}
+
+		if opts.HashFormat > NameUnchanged {
+			if err = asset.mangleName(opts); err != nil {
 				return err
 			}
 		}

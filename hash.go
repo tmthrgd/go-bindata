@@ -18,14 +18,11 @@ import (
 
 var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 
-// hashFile applies name hashing with a given format,
-// length and encoding. It returns the hashed name, the
-// hash and any error that occurred. The hash is a BLAKE2B
-// digest of the file contents.
-func (asset *binAsset) hashFile(h hash.Hash, opts *GenerateOptions) error {
+// hashFile hashes the asset and returns the resulting hash.
+func (asset *binAsset) hashFile(h hash.Hash) ([]byte, error) {
 	rc, err := asset.Open()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	buf := getSizedBuffer(rc)
@@ -36,15 +33,16 @@ func (asset *binAsset) hashFile(h hash.Hash, opts *GenerateOptions) error {
 	bufPool.Put(buf)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	asset.Hash = h.Sum(nil)
+	return h.Sum(nil), nil
+}
 
-	if opts.HashFormat == NameUnchanged {
-		return nil
-	}
-
+// mangleName applies name hashing with a given format,
+// length and encoding. It replaces asset.Name with the
+// mangled name.
+func (asset *binAsset) mangleName(opts *GenerateOptions) error {
 	var enc string
 	switch opts.HashEncoding {
 	case HexHash:
