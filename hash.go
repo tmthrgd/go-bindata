@@ -23,7 +23,7 @@ var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 // length and encoding. It returns the hashed name, the
 // hash and any error that occurred. The hash is a BLAKE2B
 // digest of the file contents.
-func hashFile(opts *GenerateOptions, asset *binAsset) error {
+func (asset *binAsset) hashFile(opts *GenerateOptions) error {
 	if opts.HashFormat == NoHash {
 		return nil
 	}

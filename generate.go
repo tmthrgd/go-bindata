@@ -35,7 +35,7 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 			Name:         file.Name,
 			OriginalName: file.Name,
 		}
-		if err := hashFile(opts, &asset); err != nil {
+		if err := asset.hashFile(opts); err != nil {
 			return err
 		}
 

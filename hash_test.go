@@ -50,7 +50,7 @@ func BenchmarkHashFile(b *testing.B) {
 							Name: file.Name,
 						}
 
-						if err := hashFile(opts, &asset); err != nil {
+						if err := asset.hashFile(opts); err != nil {
 							b.Fatal(err)
 						}
 
