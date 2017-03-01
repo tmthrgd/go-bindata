@@ -252,7 +252,7 @@ var _bindata = map[string]*asset{
 {{range $.Assets}}	{{printf "%q" .Name}}: &asset{
 		name: {{printf "%q" (name .Name)}},
 	{{- if gt $.HashFormat 1}}
-		orig: {{printf "%q" .OriginalName}},
+		orig: {{printf "%q" .File.Name}},
 	{{- end}}
 		data: {{if $.Compress -}}
 			"" +
@@ -357,7 +357,7 @@ func AssetName(name string) (string, error) {
 {{- end}}`)).New("hashnames").Parse(`
 var _hashNames = map[string]string{
 {{range .Assets -}}
-	{{printf "%q" .OriginalName}}: {{printf "%q" .Name}},
+	{{printf "%q" .File.Name}}: {{printf "%q" .Name}},
 {{end -}}
 }`))
 }

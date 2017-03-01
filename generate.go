@@ -13,9 +13,8 @@ import (
 type binAsset struct {
 	File
 
-	Name         string // Key used in TOC -- name by which asset is referenced.
-	OriginalName string // Original Name before hashing applied to Name.
-	Hash         []byte // Generated hash of file.
+	Name string // Key used in TOC -- name by which asset is referenced.
+	Hash []byte // Generated hash of file.
 }
 
 // Generate writes the generated Go code to w.
@@ -31,9 +30,8 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 	assets := make([]binAsset, 0, len(f))
 	for _, file := range f {
 		asset := binAsset{
-			File:         file,
-			Name:         file.Name(),
-			OriginalName: file.Name(),
+			File: file,
+			Name: file.Name(),
 		}
 		if err := asset.hashFile(opts); err != nil {
 			return err
