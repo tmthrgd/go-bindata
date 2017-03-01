@@ -7,8 +7,14 @@ package bindata
 import (
 	"bytes"
 	"go/parser"
+	"go/printer"
 	"go/token"
 )
+
+var printerConfig = printer.Config{
+	Mode:     printer.UseSpaces | printer.TabIndent,
+	Tabwidth: 8,
+}
 
 func formatTemplate(name string, data interface{}) (string, error) {
 	buf := bufPool.Get().(*bytes.Buffer)

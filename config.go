@@ -185,10 +185,6 @@ type GenerateOptions struct {
 
 	// When true, only gzip decompress the data on first use.
 	DecompressOnce bool
-
-	// When true, the generated code is parsed and printed to ensure it is
-	// correctly formatted.
-	Format bool
 }
 
 var (
