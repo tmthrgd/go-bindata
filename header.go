@@ -19,17 +19,17 @@ func init() {
 {{else if $.Debug -}}
 	//  debug: true
 {{end -}}
-{{- if not $.MemCopy -}}
-	//  memcopy: false
+{{- if $.MemCopy -}}
+	//  memcopy: true
 {{end -}}
-{{- if not $.Compress -}}
-	//  compress: false
+{{- if $.Compress -}}
+	//  compress: true
 {{end -}}
-{{- if and $.Compress (not $.DecompressOnce) -}}
-	//  decompress: always
+{{- if and $.Compress $.DecompressOnce -}}
+	//  decompress: once
 {{end -}}
-{{- if not $.Metadata -}}
-	//  metadata: false
+{{- if $.Metadata -}}
+	//  metadata: true
 {{end -}}
 {{- if gt $.Mode 0 -}}
 	//  mode: {{printf "%04o" $.Mode}}
@@ -37,11 +37,11 @@ func init() {
 {{- if gt $.ModTime 0 -}}
 	//  modtime: {{$.ModTime}}
 {{end -}}
-{{- if not $.AssetDir -}}
-	//  asset-dir: false
+{{- if $.AssetDir -}}
+	//  asset-dir: true
 {{end -}}
-{{- if not $.Restore -}}
-	//  restore: false
+{{- if $.Restore -}}
+	//  restore: true
 {{end -}}
 {{- if ne $.HashFormat 0 -}}
 	//  hash-format: {{$.HashFormat}}
