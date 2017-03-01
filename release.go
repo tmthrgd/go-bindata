@@ -157,9 +157,6 @@ func bindataRead(data string) []byte {
 	return b
 }
 
-{{else if not $.Compress -}}
-type bindataRead []byte
-
 {{end -}}
 
 type asset struct {
@@ -263,7 +260,11 @@ var _bindata = map[string]*asset{
 			"" +
 			{{flate .Path "\t\t\t" 24}}
 		{{- else -}}
+		{{- if $unsafeRead -}}
 			bindataRead("" +
+		{{- else -}}
+			[]byte("" +
+		{{- end}}
 			{{read .Path "\t\t\t" 24 -}}
 			)
 		{{- end}},
@@ -286,10 +287,10 @@ var _bindata = map[string]*asset{
 	{{- end -}}
 
 	{{- if $.HashFormat}}
-	{{- if $.Compress}}
-		hash: []byte("" +
-	{{- else}}
+	{{- if $unsafeRead}}
 		hash: bindataRead("" +
+	{{- else}}
+		hash: []byte("" +
 	{{- end}}
 			{{wrap .Hash "\t\t\t" 24 -}}
 		),
