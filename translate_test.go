@@ -62,11 +62,10 @@ var testCases = map[string]func(*GenerateOptions){
 }
 
 var testPaths = map[string]*FindFilesOptions{
-	"testdata":        {Recursive: true},
-	"testdata/ogqS":   {Prefix: "testdata"},
-	"CONTRIBUTING.md": nil,
-	"LICENSE":         nil,
-	"README.md":       nil,
+	"testdata":               {Recursive: true},
+	"testdata/ab6.bin":       {Prefix: "testdata"},
+	"testdata/ogqS":          {Prefix: "testdata"},
+	"testdata/ogqS/qsDM.bin": {Prefix: "testdata/ogqS"},
 }
 
 var (
