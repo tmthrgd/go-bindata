@@ -23,20 +23,20 @@ func (asset *binAsset) copy(w io.Writer) error {
 		return err
 	}
 
-	var n int
+	n := 4 * 1024
 	if s, ok := rc.(interface {
 		Stat() (os.FileInfo, error)
 	}); ok {
 		if fi, err := s.Stat(); err == nil {
 			// Don't preallocate a huge buffer, just in case.
 			if size := fi.Size(); size < 1e9 {
-				n = int(size)
+				n = int(size) + bytes.MinRead
 			}
 		}
 	}
 
 	buf := bufPool.Get().(*bytes.Buffer)
-	buf.Grow(n + bytes.MinRead)
+	buf.Grow(n)
 
 	_, err = io.CopyBuffer(w, rc, buf.Bytes()[:buf.Cap()])
 
