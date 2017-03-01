@@ -143,7 +143,7 @@ func testDiff(a, b string) (string, error) {
 	if err := difflib.WriteUnifiedDiff(&diff, difflib.UnifiedDiff{
 		A:       difflib.SplitLines(a),
 		B:       difflib.SplitLines(b),
-		Context: 2,
+		Context: 3,
 		Eol:     "",
 	}); err != nil {
 		return "", nil
