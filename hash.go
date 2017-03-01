@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -33,7 +32,7 @@ func (asset *binAsset) hashFile(opts *GenerateOptions) error {
 		return err
 	}
 
-	f, err := os.Open(asset.Path)
+	f, err := open(asset.Path)
 	if err != nil {
 		return err
 	}
