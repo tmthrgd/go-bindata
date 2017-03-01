@@ -73,7 +73,7 @@ var (
 	testFilesErr error
 )
 
-var randTestCases = flag.Uint("randtests", 25, "")
+var randTestCases = flag.Uint("randtests", 25, "the number of random test cases to add")
 
 func TestMain(m *testing.M) {
 	flag.Parse()
