@@ -8,9 +8,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/afero"
 )
+
+const stubFsRoot = "/path/to/test/data"
 
 var testPaths = map[string]*FindFilesOptions{
 	"testdata":               {Recursive: true},
@@ -19,14 +22,12 @@ var testPaths = map[string]*FindFilesOptions{
 	"testdata/ogqS/qsDM.bin": {Prefix: "testdata/ogqS"},
 }
 
+var modTime = time.Unix(123456789, 987654321)
+
 func testStubFileSystem() error {
-	var fe firstError
-
-	root, err := os.Getwd()
-	fe.Set(err)
-
 	fs := afero.NewMemMapFs()
 
+	var fe firstError
 	fe.Set(filepath.Walk("testdata", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -41,7 +42,7 @@ func testStubFileSystem() error {
 		data, err := ioutil.ReadFile(path)
 		fe.Set(err)
 		fe.Set(afero.WriteFile(fs, path, data, info.Mode()))
-		fe.Set(fs.Chtimes(path, info.ModTime(), info.ModTime()))
+		fe.Set(fs.Chtimes(path, modTime, modTime))
 		return fe.Err
 	}))
 
@@ -53,7 +54,7 @@ func testStubFileSystem() error {
 			return path, nil
 		}
 
-		return filepath.Join(root, path), nil
+		return filepath.Join(stubFsRoot, path), nil
 	}
 	walk = af.Walk
 
