@@ -19,14 +19,9 @@ import (
 	"github.com/tmthrgd/go-bindata/internal/identifier"
 )
 
-type testCase struct {
-	name string
-	opts func(*GenerateOptions)
-}
-
-var testCases = []testCase{
-	{"default", func(*GenerateOptions) {}},
-	{"old-default", func(o *GenerateOptions) {
+var testCases = map[string]func(*GenerateOptions){
+	"default": func(*GenerateOptions) {},
+	"old-default": func(o *GenerateOptions) {
 		*o = GenerateOptions{
 			Package:        "main",
 			MemCopy:        true,
@@ -36,34 +31,34 @@ var testCases = []testCase{
 			Restore:        true,
 			DecompressOnce: true,
 		}
-	}},
-	{"debug", func(o *GenerateOptions) { o.Debug = true }},
-	{"dev", func(o *GenerateOptions) { o.Dev = true }},
-	{"tags", func(o *GenerateOptions) { o.Tags = "!x" }},
-	{"package", func(o *GenerateOptions) { o.Package = "test" }},
-	{"compress", func(o *GenerateOptions) { o.Compress = true }},
-	{"copy", func(o *GenerateOptions) { o.MemCopy = true }},
-	{"metadata", func(o *GenerateOptions) { o.Metadata = true }},
-	{"decompress-once", func(o *GenerateOptions) {
+	},
+	"debug":    func(o *GenerateOptions) { o.Debug = true },
+	"dev":      func(o *GenerateOptions) { o.Dev = true },
+	"tags":     func(o *GenerateOptions) { o.Tags = "!x" },
+	"package":  func(o *GenerateOptions) { o.Package = "test" },
+	"compress": func(o *GenerateOptions) { o.Compress = true },
+	"copy":     func(o *GenerateOptions) { o.MemCopy = true },
+	"metadata": func(o *GenerateOptions) { o.Metadata = true },
+	"decompress-once": func(o *GenerateOptions) {
 		o.Compress = true
 		o.DecompressOnce = true
-	}},
-	{"hash-dir", func(o *GenerateOptions) { o.HashFormat = DirHash }},
-	{"hash-suffix", func(o *GenerateOptions) { o.HashFormat = NameHashSuffix }},
-	{"hash-hashext", func(o *GenerateOptions) { o.HashFormat = HashWithExt }},
-	{"hash-unchanged", func(o *GenerateOptions) { o.HashFormat = NameUnchanged }},
-	{"hash-enc-b32", func(o *GenerateOptions) {
+	},
+	"hash-dir":       func(o *GenerateOptions) { o.HashFormat = DirHash },
+	"hash-suffix":    func(o *GenerateOptions) { o.HashFormat = NameHashSuffix },
+	"hash-hashext":   func(o *GenerateOptions) { o.HashFormat = HashWithExt },
+	"hash-unchanged": func(o *GenerateOptions) { o.HashFormat = NameUnchanged },
+	"hash-enc-b32": func(o *GenerateOptions) {
 		o.HashEncoding = Base32Hash
 		o.HashFormat = DirHash
-	}},
-	{"hash-enc-b64", func(o *GenerateOptions) {
+	},
+	"hash-enc-b64": func(o *GenerateOptions) {
 		o.HashEncoding = Base64Hash
 		o.HashFormat = DirHash
-	}},
-	{"hash-key", func(o *GenerateOptions) {
+	},
+	"hash-key": func(o *GenerateOptions) {
 		o.HashKey = []byte{0x00, 0x11, 0x22, 0x33}
 		o.HashFormat = DirHash
-	}},
+	},
 }
 
 var testPaths = map[string]*FindFilesOptions{
@@ -86,7 +81,6 @@ func TestMain(m *testing.M) {
 
 	t := reflect.TypeOf(GenerateOptions{})
 
-	testCases = append(testCases, make([]testCase, 0, *randTestCases)...)
 	for i := uint(0); i < *randTestCases; i++ {
 		rand := rand.New(rand.NewSource(int64(i)))
 
@@ -119,10 +113,7 @@ func TestMain(m *testing.M) {
 			vo.HashFormat = NoHash
 		}
 
-		testCases = append(testCases, testCase{
-			fmt.Sprintf("random-#%d", i+1),
-			func(o *GenerateOptions) { *o = *vo },
-		})
+		testCases[fmt.Sprintf("random-#%d", i+1)] = func(o *GenerateOptions) { *o = *vo }
 	}
 
 	for path, opts := range testPaths {

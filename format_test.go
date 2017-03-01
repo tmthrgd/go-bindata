@@ -20,13 +20,13 @@ func TestFormatting(t *testing.T) {
 		t.Fatal(testFilesErr)
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for name, opts := range testCases {
+		name, opts := name, opts
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			o := &GenerateOptions{Package: "main"}
-			test.opts(o)
+			opts(o)
 
 			if o.AssetDir {
 				t.Skip("skipping test as the AssetDir API produces known wrongly formatted code")

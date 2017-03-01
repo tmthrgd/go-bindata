@@ -22,11 +22,11 @@ func BenchmarkGenerate(b *testing.B) {
 		b.Fatal(testFilesErr)
 	}
 
-	for _, test := range testCases {
-		test := test
-		b.Run(test.name, func(b *testing.B) {
+	for name, opts := range testCases {
+		name, opts := name, opts
+		b.Run(name, func(b *testing.B) {
 			o := &GenerateOptions{Package: "main"}
-			test.opts(o)
+			opts(o)
 
 			b.ResetTimer()
 

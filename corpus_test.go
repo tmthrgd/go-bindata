@@ -38,18 +38,18 @@ func TestCorpus(t *testing.T) {
 		t.Logf("generating corpus into %s", *corpus)
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
+	for name, opts := range testCases {
+		name, opts := name, opts
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			o := &GenerateOptions{Package: "main"}
-			test.opts(o)
+			opts(o)
 
-			f, err := os.OpenFile(filepath.Join(*corpus, test.name+".go"), perms, mode)
+			f, err := os.OpenFile(filepath.Join(*corpus, name+".go"), perms, mode)
 			if err != nil {
 				if os.IsNotExist(err) {
-					t.Skipf("corpus does not contain test case %s", test.name)
+					t.Skipf("corpus does not contain test case %s", name)
 					return
 				}
 
