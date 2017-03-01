@@ -46,10 +46,10 @@ func init() {
 {{- if $.HashFormat -}}
 	//  hash-format: {{$.HashFormat}}
 {{end -}}
-{{- if and $.HashFormat $.HashLength (ne $.HashLength 16) -}}
+{{- if and (gt $.HashFormat 1) $.HashLength (ne $.HashLength 16) -}}
 	//  hash-length: {{$.HashLength}}
 {{end -}}
-{{- if and $.HashFormat $.HashEncoding -}}
+{{- if and (gt $.HashFormat 1) $.HashEncoding -}}
 	//  hash-encoding: {{$.HashEncoding}}
 {{end -}}
 {{- if and $.HashFormat $.HashKey -}}
