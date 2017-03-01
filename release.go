@@ -150,7 +150,7 @@ type asset struct {
 {{- else}}
 	data []byte
 {{- end -}}
-{{- if and $.Metadata (le $.Mode 0)}}
+{{- if and $.Metadata (not $.Mode)}}
 	mode os.FileMode
 {{- end -}}
 {{- if and $.Metadata (not $.ModTime)}}
@@ -249,7 +249,7 @@ var _bindata = map[string]*asset{
 		size: {{len $data}},
 	{{- end -}}
 
-	{{- if and $.Metadata (le $.Mode 0)}}
+	{{- if and $.Metadata (not $.Mode)}}
 		mode: {{printf "%04o" (stat .Path).Mode}},
 	{{- end -}}
 
