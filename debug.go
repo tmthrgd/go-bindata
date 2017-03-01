@@ -4,10 +4,7 @@
 
 package bindata
 
-import (
-	"path/filepath"
-	"text/template"
-)
+import "text/template"
 
 func init() {
 	template.Must(template.Must(template.Must(baseTemplate.New("debug").Funcs(template.FuncMap{
@@ -57,12 +54,10 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 	{{format "bindata-dev" $}}
 {{- else -}}
 	{{format "bindata-debug" $}}
-{{- end}}`)).New("bindata-debug").Funcs(template.FuncMap{
-		"abs": filepath.Abs,
-	}).Parse(`
+{{- end}}`)).New("bindata-debug").Parse(`
 var _bindata = map[string]string{
 {{range .Assets -}}
-	{{printf "%q" .Name}}: {{printf "%q" (abs .Path)}},
+	{{printf "%q" .Name}}: {{printf "%q" .AbsolutePath}},
 {{end -}}
 }`)).New("bindata-dev").Parse(`
 var _bindata = map[string]string{

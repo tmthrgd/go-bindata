@@ -16,8 +16,10 @@ import (
 type File interface {
 	// Name returns the name by which asset is referenced.
 	Name() string
-	// Path returns the the path to the file.
+	// Path returns the relative path to the file.
 	Path() string
+	// AbsolutePath returns the absolute path to the file.
+	AbsolutePath() string
 
 	// Open returns an io.ReadCloser for reading the file.
 	Open() (io.ReadCloser, error)
@@ -39,6 +41,15 @@ func (f *osFile) Name() string {
 
 func (f *osFile) Path() string {
 	return f.path
+}
+
+func (f *osFile) AbsolutePath() string {
+	path, err := filepath.Abs(f.path)
+	if err != nil {
+		return f.path
+	}
+
+	return path
 }
 
 func (f *osFile) Open() (io.ReadCloser, error) {
