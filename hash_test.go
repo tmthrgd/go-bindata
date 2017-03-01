@@ -37,7 +37,7 @@ func BenchmarkHashFile(b *testing.B) {
 					}
 
 					if first {
-						b.Logf("hashing file %s of size %dB", file.Path, size)
+						b.Logf("hashing file %s of size %dB", file.Path(), size)
 						first = false
 					}
 
