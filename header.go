@@ -34,7 +34,7 @@ func init() {
 {{- if $.Mode -}}
 	//  mode: {{printf "%04o" $.Mode}}
 {{end -}}
-{{- if gt $.ModTime 0 -}}
+{{- if $.ModTime -}}
 	//  modtime: {{$.ModTime}}
 {{end -}}
 {{- if $.AssetDir -}}

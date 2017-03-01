@@ -153,7 +153,7 @@ type asset struct {
 {{- if and $.Metadata (le $.Mode 0)}}
 	mode os.FileMode
 {{- end -}}
-{{- if and $.Metadata (le $.ModTime 0)}}
+{{- if and $.Metadata (not $.ModTime)}}
 	time time.Time
 {{- end -}}
 {{- if $.HashFormat}}
@@ -190,7 +190,7 @@ func (a *asset) Mode() os.FileMode {
 }
 
 func (a *asset) ModTime() time.Time {
-{{- if gt $.ModTime 0}}
+{{- if $.ModTime}}
 	return time.Unix({{$.ModTime}}, 0)
 {{- else if $.Metadata}}
 	return a.time
@@ -253,7 +253,7 @@ var _bindata = map[string]*asset{
 		mode: {{printf "%04o" (stat .Path).Mode}},
 	{{- end -}}
 
-	{{- if and $.Metadata (le $.ModTime 0)}}
+	{{- if and $.Metadata (not $.ModTime)}}
 		{{$mod := (stat .Path).ModTime -}}
 		time: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
 	{{- end -}}
