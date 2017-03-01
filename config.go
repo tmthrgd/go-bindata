@@ -202,12 +202,12 @@ func (opts *GenerateOptions) validate() error {
 		return errors.New("go-bindata: invalid mode specified")
 	}
 
-	if (opts.Debug || opts.Dev) && opts.HashFormat != NoHash {
-		return errors.New("go-bindata: HashFormat is not compatible with Debug and Dev")
-	}
-
 	switch opts.HashFormat {
-	case NoHash, NameUnchanged, DirHash, NameHashSuffix, HashWithExt:
+	case NoHash:
+	case NameUnchanged, DirHash, NameHashSuffix, HashWithExt:
+		if opts.Debug || opts.Dev {
+			return errors.New("go-bindata: HashFormat is not compatible with Debug and Dev")
+		}
 	default:
 		return errors.New("go-bindata: invalid HashFormat specified")
 	}
