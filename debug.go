@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	template.Must(template.Must(baseTemplate.New("debug").Funcs(template.FuncMap{
+	template.Must(template.Must(template.Must(baseTemplate.New("debug").Funcs(template.FuncMap{
 		"format": formatTemplate,
 	}).Parse(`import (
 	"io/ioutil"
@@ -53,17 +53,21 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 }
 
 // _bindata is a table, mapping each file to its path.
-{{format "bindata-debug" $}}`)).New("bindata-debug").Funcs(template.FuncMap{
+{{if $.Dev -}}
+	{{format "bindata-dev" $}}
+{{- else -}}
+	{{format "bindata-debug" $}}
+{{- end}}`)).New("bindata-debug").Funcs(template.FuncMap{
 		"abs": filepath.Abs,
 	}).Parse(`
 var _bindata = map[string]string{
 {{range .Assets -}}
-	{{printf "%q" .Name}}:
-	{{- if $.Dev -}}
-		{{printf "%q" .Name}}
-	{{- else -}}
-		{{printf "%q" (abs .Path)}}
-	{{- end}},
+	{{printf "%q" .Name}}: {{printf "%q" (abs .Path)}},
+{{end -}}
+}`)).New("bindata-dev").Parse(`
+var _bindata = map[string]string{
+{{range .Assets -}}
+	{{printf "%q" .Name}}: {{printf "%q" .Name}},
 {{end -}}
 }`))
 }
