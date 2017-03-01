@@ -23,7 +23,7 @@ var testPaths = map[string]*FindFilesOptions{
 }
 
 func testRandomName(rand *rand.Rand) string {
-	g, err := regen.NewGenerator(fmt.Sprintf("[a-zA-Z0-9_.-]{%d}", 1+rand.Intn(20-1)), &regen.GeneratorArgs{
+	g, err := regen.NewGenerator(fmt.Sprintf("[a-zA-Z0-9_.-]{%d}", 1+rand.Intn(64-1)), &regen.GeneratorArgs{
 		RngSource: rand,
 	})
 	if err != nil {
