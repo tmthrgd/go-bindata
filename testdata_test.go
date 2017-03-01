@@ -5,46 +5,102 @@
 package bindata
 
 import (
-	"io/ioutil"
+	"fmt"
+	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
+	"reflect"
+	"testing/quick"
 	"time"
 
 	"github.com/spf13/afero"
+	"github.com/zach-klippenstein/goregen"
 )
 
-const stubFsRoot = "/path/to/test/data"
-
 var testPaths = map[string]*FindFilesOptions{
-	"testdata":               {Recursive: true},
-	"testdata/ab6.bin":       {Prefix: "testdata"},
-	"testdata/ogqS":          {Prefix: "testdata"},
-	"testdata/ogqS/qsDM.bin": {Prefix: "testdata/ogqS"},
+	"/": {Recursive: true},
 }
 
-var modTime = time.Unix(123456789, 987654321)
+func testRandomName(rand *rand.Rand) string {
+	g, err := regen.NewGenerator(fmt.Sprintf("[a-zA-Z0-9_.-]{%d}", 1+rand.Intn(20-1)), &regen.GeneratorArgs{
+		RngSource: rand,
+	})
+	if err != nil {
+		panic(err)
+	}
 
-func testStubFileSystem() error {
-	fs := afero.NewMemMapFs()
+	return g.Generate()
+}
+
+type testFileName string
+
+func (testFileName) Generate(rand *rand.Rand, size int) reflect.Value {
+	return reflect.ValueOf(testFileName(testRandomName(rand)))
+}
+
+type testFileData []byte
+
+func (testFileData) Generate(rand *rand.Rand, size int) reflect.Value {
+	v := make([]byte, 1+rand.Intn(512-1))
+	rand.Read(v)
+	return reflect.ValueOf(testFileData(v))
+}
+
+type testFileModTime time.Time
+
+func (testFileModTime) Generate(rand *rand.Rand, size int) reflect.Value {
+	return reflect.ValueOf(testFileModTime(time.Unix(rand.Int63(), rand.Int63())))
+}
+
+type testFileMode os.FileMode
+
+func (testFileMode) Generate(rand *rand.Rand, size int) reflect.Value {
+	return reflect.ValueOf(testFileMode(rand.Intn(int(os.ModePerm))))
+}
+
+type testFileMap map[testFileName]struct {
+	Data    testFileData
+	ModTime testFileModTime
+	Mode    testFileMode
+}
+
+func testPopulateDirectory(fs afero.Fs, base string, rand *rand.Rand) error {
+	v, ok := quick.Value(reflect.TypeOf(testFileMap{}), rand)
+	if !ok {
+		panic("quick.Value failed")
+	}
 
 	var fe firstError
-	fe.Set(filepath.Walk("testdata", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
 
-		if info.IsDir() {
-			return fs.Mkdir(path, info.Mode())
-		}
+	for name, file := range v.Interface().(testFileMap) {
+		path := filepath.FromSlash(filepath.Join(base, string(name)))
 
-		var fe firstError
+		fe.Set(afero.WriteFile(fs, path, file.Data, os.FileMode(file.Mode)))
+		fe.Set(fs.Chtimes(path, time.Time(file.ModTime), time.Time(file.ModTime)))
+	}
 
-		data, err := ioutil.ReadFile(path)
-		fe.Set(err)
-		fe.Set(afero.WriteFile(fs, path, data, info.Mode()))
-		fe.Set(fs.Chtimes(path, modTime, modTime))
-		return fe.Err
-	}))
+	return fe.Err
+}
+
+var fs = afero.NewMemMapFs()
+
+func testStubFileSystem() error {
+	rand := rand.New(rand.NewSource(0))
+
+	var fe firstError
+
+	dirName := path.Join("/", testRandomName(rand))
+	testPaths[dirName] = &FindFilesOptions{
+		Prefix: dirName,
+	}
+
+	for _, dir := range [...]string{
+		dirName,
+		path.Join("/", testRandomName(rand)),
+	} {
+		fe.Set(testPopulateDirectory(fs, dir, rand))
+	}
 
 	af := afero.Afero{Fs: fs}
 
@@ -54,7 +110,7 @@ func testStubFileSystem() error {
 			return path, nil
 		}
 
-		return filepath.Join(stubFsRoot, path), nil
+		return filepath.Join("/", path), nil
 	}
 	walk = af.Walk
 
@@ -65,7 +121,6 @@ func testStubFileSystem() error {
 		return af.Open(name)
 	}
 	stat = af.Stat
-
 	return fe.Err
 }
 
