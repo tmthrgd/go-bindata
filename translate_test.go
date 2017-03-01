@@ -27,13 +27,15 @@ type testCase struct {
 var testCases = []testCase{
 	{"default", func(*GenerateOptions) {}},
 	{"old-default", func(o *GenerateOptions) {
-		o.Package = "main"
-		o.MemCopy = true
-		o.Compress = true
-		o.Metadata = true
-		o.AssetDir = true
-		o.Restore = true
-		o.DecompressOnce = true
+		*o = GenerateOptions{
+			Package:        "main",
+			MemCopy:        true,
+			Compress:       true,
+			Metadata:       true,
+			AssetDir:       true,
+			Restore:        true,
+			DecompressOnce: true,
+		}
 	}},
 	{"debug", func(o *GenerateOptions) { o.Debug = true }},
 	{"dev", func(o *GenerateOptions) { o.Dev = true }},
