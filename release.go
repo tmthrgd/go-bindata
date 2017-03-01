@@ -17,6 +17,24 @@ import (
 var flatePool sync.Pool
 
 func init() {
+	template.Must(baseTemplate.New("hashnames").Funcs(template.FuncMap{
+		"maxOriginalNameLength": func(toc []binAsset) int {
+			l := 0
+			for _, asset := range toc {
+				if len(asset.OriginalName) > l {
+					l = len(asset.OriginalName)
+				}
+			}
+
+			return l
+		},
+	}).Parse(`var _hashNames = map[string]string{
+{{$max := maxOriginalNameLength .Assets -}}
+{{range .Assets}}	{{printf "%q" .OriginalName}}:
+	{{- repeat " " (sub $max (len .OriginalName))}} {{printf "%q" .Name}},
+{{end -}}
+}`))
+
 	template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
 		"stat": os.Stat,
 		"name": func(name string) string {
@@ -115,16 +133,7 @@ func init() {
 			flatePool.Put(fw)
 			return
 		},
-		"maxOriginalNameLength": func(toc []binAsset) int {
-			l := 0
-			for _, asset := range toc {
-				if len(asset.OriginalName) > l {
-					l = len(asset.OriginalName)
-				}
-			}
-
-			return l
-		},
+		"format": formatTemplate,
 	}).Parse(`
 {{- $unsafeRead := and (not $.Compress) (not $.MemCopy) -}}
 import (
@@ -353,12 +362,7 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 
 {{- if gt $.HashFormat 1}}
 
-var _hashNames = map[string]string{
-{{$max := maxOriginalNameLength .Assets -}}
-{{range .Assets}}	{{printf "%q" .OriginalName}}:
-	{{- repeat " " (sub $max (len .OriginalName))}} {{printf "%q" .Name}},
-{{end -}}
-}
+{{format "hashnames" $}}
 
 // AssetName returns the hashed name associated with an asset of a
 // given name.
