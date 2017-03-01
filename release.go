@@ -249,13 +249,17 @@ var _bindata = map[string]*asset{
 		size: {{len $data}},
 	{{- end -}}
 
-	{{- if and $.Metadata (not $.Mode)}}
-		mode: {{printf "%04o" (stat .Path).Mode}},
-	{{- end -}}
+	{{- if and $.Metadata (not (and $.Mode $.ModTime)) -}}
+		{{- $info := stat .Path -}}
 
-	{{- if and $.Metadata (not $.ModTime)}}
-		{{$mod := (stat .Path).ModTime -}}
+		{{- if not $.Mode}}
+		mode: {{printf "%04o" $info.Mode}},
+		{{- end -}}
+
+		{{- if not $.ModTime}}
+		{{$mod := $info.ModTime -}}
 		time: time.Unix({{$mod.Unix}}, {{$mod.Nanosecond}}),
+		{{- end -}}
 	{{- end -}}
 
 	{{- if $.HashFormat}}
