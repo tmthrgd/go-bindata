@@ -30,6 +30,8 @@ func must(err error) {
 func main() {
 	genOpts, findOpts, output := parseArgs()
 
+	io.WriteString(os.Stderr, "The go-bindata command is deprecated, use github.com/tmthrgd/go-bindata instead.\n")
+
 	var all bindata.Files
 
 	for i := 0; i < flag.NArg(); i++ {
@@ -72,37 +74,24 @@ func parseArgs() (genOpts *bindata.GenerateOptions, findOpts *bindata.FindFilesO
 		Compress:       true,
 		Metadata:       true,
 		Restore:        true,
-		HashLength:     16,
 		AssetDir:       true,
 		DecompressOnce: true,
 	}
 	findOpts = new(bindata.FindFilesOptions)
 
+	var noMemCopy, noCompress, noMetadata bool
 	var mode uint
 	flag.BoolVar(&genOpts.Debug, "debug", genOpts.Debug, "Do not embed the assets, but provide the embedding API. Contents will still be loaded from disk.")
 	flag.BoolVar(&genOpts.Dev, "dev", genOpts.Dev, "Similar to debug, but does not emit absolute paths. Expects a rootDir variable to already exist in the generated code's package.")
 	flag.StringVar(&genOpts.Tags, "tags", genOpts.Tags, "Optional set of build tags to include.")
 	flag.StringVar(&findOpts.Prefix, "prefix", "", "Optional path prefix to strip off asset names.")
 	flag.StringVar(&genOpts.Package, "pkg", genOpts.Package, "Package name to use in the generated code.")
-	flag.BoolVar(&genOpts.MemCopy, "memcopy", genOpts.MemCopy, "Do not use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
-	flag.BoolVar(&genOpts.Compress, "compress", genOpts.Compress, "Assets will be GZIP compressed when this flag is specified.")
-	flag.BoolVar(&genOpts.Metadata, "metadata", genOpts.Metadata, "Assets will preserve size, mode, and modtime info.")
+	flag.BoolVar(&noMemCopy, "nomemcopy", !genOpts.MemCopy, "Use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
+	flag.BoolVar(&noCompress, "nocompress", !genOpts.Compress, "Assets will *not* be GZIP compressed when this flag is specified.")
+	flag.BoolVar(&noMetadata, "nometadata", !genOpts.Metadata, "Assets will not preserve size, mode, and modtime info.")
 	flag.UintVar(&mode, "mode", uint(genOpts.Mode), "Optional file mode override for all files.")
 	flag.Int64Var(&genOpts.ModTime, "modtime", genOpts.ModTime, "Optional modification unix timestamp override for all files.")
-	flag.BoolVar(&genOpts.Restore, "restore", genOpts.Restore, "[Deprecated]: use github.com/tmthrgd/go-bindata/restore.")
-	flag.Var((*hashFormatValue)(&genOpts.HashFormat), "hash", "Optional the format of name hashing to apply.")
-	flag.UintVar(&genOpts.HashLength, "hashlen", genOpts.HashLength, "Optional length of hashes to be generated.")
-	flag.Var((*hashEncodingValue)(&genOpts.HashEncoding), "hashenc", `Optional the encoding of the hash to use. (default "hex")`)
-	flag.Var((*hexEncodingValue)(&genOpts.HashKey), "hashkey", "Optional hexadecimal key to use to turn the BLAKE2B hashing into a MAC.")
-	flag.BoolVar(&genOpts.AssetDir, "assetdir", genOpts.AssetDir, "Provide the AssetDir APIs.")
 	flag.Var((*appendRegexValue)(&findOpts.Ignore), "ignore", "Regex pattern to ignore")
-	flag.BoolVar(&genOpts.DecompressOnce, "once", genOpts.DecompressOnce, "Only GZIP decompress the resource once.")
-
-	// Deprecated options
-	var noMemCopy, noCompress, noMetadata bool
-	flag.BoolVar(&noMemCopy, "nomemcopy", !genOpts.MemCopy, "[Deprecated]: use -memcpy=false.")
-	flag.BoolVar(&noCompress, "nocompress", !genOpts.Compress, "[Deprecated]: use -compress=false.")
-	flag.BoolVar(&noMetadata, "nometadata", !genOpts.Metadata, "[Deprecated]: use -metadata=false.")
 
 	flag.Parse()
 
@@ -127,30 +116,19 @@ func parseArgs() (genOpts *bindata.GenerateOptions, findOpts *bindata.FindFilesO
 		output = filepath.Join(cwd, "bindata.go")
 	}
 
+	genOpts.MemCopy = !noMemCopy
+	genOpts.Compress = !noCompress
+	genOpts.Metadata = !noMetadata && (genOpts.Mode == 0 || genOpts.ModTime == 0)
+
 	genOpts.Mode = os.FileMode(mode)
 
 	var pkgSet, outputSet bool
-	var memcopySet, nomemcopySet bool
-	var compressSet, nocompressSet bool
-	var metadataSet, nometadataSet bool
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "pkg":
 			pkgSet = true
 		case "o":
 			outputSet = true
-		case "memcopy":
-			memcopySet = true
-		case "nomemcopy":
-			nomemcopySet = true
-		case "compress":
-			compressSet = true
-		case "nocompress":
-			nocompressSet = true
-		case "metadata":
-			metadataSet = true
-		case "nometadata":
-			nometadataSet = true
 		}
 	})
 
@@ -162,24 +140,8 @@ func parseArgs() (genOpts *bindata.GenerateOptions, findOpts *bindata.FindFilesO
 		}
 	}
 
-	if !memcopySet && nomemcopySet {
-		genOpts.MemCopy = !noMemCopy
-	}
-
-	if !compressSet && nocompressSet {
-		genOpts.Compress = !noCompress
-	}
-
-	if !metadataSet && nometadataSet {
-		genOpts.Metadata = !noMetadata
-	}
-
-	if genOpts.Mode != 0 && genOpts.ModTime != 0 {
-		genOpts.Metadata = false
-	}
-
 	if !genOpts.MemCopy && genOpts.Compress {
-		io.WriteString(os.Stderr, "The use of -memcopy=false with -compress is deprecated.\n")
+		io.WriteString(os.Stderr, "The use of -nomemcopy without -nocompress is deprecated.\n")
 	}
 
 	must(validateOutput(output))

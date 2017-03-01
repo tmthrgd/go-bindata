@@ -12,13 +12,12 @@ Since that fork, go-bindata has been
 [largely rewritten](https://github.com/tmthrgd/go-bindata/compare/3adb6a8b66f07a123c3d44e8f6c7e78bbdd029c2...master)
 and has become a standalone project. While the generated code has changed,
 the generated API remains backwards compatible. The CLI also remains
-backwards compatible. The
-[package API](https://godoc.org/github.com/tmthrgd/go-bindata) is not
+backwards compatible **but is considered deprecated** and will not be updated.
+The [package API](https://godoc.org/github.com/tmthrgd/go-bindata) is not
 backwards compatible.
 
-The suggested way of using go-bindata is through the
-[package API](https://godoc.org/github.com/tmthrgd/go-bindata) from a
-single .go file with an ignore build tag (`// +build ignore`) run with
+The suggested way of using go-bindata is from a single .go file with an
+ignore build tag (`// +build ignore`) run with
 `//go:generate go run path/to/generate.go`.
 
 *Nota bene*: Most of the README that follows has not been updated to match
@@ -31,52 +30,11 @@ This package converts any file into manageable Go source code. Useful for
 embedding binary data into a go program. The file data is optionally gzip
 compressed before being converted to a raw byte slice.
 
-It comes with a command line tool in the `go-bindata` sub directory.
-This tool offers a set of command line options, used to customize the
-output being generated.
-
-
 ### Installation
 
-To install the library and command line program, use the following:
+To install the library, use the following:
 
-	go get -u github.com/tmthrgd/go-bindata/...
-
-
-### Usage
-
-Conversion is done on one or more sets of files. They are all embedded in a new
-Go source file, along with a table of contents and an `Asset` function,
-which allows quick access to the asset, based on its name.
-
-The simplest invocation generates a `bindata.go` file in the current
-working directory. It includes all assets from the `data` directory.
-
-	$ go-bindata data/
-
-To include all input sub-directories recursively, use the ellipsis postfix
-as defined for Go import paths. Otherwise it will only consider assets in the
-input directory itself.
-
-	$ go-bindata data/...
-
-To specify the name of the output file being generated, we use the following:
-
-	$ go-bindata -o myfile.go data/
-
-Multiple input directories can be specified if necessary.
-
-	$ go-bindata dir1/... /path/to/dir2/... dir3
-
-
-The following paragraphs detail some of the command line options which can be 
-supplied to `go-bindata`. Refer to the `testdata/out` directory for various
-output examples from the assets in `testdata/in`. Each example uses different
-command line options.
-
-To ignore files, pass in regexes using -ignore, for example:
-
-    $ go-bindata -ignore=\\.gitignore data/...
+	go get -u github.com/tmthrgd/go-bindata
 
 ### Accessing an asset
 
