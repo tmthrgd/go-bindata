@@ -17,7 +17,12 @@ var bufPool = &sync.Pool{
 	},
 }
 
-func getSizedBuffer(rc io.ReadCloser) *bytes.Buffer {
+func (asset *binAsset) copy(w io.Writer) error {
+	rc, err := asset.Open()
+	if err != nil {
+		return err
+	}
+
 	var n int
 	if s, ok := rc.(interface {
 		Stat() (os.FileInfo, error)
@@ -32,5 +37,10 @@ func getSizedBuffer(rc io.ReadCloser) *bytes.Buffer {
 
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Grow(n + bytes.MinRead)
-	return buf
+
+	_, err = io.CopyBuffer(w, rc, buf.Bytes()[:buf.Cap()])
+
+	rc.Close()
+	bufPool.Put(buf)
+	return err
 }

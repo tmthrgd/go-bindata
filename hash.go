@@ -8,8 +8,6 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"errors"
-	"hash"
-	"io"
 	"path/filepath"
 	"strings"
 
@@ -17,27 +15,6 @@ import (
 )
 
 var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
-
-// hashFile hashes the asset and returns the resulting hash.
-func (asset *binAsset) hashFile(h hash.Hash) ([]byte, error) {
-	rc, err := asset.Open()
-	if err != nil {
-		return nil, err
-	}
-
-	buf := getSizedBuffer(rc)
-
-	_, err = io.CopyBuffer(h, rc, buf.Bytes()[:buf.Cap()])
-
-	rc.Close()
-	bufPool.Put(buf)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return h.Sum(nil), nil
-}
 
 // mangleName applies name hashing with a given format,
 // length and encoding. It replaces asset.Name with the

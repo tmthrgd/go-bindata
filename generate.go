@@ -50,9 +50,11 @@ func (f Files) Generate(w io.Writer, opts *GenerateOptions) error {
 				h.Reset()
 			}
 
-			if asset.Hash, err = asset.hashFile(h); err != nil {
+			if err = asset.copy(h); err != nil {
 				return err
 			}
+
+			asset.Hash = h.Sum(nil)
 		}
 
 		if opts.HashFormat > NameUnchanged {

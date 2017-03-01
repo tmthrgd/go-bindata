@@ -7,7 +7,6 @@ package bindata
 import (
 	"bytes"
 	"compress/flate"
-	"io"
 	"path"
 	"sync"
 	"text/template"
@@ -49,16 +48,7 @@ func init() {
 				WrapAt: wrapAt,
 			}
 
-			rc, err := asset.Open()
-			if err != nil {
-				return "", err
-			}
-
-			buf2 := getSizedBuffer(rc)
-
-			_, err = io.CopyBuffer(sw, rc, buf2.Bytes()[:buf2.Cap()])
-			rc.Close()
-			if err != nil {
+			if err := asset.copy(sw); err != nil {
 				return "", err
 			}
 
@@ -86,16 +76,7 @@ func init() {
 				return
 			}
 
-			rc, err := asset.Open()
-			if err != nil {
-				return
-			}
-
-			buf2 := getSizedBuffer(rc)
-
-			_, err = io.CopyBuffer(fw, rc, buf2.Bytes()[:buf2.Cap()])
-			rc.Close()
-			if err != nil {
+			if err = asset.copy(fw); err != nil {
 				return
 			}
 
@@ -108,8 +89,6 @@ func init() {
 
 			buf.Reset()
 			bufPool.Put(buf)
-			buf2.Reset()
-			bufPool.Put(buf2)
 			flatePool.Put(fw)
 			return
 		},
