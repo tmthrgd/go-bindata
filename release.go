@@ -50,7 +50,7 @@ func init() {
 			bufPool.Put(buf)
 			return out
 		},
-		"flate": func(data []byte, indent string, wrapAt int) (out string, err error) {
+		"flate": func(path, indent string, wrapAt int) (out string, err error) {
 			buf := bufPool.Get().(*bytes.Buffer)
 			buf.WriteString(`"`)
 
@@ -65,6 +65,11 @@ func init() {
 				fw.Reset(sw)
 			} else if fw, err = flate.NewWriter(sw, flate.BestCompression); err != nil {
 				return
+			}
+
+			data, err := ioutil.ReadFile(path)
+			if err != nil {
+				return "", err
 			}
 
 			if _, err = fw.Write(data); err != nil {
@@ -236,13 +241,12 @@ var _bindata = map[string]*asset{
 	{{- if gt $.HashFormat 1}}
 		orig: {{printf "%q" .OriginalName}},
 	{{- end}}
-		data: {{$data := read .Path -}}
-		{{- if $.Compress -}}
+		data: {{if $.Compress -}}
 			"" +
-			{{flate $data "\t\t\t" 24}}
+			{{flate .Path "\t\t\t" 24}}
 		{{- else -}}
 			bindataRead("" +
-			{{wrap $data "\t\t\t" 24 -}}
+			{{wrap (read .Path) "\t\t\t" 24 -}}
 			)
 		{{- end}},
 
