@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/tmthrgd/go-bindata/internal/identifier"
-	"golang.org/x/crypto/blake2b"
 )
 
 // HashFormat specifies which format to use when hashing names.
@@ -211,10 +210,6 @@ func (opts *GenerateOptions) validate() error {
 	case NoHash, NameUnchanged, DirHash, NameHashSuffix, HashWithExt:
 	default:
 		return errors.New("go-bindata: invalid HashFormat specified")
-	}
-
-	if len(opts.HashKey) > blake2b.Size {
-		return fmt.Errorf("go-bindata: HashKey cannot be longer than %d bytes", blake2b.Size)
 	}
 
 	if opts.Restore && !opts.AssetDir {
