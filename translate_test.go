@@ -59,6 +59,8 @@ var testCases = map[string]func(*GenerateOptions){
 		o.HashKey = []byte{0x00, 0x11, 0x22, 0x33}
 		o.HashFormat = DirHash
 	},
+	"asset-dir": func(o *GenerateOptions) { o.AssetDir = true },
+	"format":    func(o *GenerateOptions) { o.Format = true; o.AssetDir = true },
 }
 
 var testPaths = map[string]*FindFilesOptions{
