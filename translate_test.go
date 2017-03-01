@@ -62,13 +62,6 @@ var testCases = map[string]func(*GenerateOptions){
 	"asset-dir": func(o *GenerateOptions) { o.AssetDir = true },
 }
 
-var testPaths = map[string]*FindFilesOptions{
-	"testdata":               {Recursive: true},
-	"testdata/ab6.bin":       {Prefix: "testdata"},
-	"testdata/ogqS":          {Prefix: "testdata"},
-	"testdata/ogqS/qsDM.bin": {Prefix: "testdata/ogqS"},
-}
-
 var (
 	testFiles    Files
 	testFilesErr error
@@ -115,6 +108,11 @@ func TestMain(m *testing.M) {
 		}
 
 		testCases[fmt.Sprintf("random-#%d", i+1)] = func(o *GenerateOptions) { *o = *vo }
+	}
+
+	if testFilesErr = testStubFileSystem(); testFilesErr != nil {
+		os.Exit(m.Run())
+		return
 	}
 
 	paths := make([]string, 0, len(testPaths))
