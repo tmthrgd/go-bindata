@@ -18,10 +18,6 @@ func BenchmarkFindFiles(b *testing.B) {
 }
 
 func BenchmarkGenerate(b *testing.B) {
-	if testFilesErr != nil {
-		b.Fatal(testFilesErr)
-	}
-
 	for name, opts := range testCases {
 		name, opts := name, opts
 		b.Run(name, func(b *testing.B) {

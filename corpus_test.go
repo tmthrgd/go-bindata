@@ -23,10 +23,6 @@ func TestCorpus(t *testing.T) {
 		t.Skip("skipping test as -corpus flag not provided")
 	}
 
-	if testFilesErr != nil {
-		t.Fatal(testFilesErr)
-	}
-
 	perms, mode := os.O_RDONLY, os.FileMode(0)
 	if *gencorpus {
 		perms, mode = os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666

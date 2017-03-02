@@ -16,10 +16,6 @@ func TestFormatting(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
-	if testFilesErr != nil {
-		t.Fatal(testFilesErr)
-	}
-
 	for name, opts := range testCases {
 		name, opts := name, opts
 		t.Run(name, func(t *testing.T) {
