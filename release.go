@@ -138,7 +138,7 @@ func bindataRead(data string) []byte {
 
 type asset struct {
 	name string
-{{- if gt $.HashFormat 1}}
+{{- if and $.Hash $.HashFormat}}
 	orig string
 {{- end -}}
 {{- if $.Compress}}
@@ -153,7 +153,7 @@ type asset struct {
 {{- if and $.Metadata (not $.ModTime)}}
 	time time.Time
 {{- end -}}
-{{- if $.HashFormat}}
+{{- if $.Hash}}
 	hash []byte
 {{- end}}
 {{- if and $.Compress $.DecompressOnce}}
@@ -204,10 +204,10 @@ func (*asset) Sys() interface{} {
 	return nil
 }
 
-{{- if $.HashFormat}}
+{{- if $.Hash}}
 
 func (a *asset) OriginalName() string {
-{{- if gt $.HashFormat 1}}
+{{- if $.HashFormat}}
 	return a.orig
 {{- else}}
 	return a.name
@@ -230,7 +230,7 @@ type FileInfo interface {
 var _bindata = map[string]*asset{
 {{range $.Assets}}	{{printf "%q" .Name}}: &asset{
 		name: {{printf "%q" (name .Name)}},
-	{{- if gt $.HashFormat 1}}
+	{{- if and $.Hash $.HashFormat}}
 		orig: {{printf "%q" .File.Name}},
 	{{- end}}
 		data: {{if $.Compress -}}
@@ -263,7 +263,7 @@ var _bindata = map[string]*asset{
 		{{- end -}}
 	{{- end -}}
 
-	{{- if $.HashFormat}}
+	{{- if $.Hash}}
 	{{- if $unsafeRead}}
 		hash: bindataRead("" +
 	{{- else}}
@@ -320,7 +320,7 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 {{- end}}
 }
 
-{{- if gt $.HashFormat 1}}
+{{- if and $.Hash $.HashFormat}}
 
 {{format "hashnames" $}}
 

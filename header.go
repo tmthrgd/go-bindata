@@ -48,18 +48,19 @@ func init() {
 {{- if $.Restore -}}
 	//  restore: true
 {{end -}}
+{{- if $.Hash -}}
 {{- if $.HashFormat -}}
 	//  hash-format: {{$.HashFormat}}
+{{else -}}
+	//  hash-format: unchanged
 {{end -}}
-{{- if and (gt $.HashFormat 1) $.HashLength (ne $.HashLength 16) -}}
+{{- if and $.HashFormat $.HashLength (ne $.HashLength 16) -}}
 	//  hash-length: {{$.HashLength}}
 {{end -}}
-{{- if and (gt $.HashFormat 1) $.HashEncoding -}}
+{{- if and $.HashFormat $.HashEncoding -}}
 	//  hash-encoding: {{$.HashEncoding}}
 {{end -}}
-{{- if and $.HashFormat $.HashKey -}}
-	//  hash-key: <omitted>
-{{end -}}
+{{- end -}}
 // sources:
 {{range .Assets -}}
 	//  {{toslash (trimright .Path)}}

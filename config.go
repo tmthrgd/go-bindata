@@ -6,6 +6,7 @@ package bindata
 
 import (
 	"errors"
+	"hash"
 	"os"
 
 	"github.com/tmthrgd/go-bindata/internal/identifier"
@@ -15,11 +16,8 @@ import (
 type HashFormat int
 
 const (
-	// NoHash disables name hashing.
-	NoHash HashFormat = iota
-	// NameUnchanged generates the file hash but does not change
-	// the asset name.
-	NameUnchanged
+	// NameUnchanged leaves the file name unchanged.
+	NameUnchanged HashFormat = iota
 	// DirHash formats names like path/to/hash/name.ext.
 	DirHash
 	// NameHashSuffix formats names like path/to/name-hash.ext.
@@ -30,16 +28,14 @@ const (
 
 func (hf HashFormat) String() string {
 	switch hf {
-	case NoHash:
-		return ""
+	case NameUnchanged:
+		return "unchanged"
 	case DirHash:
 		return "dir"
 	case NameHashSuffix:
 		return "namesuffix"
 	case HashWithExt:
 		return "hashext"
-	case NameUnchanged:
-		return "unchanged"
 	default:
 		return "unknown"
 	}
@@ -172,15 +168,14 @@ type GenerateOptions struct {
 	// When nonzero, use this as unix timestamp for all files.
 	ModTime int64
 
+	// Hash is used to produce a hash of the file.
+	Hash hash.Hash
 	// Which of the given name hashing formats to use.
 	HashFormat HashFormat
 	// The length of the hash to use, defaults to 16 characters.
 	HashLength uint
 	// The encoding to use to encode the name hash.
 	HashEncoding HashEncoding
-	// The key to use to turn the BLAKE2B hashing into a MAC. Must be between
-	// zero and 64 bytes long.
-	HashKey []byte
 }
 
 // validate ensures the config has sane values.
@@ -202,14 +197,8 @@ func (opts *GenerateOptions) validate() error {
 		return errors.New("go-bindata: invalid mode specified")
 	}
 
-	switch opts.HashFormat {
-	case NoHash:
-	case NameUnchanged, DirHash, NameHashSuffix, HashWithExt:
-		if opts.Debug || opts.Dev {
-			return errors.New("go-bindata: HashFormat is not compatible with Debug and Dev")
-		}
-	default:
-		return errors.New("go-bindata: invalid HashFormat specified")
+	if opts.Hash != nil && (opts.Debug || opts.Dev) {
+		return errors.New("go-bindata: Hash is not compatible with Debug and Dev")
 	}
 
 	if opts.Restore && !opts.AssetDir {

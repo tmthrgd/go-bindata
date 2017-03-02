@@ -19,7 +19,7 @@ var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 // name for NoHash and NameUnchanged and returns the mangledName
 // otherwise.
 func (asset *binAsset) Name() string {
-	if asset.opts.HashFormat <= NameUnchanged {
+	if asset.Hash == nil || asset.opts.HashFormat == NameUnchanged {
 		return asset.File.Name()
 	} else if asset.mangledName != "" {
 		return asset.mangledName

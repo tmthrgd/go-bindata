@@ -10,9 +10,9 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
-	"testing/quick"
 
 	"github.com/tmthrgd/go-bindata/internal/identifier"
+	"golang.org/x/crypto/blake2b"
 )
 
 var testCases = map[string]func(*GenerateOptions){
@@ -39,20 +39,29 @@ var testCases = map[string]func(*GenerateOptions){
 		o.Compress = true
 		o.DecompressOnce = true
 	},
-	"hash-dir":       func(o *GenerateOptions) { o.HashFormat = DirHash },
-	"hash-suffix":    func(o *GenerateOptions) { o.HashFormat = NameHashSuffix },
-	"hash-hashext":   func(o *GenerateOptions) { o.HashFormat = HashWithExt },
-	"hash-unchanged": func(o *GenerateOptions) { o.HashFormat = NameUnchanged },
+	"hash-unchanged": func(o *GenerateOptions) {
+		o.Hash, _ = blake2b.New512(nil)
+	},
+	"hash-dir": func(o *GenerateOptions) {
+		o.Hash, _ = blake2b.New512(nil)
+		o.HashFormat = DirHash
+	},
+	"hash-suffix": func(o *GenerateOptions) {
+		o.Hash, _ = blake2b.New512(nil)
+		o.HashFormat = NameHashSuffix
+	},
+	"hash-hashext": func(o *GenerateOptions) {
+		o.Hash, _ = blake2b.New512(nil)
+		o.HashFormat = HashWithExt
+	},
 	"hash-enc-b32": func(o *GenerateOptions) {
+		o.Hash, _ = blake2b.New512(nil)
 		o.HashEncoding = Base32Hash
 		o.HashFormat = DirHash
 	},
 	"hash-enc-b64": func(o *GenerateOptions) {
+		o.Hash, _ = blake2b.New512(nil)
 		o.HashEncoding = Base64Hash
-		o.HashFormat = DirHash
-	},
-	"hash-key": func(o *GenerateOptions) {
-		o.HashKey = []byte{0x00, 0x11, 0x22, 0x33}
 		o.HashFormat = DirHash
 	},
 	"asset-dir": func(o *GenerateOptions) { o.AssetDir = true },
@@ -66,9 +75,9 @@ func setupTestCases() {
 	for i := uint(0); i < *randTestCases; i++ {
 		rand := rand.New(rand.NewSource(int64(i)))
 
-		v, ok := quick.Value(t, rand)
+		v, ok := sizedValue(t, rand, complexSize)
 		if !ok {
-			panic("quick.Value failed")
+			panic("sizedValue failed")
 		}
 
 		vo := v.Addr().Interface().(*GenerateOptions)
@@ -84,7 +93,7 @@ func setupTestCases() {
 		}
 
 		if vo.Debug || vo.Dev {
-			vo.HashFormat = NoHash
+			vo.Hash = nil
 		}
 
 		testCases[fmt.Sprintf("random-#%d", i+1)] = func(o *GenerateOptions) { *o = *vo }
