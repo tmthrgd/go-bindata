@@ -14,6 +14,7 @@ import (
 	"path"
 	"time"
 
+	chacha20rand "github.com/tmthrgd/go-rand"
 	"github.com/zach-klippenstein/goregen"
 )
 
@@ -32,7 +33,7 @@ func (s testStat) Sys() interface{}   { return nil }
 
 type testFile struct {
 	path string
-	seed int64
+	seed [chacha20rand.SeedSize]byte
 	size int64
 	time time.Time
 	mode os.FileMode
@@ -46,8 +47,12 @@ func (f *testFile) AbsolutePath() string {
 }
 
 func (f *testFile) Open() (io.ReadCloser, error) {
-	rand := rand.New(rand.NewSource(f.seed))
-	return ioutil.NopCloser(io.LimitReader(rand, f.size)), nil
+	r, err := chacha20rand.New(f.seed[:])
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.NopCloser(io.LimitReader(r, f.size)), nil
 }
 
 func (f *testFile) Stat() (os.FileInfo, error) {
@@ -87,13 +92,15 @@ func setupTestFiles() {
 			panic(err)
 		}
 
-		testFiles = append(testFiles, &testFile{
+		f := &testFile{
 			path: path.Join(dir, fg.Generate()),
-			seed: int64(i),
 			size: int64(rand.Intn(int(*maxFileSize))),
 			time: time.Unix(rand.Int63(), rand.Int63()),
 			mode: os.FileMode(rand.Intn(int(os.ModePerm))),
-		})
+		}
+		rand.Read(f.seed[:])
+
+		testFiles = append(testFiles, f)
 
 		switch mrand.Intn(5) {
 		case 0:
