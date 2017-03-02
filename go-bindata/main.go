@@ -110,10 +110,9 @@ func parseArgs() (genOpts *bindata.GenerateOptions, findOpts *bindata.FindFilesO
 	}
 
 	if output == "" {
-		cwd, err := os.Getwd()
+		var err error
+		output, err = filepath.Abs("bindata.go")
 		must(err)
-
-		output = filepath.Join(cwd, "bindata.go")
 	}
 
 	genOpts.MemCopy = !noMemCopy
