@@ -7,7 +7,7 @@ package bindata
 import (
 	"encoding/base32"
 	"encoding/base64"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/tmthrgd/go-hex"
@@ -46,17 +46,17 @@ func (asset *binAsset) Name() string {
 		enc = enc[:l]
 	}
 
-	dir, file := filepath.Split(asset.File.Name())
-	ext := filepath.Ext(file)
+	dir, file := path.Split(asset.File.Name())
+	ext := path.Ext(file)
 
 	switch asset.opts.HashFormat {
 	case DirHash:
-		asset.mangledName = filepath.Join(dir, enc, file)
+		asset.mangledName = path.Join(dir, enc, file)
 	case NameHashSuffix:
 		file = strings.TrimSuffix(file, ext)
-		asset.mangledName = filepath.Join(dir, file+"-"+enc+ext)
+		asset.mangledName = path.Join(dir, file+"-"+enc+ext)
 	case HashWithExt:
-		asset.mangledName = filepath.Join(dir, enc+ext)
+		asset.mangledName = path.Join(dir, enc+ext)
 	default:
 		panic("unreachable")
 	}
