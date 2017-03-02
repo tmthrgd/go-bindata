@@ -8,8 +8,7 @@ import "testing"
 
 func BenchmarkFindFiles(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		if _, err := FindFiles("testdata", &FindFilesOptions{
-			Prefix:    "testdata",
+		if _, err := FindFiles("", &FindFilesOptions{
 			Recursive: true,
 		}); err != nil {
 			b.Fatal(err)
