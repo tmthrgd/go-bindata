@@ -29,29 +29,43 @@ type fileInfo interface {
 	FileHash() []byte
 }
 
-type fileHandler struct {
-	asset      AssetAndInfo
-	compressed AssetAndInfo
-	etagLen    int
+// FileServer is a http.Handler that serves files
+// from the provided AssetAndInfo methods.
+//
+// It will serve files from Asset by default but
+// will try to serve files from Brotli if the
+// client supports brotli compression, or from Gzip
+// if client only supports Gzip.
+//
+// EtagLen optionally specifies the length of Etags
+// to generate, if the os.FileInfo returned by Asset
+// implements the FileHash() method. The Etag will be
+// a hexadecimal encoded string truncated to EtagLen.
+type FileServer struct {
+	Asset  AssetAndInfo
+	Brotli AssetAndInfo
+	Gzip   AssetAndInfo
+
+	EtagLen int
 }
 
 // New returns a new asset filesystem.
 func New(asset AssetAndInfo) http.Handler {
-	return &fileHandler{asset: asset}
+	return &FileServer{Asset: asset}
 }
 
 // NewWithETag returns a new asset filesystem that will
 // include an ETag derived from the assets FileHash() if
 // implemented.
 func NewWithETag(asset AssetAndInfo, etagLen int) http.Handler {
-	return NewCompressedWithETag(asset, nil, etagLen)
+	return &FileServer{Asset: asset, EtagLen: etagLen}
 }
 
 // NewCompressed returns a new asset filesystem that will
 // optionally serve precompressed .gz and .br resources from
 // compressed.
 func NewCompressed(asset, compressed AssetAndInfo) http.Handler {
-	return &fileHandler{asset: asset, compressed: compressed}
+	return NewCompressedWithETag(asset, compressed, 0)
 }
 
 // NewCompressedWithETag returns a new asset filesystem that
@@ -65,13 +79,23 @@ func NewCompressedWithETag(asset, compressed AssetAndInfo, etagLen int) http.Han
 		etagLen = maxETagLen
 	}
 
-	return &fileHandler{asset, compressed, etagLen}
+	return &FileServer{
+		Asset: asset,
+		Brotli: func(name string) (data []byte, info os.FileInfo, err error) {
+			return compressed(name + ".br")
+		},
+		Gzip: func(name string) (data []byte, info os.FileInfo, err error) {
+			return compressed(name + ".gz")
+		},
+
+		EtagLen: etagLen,
+	}
 }
 
-func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
 
-	data, info, err := fh.asset(name)
+	data, info, err := fs.Asset(name)
 	if err != nil {
 		code := toHTTPError(err)
 		http.Error(w, http.StatusText(code), code)
@@ -79,10 +103,10 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fi, ok := info.(fileInfo)
-	if ok && fh.etagLen != 0 {
+	if ok && fs.EtagLen != 0 {
 		hash := fi.FileHash()
 
-		l := fh.etagLen
+		l := fs.EtagLen
 		if l > 2*len(hash) {
 			l = 2 * len(hash)
 		}
@@ -95,14 +119,14 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Etag", string(etag[:2+l]))
 	}
 
-	if fh.compressed != nil {
+	if fs.Brotli != nil || fs.Gzip != nil {
 		if ok {
 			name = fi.OriginalName()
 		}
 
 		brotli, gzip := parseAcceptEncoding(r.Header.Get("Accept-Encoding"))
-		if (brotli && fh.serveCompressed(w, r, info, name+".br", "br", len(data))) ||
-			(gzip && fh.serveCompressed(w, r, info, name+".gz", "gzip", len(data))) {
+		if (brotli && fs.Brotli != nil && serveCompressed(w, r, info, fs.Brotli, name, "br", len(data))) ||
+			(gzip && fs.Gzip != nil && serveCompressed(w, r, info, fs.Gzip, name, "gzip", len(data))) {
 			return
 		}
 	}
@@ -110,8 +134,8 @@ func (fh *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
 }
 
-func (fh *fileHandler) serveCompressed(w http.ResponseWriter, r *http.Request, info os.FileInfo, name, enc string, size int) bool {
-	data, _, err := fh.compressed(name)
+func serveCompressed(w http.ResponseWriter, r *http.Request, info os.FileInfo, assetAndInfo AssetAndInfo, name, enc string, size int) bool {
+	data, _, err := assetAndInfo(name)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false
