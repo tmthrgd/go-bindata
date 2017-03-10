@@ -16,10 +16,7 @@ var flatePool sync.Pool
 
 func init() {
 	template.Must(template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
-		"name": func(name string) string {
-			_, name = path.Split(name)
-			return name
-		},
+		"base": path.Base,
 		"wrap": func(data []byte, indent string, wrapAt int) string {
 			buf := bufPool.Get().(*bytes.Buffer)
 			buf.WriteString(`"`)
@@ -229,7 +226,7 @@ type FileInfo interface {
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]*asset{
 {{range $.Assets}}	{{printf "%q" .Name}}: &asset{
-		name: {{printf "%q" (name .Name)}},
+		name: {{printf "%q" (base .Name)}},
 	{{- if and $.Hash $.HashFormat}}
 		orig: {{printf "%q" .File.Name}},
 	{{- end}}

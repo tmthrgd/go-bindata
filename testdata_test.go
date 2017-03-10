@@ -21,8 +21,7 @@ import (
 type testStat struct{ f *testFile }
 
 func (s testStat) Name() string {
-	_, name := path.Split(s.f.path)
-	return name
+	return path.Base(s.f.path)
 }
 
 func (s testStat) Size() int64        { return s.f.size }
