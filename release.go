@@ -151,7 +151,7 @@ type asset struct {
 	time time.Time
 {{- end -}}
 {{- if $.Hash}}
-	hash []byte
+	hash string
 {{- end}}
 {{- if and $.Compress $.DecompressOnce}}
 
@@ -212,7 +212,11 @@ func (a *asset) OriginalName() string {
 }
 
 func (a *asset) FileHash() []byte {
-	return a.hash
+{{- if $unsafeRead}}
+	return bindataRead(a.hash)
+{{- else}}
+	return []byte(a.hash)
+{{- end}}
 }
 
 type FileInfo interface {
@@ -256,13 +260,8 @@ var _bindata = map[string]*asset{
 	{{- end -}}
 
 	{{- if $.Hash}}
-	{{- if $unsafeRead}}
-		hash: bindataRead("" +
-	{{- else}}
-		hash: []byte("" +
-	{{- end}}
-			{{wrap .Hash "\t\t\t" 24 -}}
-		),
+		hash: "" +
+			{{wrap .Hash "\t\t\t" 24}},
 	{{- end}}
 	},
 {{end -}}
