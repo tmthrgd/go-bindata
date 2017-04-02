@@ -142,7 +142,7 @@ type asset struct {
 	data string
 	size int64
 {{- else}}
-	data []byte
+	data string
 {{- end -}}
 {{- if and $.Metadata (not $.Mode)}}
 	mode os.FileMode
@@ -234,13 +234,8 @@ var _bindata = map[string]*asset{
 			"" +
 			{{flate . "\t\t\t" 24}}
 		{{- else -}}
-		{{- if $unsafeRead -}}
-			bindataRead("" +
-		{{- else -}}
-			[]byte("" +
-		{{- end}}
+			"" +
 			{{read . "\t\t\t" 24 -}}
-			)
 		{{- end}},
 
 	{{- if or $.Metadata $.Compress -}}
@@ -312,8 +307,10 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 	}
 
 	return buf.Bytes(), a, nil
+{{- else if $unsafeRead}}
+	return bindataRead(a.data), a, nil
 {{- else}}
-	return a.data, a, nil
+	return []byte(a.data), a, nil
 {{- end}}
 }
 
