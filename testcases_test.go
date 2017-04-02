@@ -64,6 +64,10 @@ var testCases = map[string]func(*GenerateOptions){
 		o.HashEncoding = Base64Hash
 		o.HashFormat = DirHash
 	},
+	"hash-copy": func(o *GenerateOptions) {
+		o.MemCopy = true
+		o.Hash, _ = blake2b.New512(nil)
+	},
 	"asset-dir": func(o *GenerateOptions) { o.AssetDir = true },
 }
 
