@@ -26,14 +26,6 @@ func MustAsset(name string) []byte {
 	return a
 }
 
-// AssetInfo loads and returns the asset info for the given name.
-// It returns an error if the asset could not be found or
-// could not be loaded.
-func AssetInfo(name string) (os.FileInfo, error) {
-	_, info, err := AssetAndInfo(name)
-	return info, err
-}
-
 // AssetNames returns the names of the assets.
 func AssetNames() []string {
 	names := make([]string, 0, len(_bindata))

@@ -313,6 +313,18 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 {{- end}}
 }
 
+// AssetInfo loads and returns the asset info for the given name.
+// It returns an error if the asset could not be found or
+// could not be loaded.
+func AssetInfo(name string) (os.FileInfo, error) {
+	a, ok := _bindata[filepath.ToSlash(name)]
+	if !ok {
+		return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+	}
+
+	return a, nil
+}
+
 {{- if and $.Hash $.HashFormat}}
 
 {{format "hashnames" $}}

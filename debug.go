@@ -49,6 +49,22 @@ func AssetAndInfo(name string) ([]byte, os.FileInfo, error) {
 	return data, fi, nil
 }
 
+// AssetInfo loads and returns the asset info for the given name.
+// It returns an error if the asset could not be found or
+// could not be loaded.
+func AssetInfo(name string) (os.FileInfo, error) {
+	path, ok := _bindata[filepath.ToSlash(name)]
+	if !ok {
+		return nil, &os.PathError{Op: "open", Path: name, Err: os.ErrNotExist}
+	}
+
+{{- if $.Dev}}
+
+	path = filepath.Join(rootDir, path)
+{{- end}}
+	return os.Stat(path)
+}
+
 // _bindata is a table, mapping each file to its path.
 {{if $.Dev -}}
 	{{format "bindata-dev" $}}
