@@ -8,6 +8,7 @@ package httpasset
 
 import (
 	"bytes"
+	"mime"
 	"net/http"
 	"os"
 	"path"
@@ -103,6 +104,15 @@ func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h := w.Header()
+
+	if _, ok := h["Content-Type"]; !ok {
+		ctype := mime.TypeByExtension(path.Ext(name))
+		if ctype == "" {
+			ctype = http.DetectContentType(data)
+		}
+
+		h["Content-Type"] = []string{ctype}
+	}
 
 	fi, ok := info.(fileInfo)
 	if ok && fs.EtagLen != 0 {
