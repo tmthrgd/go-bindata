@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "IcXUfx7TDywsXrqwj1L5LXC6HMA=",
+			"path": "github.com/golang/gddo/httputil/header",
+			"revision": "bfa5ccfe9ca1864ebec392c0e9da1ae2d87475be",
+			"revisionTime": "2015-03-10T00:28:47Z"
+		}
+	],
+	"rootPath": "github.com/tmthrgd/go-bindata"
+}
