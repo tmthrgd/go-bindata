@@ -102,6 +102,8 @@ func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h := w.Header()
+
 	fi, ok := info.(fileInfo)
 	if ok && fs.EtagLen != 0 {
 		hash := fi.FileHash()
@@ -116,13 +118,15 @@ func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		hex.Encode(etag[1:], hash[:((l+1)&^1)/2])
 		etag[1+l] = '"'
 
-		w.Header().Set("Etag", string(etag[:2+l]))
+		h.Set("Etag", string(etag[:2+l]))
 	}
 
 	if fs.Brotli != nil || fs.Gzip != nil {
 		if ok {
 			name = fi.OriginalName()
 		}
+
+		h.Add("Vary", "Accept-Encoding")
 
 		var brotli, gzip bool
 
