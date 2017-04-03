@@ -118,7 +118,7 @@ func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		hex.Encode(etag[1:], hash[:((l+1)&^1)/2])
 		etag[1+l] = '"'
 
-		h.Set("Etag", string(etag[:2+l]))
+		h["Etag"] = []string{string(etag[:2+l])}
 	}
 
 	if fs.Brotli != nil || fs.Gzip != nil {
@@ -126,7 +126,7 @@ func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			name = fi.OriginalName()
 		}
 
-		h.Add("Vary", "Accept-Encoding")
+		h["Vary"] = append(h["Vary"], "Accept-Encoding")
 
 		var brotli, gzip bool
 
@@ -166,7 +166,7 @@ func serveCompressed(w http.ResponseWriter, r *http.Request, info os.FileInfo, a
 		return false
 	}
 
-	w.Header().Set("Content-Encoding", enc)
+	w.Header()["Content-Encoding"] = []string{enc}
 	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
 	return true
 }
