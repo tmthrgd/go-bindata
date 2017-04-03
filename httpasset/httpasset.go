@@ -12,8 +12,8 @@ import (
 	"os"
 	"path"
 	"strings"
-	"unicode"
 
+	"github.com/golang/gddo/httputil/header"
 	"github.com/tmthrgd/go-hex"
 )
 
@@ -124,7 +124,21 @@ func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			name = fi.OriginalName()
 		}
 
-		brotli, gzip := parseAcceptEncoding(r.Header.Get("Accept-Encoding"))
+		var brotli, gzip bool
+
+		for _, spec := range header.ParseAccept(r.Header, "Accept-Encoding") {
+			switch spec.Value {
+			case "br":
+				brotli = spec.Q > 0
+			case "gzip":
+				gzip = spec.Q > 0
+			}
+
+			if brotli && gzip {
+				break
+			}
+		}
+
 		if (brotli && fs.Brotli != nil && serveCompressed(w, r, info, fs.Brotli, name, "br", len(data))) ||
 			(gzip && fs.Gzip != nil && serveCompressed(w, r, info, fs.Gzip, name, "gzip", len(data))) {
 			return
@@ -151,37 +165,6 @@ func serveCompressed(w http.ResponseWriter, r *http.Request, info os.FileInfo, a
 	w.Header().Set("Content-Encoding", enc)
 	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
 	return true
-}
-
-func isFieldSeparator(r rune) bool {
-	return r == ';' || unicode.IsSpace(r)
-}
-
-func parseAcceptEncoding(header string) (brotli, gzip bool) {
-outer:
-	for _, value := range strings.Split(header, ",") {
-		fields := strings.FieldsFunc(value, isFieldSeparator)
-		if len(fields) == 0 {
-			continue
-		}
-
-		for _, field := range fields[1:] {
-			switch field {
-			case "q=0", "q=0.0", "q=0.00", "q=0.000",
-				"Q=0", "Q=0.0", "Q=0.00", "Q=0.000":
-				continue outer
-			}
-		}
-
-		switch strings.ToLower(fields[0]) {
-		case "br":
-			brotli = true
-		case "gzip":
-			gzip = true
-		}
-	}
-
-	return
 }
 
 // toHTTPError returns a non-specific HTTP error message and status code
