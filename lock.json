@@ -1,0 +1,80 @@
+{
+    "memo": "decb3392dc00135b3f451dcb0413b38cbd101d34010470c19712770e3fbf0b8c",
+    "projects": [
+        {
+            "name": "github.com/golang/gddo",
+            "branch": "master",
+            "revision": "acb24b1c7338f939722c1f56545a619161ad7c92",
+            "packages": [
+                "httputil/header"
+            ]
+        },
+        {
+            "name": "github.com/pmezard/go-difflib",
+            "version": "v1.0.0",
+            "revision": "792786c7400a136282c1664665ae0a8db921c6c2",
+            "packages": [
+                "difflib"
+            ]
+        },
+        {
+            "name": "github.com/tmthrgd/asm",
+            "branch": "master",
+            "revision": "da148a91f261dc0471d0c1c6aacf38c6e4d0eed0",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/tmthrgd/chacha20",
+            "branch": "master",
+            "revision": "ec7c12cafbdb24a67c798d8ff61942100b322c7a",
+            "packages": [
+                ".",
+                "internal/ref",
+                "internal/xor"
+            ]
+        },
+        {
+            "name": "github.com/tmthrgd/go-hex",
+            "branch": "master",
+            "revision": "0d230118f0c52138131205f7c92099e3f4ea0587",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/tmthrgd/go-rand",
+            "branch": "master",
+            "revision": "adbdce0207d23aa3aff6692f3bd8e3a279561d76",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/zach-klippenstein/goregen",
+            "branch": "master",
+            "revision": "795b5e3961ea1912fde60af417ad85e86acc0d6a",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/crypto",
+            "branch": "master",
+            "revision": "641ab6b32049cabca26c30bf27baaae445bf4175",
+            "packages": [
+                "blake2b"
+            ]
+        },
+        {
+            "name": "golang.org/x/tools",
+            "branch": "master",
+            "revision": "2946dd1f77e693e136d9ed202ba093bb4a3ea761",
+            "packages": [
+                "go/ast/astutil",
+                "imports"
+            ]
+        }
+    ]
+}
