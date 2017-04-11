@@ -40,7 +40,10 @@ func (asset *binAsset) copy(w io.Writer) error {
 
 	_, err = io.CopyBuffer(w, rc, buf.Bytes()[:buf.Cap()])
 
-	rc.Close()
+	if closeErr := rc.Close(); err == nil {
+		err = closeErr
+	}
+
 	bufPool.Put(buf)
 	return err
 }
