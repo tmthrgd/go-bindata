@@ -5,12 +5,11 @@
 package bindata
 
 import (
+	"crypto/sha512"
 	"hash"
 	"math/rand"
 	"reflect"
 	"testing/quick"
-
-	"golang.org/x/crypto/blake2b"
 )
 
 const complexSize = 50
@@ -66,8 +65,7 @@ func sizedValue(t reflect.Type, rand *rand.Rand, size int) (value reflect.Value,
 		for i := 0; i < n; i++ {
 			if concrete.Field(i).Type.Implements(reflect.TypeOf((*hash.Hash)(nil)).Elem()) {
 				if rand.Int()%3 == 0 {
-					h, _ := blake2b.New512(nil)
-					v.Field(i).Set(reflect.ValueOf(h))
+					v.Field(i).Set(reflect.ValueOf(sha512.New()))
 				}
 
 				continue

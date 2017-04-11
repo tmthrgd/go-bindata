@@ -5,6 +5,7 @@
 package bindata
 
 import (
+	"crypto/sha512"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -12,7 +13,6 @@ import (
 	"reflect"
 
 	"github.com/tmthrgd/go-bindata/internal/identifier"
-	"golang.org/x/crypto/blake2b"
 )
 
 var testCases = map[string]func(*GenerateOptions){
@@ -40,33 +40,33 @@ var testCases = map[string]func(*GenerateOptions){
 		o.DecompressOnce = true
 	},
 	"hash-unchanged": func(o *GenerateOptions) {
-		o.Hash, _ = blake2b.New512(nil)
+		o.Hash = sha512.New()
 	},
 	"hash-dir": func(o *GenerateOptions) {
-		o.Hash, _ = blake2b.New512(nil)
+		o.Hash = sha512.New()
 		o.HashFormat = DirHash
 	},
 	"hash-suffix": func(o *GenerateOptions) {
-		o.Hash, _ = blake2b.New512(nil)
+		o.Hash = sha512.New()
 		o.HashFormat = NameHashSuffix
 	},
 	"hash-hashext": func(o *GenerateOptions) {
-		o.Hash, _ = blake2b.New512(nil)
+		o.Hash = sha512.New()
 		o.HashFormat = HashWithExt
 	},
 	"hash-enc-b32": func(o *GenerateOptions) {
-		o.Hash, _ = blake2b.New512(nil)
+		o.Hash = sha512.New()
 		o.HashEncoding = Base32Hash
 		o.HashFormat = DirHash
 	},
 	"hash-enc-b64": func(o *GenerateOptions) {
-		o.Hash, _ = blake2b.New512(nil)
+		o.Hash = sha512.New()
 		o.HashEncoding = Base64Hash
 		o.HashFormat = DirHash
 	},
 	"hash-copy": func(o *GenerateOptions) {
 		o.MemCopy = true
-		o.Hash, _ = blake2b.New512(nil)
+		o.Hash = sha512.New()
 	},
 	"asset-dir": func(o *GenerateOptions) { o.AssetDir = true },
 }
