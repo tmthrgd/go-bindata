@@ -7,10 +7,9 @@ package bindata
 import (
 	"encoding/base32"
 	"encoding/base64"
+	"encoding/hex"
 	"path"
 	"strings"
-
-	"github.com/tmthrgd/go-hex"
 )
 
 var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")

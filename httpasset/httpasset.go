@@ -8,6 +8,7 @@ package httpasset
 
 import (
 	"bytes"
+	"encoding/hex"
 	"mime"
 	"net/http"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/golang/gddo/httputil/header"
-	"github.com/tmthrgd/go-hex"
 )
 
 const maxETagLen = 2 * 64
