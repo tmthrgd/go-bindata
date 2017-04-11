@@ -3,7 +3,17 @@ go:
     - 1.7
     - 1.8
     - tip
-script: go test -v -randtests 1000 ./...
+before_script:
+    - PKGS=$(go list ./... | grep -v /vendor/)
+    - GO_FILES=$(find . -iname '*.go' -not \( -path '*/vendor/*' -prune \))
+    - go get -v honnef.co/go/tools/cmd/{gosimple,staticcheck,unused}
+script:
+    - test -z $(gofmt -s -l $GO_FILES)
+    - go vet $PKGS
+    - gosimple $PKGS
+    - staticcheck $PKGS
+    - unused $PKGS
+    - go test -v -race -randtests 1000 ./...
 matrix:
     fast_finish: true
     allow_failures:
