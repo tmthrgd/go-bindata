@@ -170,9 +170,7 @@ and must follow the build tags syntax specified by the go tool.
 
 ## Testing
 
-To execute the test case, use the following:
+To execute the test case, run the following commands:
 
+	go get -t -u github.com/tmthrgd/go-bindata
 	go test github.com/tmthrgd/go-bindata
-
-The `testdata` directory was generated with a shell script created by Stack 
-Overflow user [sdaau](http://stackoverflow.com/a/19878455).
