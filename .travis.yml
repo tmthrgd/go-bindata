@@ -7,12 +7,14 @@ before_script:
     - PKGS=$(go list ./... | grep -v /vendor/)
     - GO_FILES=$(find . -iname '*.go' -not \( -path '*/vendor/*' -prune \))
     - go get -v honnef.co/go/tools/cmd/{gosimple,staticcheck,unused}
+    - go get -v github.com/client9/misspell/cmd/misspell
 script:
     - test -z $(gofmt -s -l $GO_FILES)
     - go vet $PKGS
     - gosimple $PKGS
     - staticcheck $PKGS
     - unused $PKGS
+    - misspell -locale UK $GO_FILES
     - go test -v -race -randtests 1000 ./...
 matrix:
     fast_finish: true
