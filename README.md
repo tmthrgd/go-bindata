@@ -174,3 +174,14 @@ To execute the test case, run the following commands:
 
 	go get -t -u github.com/tmthrgd/go-bindata
 	go test github.com/tmthrgd/go-bindata
+
+### Test corpus
+
+To generate the corpus-sha256sums needed for travis, run the following commands:
+
+	[ -d .testcorpus ] && rm -r .testcorpus
+	go test -run TestCorpus -randtests 50 -corpus .testcorpus -gencorpus .
+	cd .testcorpus && sha256sum * > ../corpus-sha256sums; cd ..
+
+This must be done every time the generated code changes, but can be skipped while working
+on a pull request until it is ready to merge.

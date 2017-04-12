@@ -16,6 +16,7 @@ script:
     - unused $PKGS
     - misspell -locale UK $GO_FILES README.md
     - go test -v -race -randtests 1000 ./...
+    - ./corpus_test_travis.sh
 matrix:
     fast_finish: true
     allow_failures:
