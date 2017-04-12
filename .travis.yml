@@ -14,7 +14,7 @@ script:
     - gosimple $PKGS
     - staticcheck $PKGS
     - unused $PKGS
-    - misspell -locale UK $GO_FILES
+    - misspell -locale UK $GO_FILES README.md
     - go test -v -race -randtests 1000 ./...
 matrix:
     fast_finish: true
