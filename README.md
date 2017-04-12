@@ -2,6 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/tmthrgd/go-bindata?status.svg)](https://godoc.org/github.com/tmthrgd/go-bindata)
 [![Build Status](https://travis-ci.org/tmthrgd/go-bindata.svg?branch=master)](https://travis-ci.org/tmthrgd/go-bindata)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tmthrgd/go-bindata)](https://goreportcard.com/report/github.com/tmthrgd/go-bindata)
 
 This is a rewrite of go-bindata that started life as fork of a fork. It
 was forked by [lestrrat](https://github.com/lestrrat/go-bindata) as
