@@ -153,8 +153,13 @@ func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if (brotli && fs.Brotli != nil && serveCompressed(w, r, info, fs.Brotli, name, "br", len(data))) ||
-			(gzip && fs.Gzip != nil && serveCompressed(w, r, info, fs.Gzip, name, "gzip", len(data))) {
+		brotli, gzip = brotli && fs.Brotli != nil, gzip && fs.Gzip != nil
+
+		if brotli && serveCompressed(w, r, info, fs.Brotli, name, "br", len(data)) {
+			return
+		}
+
+		if gzip && serveCompressed(w, r, info, fs.Gzip, name, "gzip", len(data)) {
 			return
 		}
 	}
