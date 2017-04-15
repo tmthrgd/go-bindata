@@ -29,6 +29,8 @@ func (asset *binAsset) Name() string {
 	case HexHash:
 		enc = hex.EncodeToString(asset.Hash)
 	case Base32Hash:
+		// TODO(tmthrgd): remove the call to strings.TrimSuffix
+		// once golang/go#19478 has been resolved.
 		enc = strings.TrimSuffix(base32Enc.EncodeToString(asset.Hash), "=")
 	case Base64Hash:
 		enc = base64.RawURLEncoding.EncodeToString(asset.Hash)
