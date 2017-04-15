@@ -142,10 +142,15 @@ func (fs *FileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		for _, spec := range header.ParseAccept(r.Header, "Accept-Encoding") {
 			switch spec.Value {
-			case "br":
+			case "br", "BR", "bR", "Br":
 				brotli = spec.Q > 0
-			case "gzip":
+			case "gzip", "GZIP":
 				gzip = spec.Q > 0
+			default:
+				if len(spec.Value) == len("gzip") &&
+					strings.ToLower(spec.Value) == "gzip" {
+					gzip = spec.Q > 0
+				}
 			}
 
 			if brotli && gzip {
