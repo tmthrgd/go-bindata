@@ -137,12 +137,10 @@ type asset struct {
 	name string
 {{- if and $.Hash $.HashFormat}}
 	orig string
-{{- end -}}
+{{- end}}
+	data string
 {{- if $.Compress}}
-	data string
 	size int64
-{{- else}}
-	data string
 {{- end -}}
 {{- if and $.Metadata (not $.Mode)}}
 	mode os.FileMode
