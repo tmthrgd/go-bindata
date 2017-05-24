@@ -22,7 +22,7 @@ func writeWrappedString(write func(io.Writer) error, indent string, wrapAt int) 
 		bufPool.Put(buf)
 	}()
 
-	buf.WriteString(`"`)
+	buf.WriteByte('"')
 
 	if err := write(&stringWriter{
 		Writer: buf,
@@ -32,7 +32,7 @@ func writeWrappedString(write func(io.Writer) error, indent string, wrapAt int) 
 		return "", err
 	}
 
-	buf.WriteString(`"`)
+	buf.WriteByte('"')
 	return buf.String(), nil
 }
 
