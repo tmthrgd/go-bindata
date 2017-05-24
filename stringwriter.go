@@ -6,6 +6,11 @@ package bindata
 
 import "io"
 
+var (
+	stringWriterLinePrefix = []byte("\" +\n")
+	stringWriterLineSuffix = []byte(`"`)
+)
+
 type stringWriter struct {
 	io.Writer
 	Indent string
@@ -14,9 +19,7 @@ type stringWriter struct {
 }
 
 func (w *stringWriter) Write(p []byte) (n int, err error) {
-	var buf [4]byte
-	buf[0] = '\\'
-	buf[1] = 'x'
+	buf := [4]byte{'\\', 'x', 0, 0}
 
 	for _, b := range p {
 		const lowerHex = "0123456789abcdef"
@@ -34,7 +37,7 @@ func (w *stringWriter) Write(p []byte) (n int, err error) {
 			continue
 		}
 
-		if _, err = w.Writer.Write([]byte("\" +\n")); err != nil {
+		if _, err = w.Writer.Write(stringWriterLinePrefix); err != nil {
 			return
 		}
 
@@ -42,7 +45,7 @@ func (w *stringWriter) Write(p []byte) (n int, err error) {
 			return
 		}
 
-		if _, err = w.Writer.Write([]byte(`"`)); err != nil {
+		if _, err = w.Writer.Write(stringWriterLineSuffix); err != nil {
 			return
 		}
 	}
