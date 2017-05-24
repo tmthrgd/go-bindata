@@ -7,6 +7,7 @@ package bindata
 import (
 	"bytes"
 	"compress/flate"
+	"io"
 	"path"
 	"sync"
 	"text/template"
@@ -14,80 +15,57 @@ import (
 
 var flatePool sync.Pool
 
+func writeWrappedString(write func(io.Writer) error, indent string, wrapAt int) (string, error) {
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.WriteString(`"`)
+
+	err := write(&stringWriter{
+		Writer: buf,
+		Indent: indent,
+		WrapAt: wrapAt,
+	})
+
+	buf.WriteString(`"`)
+	out := buf.String()
+
+	buf.Reset()
+	bufPool.Put(buf)
+
+	if err != nil {
+		return "", err
+	}
+
+	return out, nil
+}
+
 func init() {
 	template.Must(template.Must(baseTemplate.New("release").Funcs(template.FuncMap{
 		"base": path.Base,
-		"wrap": func(data []byte, indent string, wrapAt int) string {
-			buf := bufPool.Get().(*bytes.Buffer)
-			buf.WriteString(`"`)
-
-			sw := &stringWriter{
-				Writer: buf,
-				Indent: indent,
-				WrapAt: wrapAt,
-			}
-			sw.Write(data)
-
-			buf.WriteString(`"`)
-			out := buf.String()
-
-			buf.Reset()
-			bufPool.Put(buf)
-			return out
+		"wrap": func(data []byte, indent string, wrapAt int) (string, error) {
+			return writeWrappedString(func(w io.Writer) error {
+				_, err := w.Write(data)
+				return err
+			}, indent, wrapAt)
 		},
 		"read": func(asset binAsset, indent string, wrapAt int) (string, error) {
-			buf := bufPool.Get().(*bytes.Buffer)
-			buf.WriteString(`"`)
-
-			sw := &stringWriter{
-				Writer: buf,
-				Indent: indent,
-				WrapAt: wrapAt,
-			}
-
-			if err := asset.copy(sw); err != nil {
-				return "", err
-			}
-
-			buf.WriteString(`"`)
-			out := buf.String()
-
-			buf.Reset()
-			bufPool.Put(buf)
-			return out, nil
+			return writeWrappedString(asset.copy, indent, wrapAt)
 		},
 		"flate": func(asset binAsset, indent string, wrapAt int) (out string, err error) {
-			buf := bufPool.Get().(*bytes.Buffer)
-			buf.WriteString(`"`)
+			return writeWrappedString(func(w io.Writer) error {
+				fw, _ := flatePool.Get().(*flate.Writer)
+				if fw != nil {
+					fw.Reset(w)
+				} else if fw, err = flate.NewWriter(w, flate.BestCompression); err != nil {
+					return err
+				}
+				defer flatePool.Put(fw)
 
-			sw := &stringWriter{
-				Writer: buf,
-				Indent: indent,
-				WrapAt: wrapAt,
-			}
+				if err := asset.copy(fw); err != nil {
+					return err
+				}
 
-			fw, _ := flatePool.Get().(*flate.Writer)
-			if fw != nil {
-				fw.Reset(sw)
-			} else if fw, err = flate.NewWriter(sw, flate.BestCompression); err != nil {
-				return
-			}
-
-			if err = asset.copy(fw); err != nil {
-				return
-			}
-
-			if err = fw.Close(); err != nil {
-				return
-			}
-
-			buf.WriteString(`"`)
-			out = buf.String()
-
-			buf.Reset()
-			bufPool.Put(buf)
-			flatePool.Put(fw)
-			return
+				return fw.Close()
+			}, indent, wrapAt)
 		},
 		"format": formatTemplate,
 	}).Parse(`
