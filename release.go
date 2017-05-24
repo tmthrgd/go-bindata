@@ -17,25 +17,23 @@ var flatePool sync.Pool
 
 func writeWrappedString(write func(io.Writer) error, indent string, wrapAt int) (string, error) {
 	buf := bufPool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufPool.Put(buf)
+	}()
+
 	buf.WriteString(`"`)
 
-	err := write(&stringWriter{
+	if err := write(&stringWriter{
 		Writer: buf,
 		Indent: indent,
 		WrapAt: wrapAt,
-	})
-
-	buf.WriteString(`"`)
-	out := buf.String()
-
-	buf.Reset()
-	bufPool.Put(buf)
-
-	if err != nil {
+	}); err != nil {
 		return "", err
 	}
 
-	return out, nil
+	buf.WriteString(`"`)
+	return buf.String(), nil
 }
 
 func init() {
