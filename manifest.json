@@ -1,0 +1,10 @@
+{
+    "dependencies": {
+        "golang.org/x/crypto": {
+            "branch": "master"
+        },
+        "golang.org/x/tools": {
+            "branch": "master"
+        }
+    }
+}
