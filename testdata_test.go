@@ -77,7 +77,7 @@ func setupTestFiles() {
 
 	var dir string
 
-	testFiles = make(Files, 0, *numTestFiles)
+	testFiles = make(Files, 0, *numTestFiles+1)
 	for i := uint(0); i < *numTestFiles; i++ {
 		rand := rand.New(rand.NewSource(int64(i + 1)))
 
@@ -108,4 +108,11 @@ func setupTestFiles() {
 			dir = path.Join(dir, dg.Generate())
 		}
 	}
+
+	// This test file is designed to trigger the fix for
+	// https://github.com/tmthrgd/go-bindata/issues/8.
+	testFiles = append(testFiles, &testFile{
+		path: path.Join(dir, "issue-8.bin"),
+		size: 15 << 10,
+	})
 }
