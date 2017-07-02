@@ -7,8 +7,8 @@ package bindata
 import "io"
 
 var (
-	stringWriterLinePrefix = []byte("\" +\n")
-	stringWriterLineSuffix = []byte(`"`)
+	stringWriterLinePrefix = []byte(`"`)
+	stringWriterLineSuffix = []byte("\" +\n")
 )
 
 type stringWriter struct {
@@ -37,7 +37,7 @@ func (w *stringWriter) Write(p []byte) (n int, err error) {
 			continue
 		}
 
-		if _, err = w.Writer.Write(stringWriterLinePrefix); err != nil {
+		if _, err = w.Writer.Write(stringWriterLineSuffix); err != nil {
 			return
 		}
 
@@ -45,7 +45,7 @@ func (w *stringWriter) Write(p []byte) (n int, err error) {
 			return
 		}
 
-		if _, err = w.Writer.Write(stringWriterLineSuffix); err != nil {
+		if _, err = w.Writer.Write(stringWriterLinePrefix); err != nil {
 			return
 		}
 	}
