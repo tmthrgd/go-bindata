@@ -7,15 +7,16 @@ package bindata
 import "io"
 
 var (
-	stringWriterLinePrefix = []byte(`"`)
-	stringWriterLineSuffix = []byte("\" +\n")
+	stringWriterLinePrefix       = []byte(`"`)
+	stringWriterLineSuffix       = []byte("\" +\n")
+	stringWriterParensLineSuffix = []byte("\") + (\"\" +\n")
 )
 
 type stringWriter struct {
 	io.Writer
 	Indent string
 	WrapAt int
-	c      int
+	c, l   int
 }
 
 func (w *stringWriter) Write(p []byte) (n int, err error) {
@@ -37,7 +38,23 @@ func (w *stringWriter) Write(p []byte) (n int, err error) {
 			continue
 		}
 
-		if _, err = w.Writer.Write(stringWriterLineSuffix); err != nil {
+		w.l++
+
+		suffix := stringWriterLineSuffix
+		if w.l%500 == 0 {
+			// As per https://golang.org/issue/18078, the compiler has trouble
+			// compiling the concatenation of many strings, s0 + s1 + s2 + ... + sN,
+			// for large N. We insert redundant, explicit parentheses to work around
+			// that, lowering the N at any given step: (s0 + s1 + ... + s499) + (s500 +
+			// ... + s1999) + etc + (etc + ... + sN).
+			//
+			// This fix was taken from the fix applied to x/text in
+			// https://github.com/golang/text/commit/5c6cf4f9a2.
+
+			suffix = stringWriterParensLineSuffix
+		}
+
+		if _, err = w.Writer.Write(suffix); err != nil {
 			return
 		}
 

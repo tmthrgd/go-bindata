@@ -9,6 +9,7 @@ import (
 	"compress/flate"
 	"io"
 	"path"
+	"strings"
 	"sync"
 	"text/template"
 )
@@ -22,6 +23,8 @@ func writeWrappedString(write func(io.Writer) error, indent string, wrapAt int) 
 		bufPool.Put(buf)
 	}()
 
+	buf.WriteString("(\"\" +\n")
+	buf.WriteString(indent)
 	buf.WriteByte('"')
 
 	if err := write(&stringWriter{
@@ -32,8 +35,15 @@ func writeWrappedString(write func(io.Writer) error, indent string, wrapAt int) 
 		return "", err
 	}
 
-	buf.WriteByte('"')
-	return buf.String(), nil
+	buf.WriteString("\")")
+
+	s := buf.String()
+
+	if strings.IndexByte(s[1:], '(') == -1 {
+		s = s[1 : len(s)-1]
+	}
+
+	return s, nil
 }
 
 func init() {
@@ -209,11 +219,9 @@ var _bindata = map[string]*asset{
 		orig: {{printf "%q" .File.Name}},
 	{{- end}}
 		data: {{if $.Compress -}}
-			"" +
 			{{flate . "\t\t\t" 24}}
 		{{- else -}}
-			"" +
-			{{read . "\t\t\t" 24 -}}
+			{{read . "\t\t\t" 24}}
 		{{- end}},
 
 	{{- if or $.Metadata $.Compress -}}
@@ -234,8 +242,7 @@ var _bindata = map[string]*asset{
 	{{- end -}}
 
 	{{- if $.Hash}}
-		hash: "" +
-			{{wrap .Hash "\t\t\t" 24}},
+		hash: {{wrap .Hash "\t\t\t" 24}},
 	{{- end}}
 	},
 {{end -}}
