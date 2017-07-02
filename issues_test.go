@@ -60,6 +60,10 @@ func TestIssue8(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if err = f.Close(); err != nil {
+		t.Fatal(err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
