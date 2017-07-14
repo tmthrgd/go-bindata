@@ -35,7 +35,7 @@ compressed before being converted to a raw byte slice.
 
 To install the library, use the following:
 
-	go get -u github.com/tmthrgd/go-bindata
+	go get -u github.com/tmthrgd/go-bindata/...
 
 ### Accessing an asset
 
