@@ -71,7 +71,7 @@ func (he HashEncoding) String() string {
 // GenerateOptions defines a set of options to use
 // when generating the Go code.
 type GenerateOptions struct {
-	// Name of the package to use. Defaults to 'main'.
+	// Name of the package to use.
 	Package string
 
 	// Tags specify a set of optional build tags, which should be
