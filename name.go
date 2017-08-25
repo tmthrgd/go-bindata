@@ -5,14 +5,11 @@
 package bindata
 
 import (
-	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
 	"path"
 	"strings"
 )
-
-var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567")
 
 // Name applies name hashing if required. It returns the original
 // name for NoHash and NameUnchanged and returns the mangledName
@@ -29,9 +26,7 @@ func (asset *binAsset) Name() string {
 	case HexHash:
 		enc = hex.EncodeToString(asset.Hash)
 	case Base32Hash:
-		// TODO(tmthrgd): remove the call to strings.TrimSuffix
-		// once golang/go#19478 has been resolved.
-		enc = strings.TrimSuffix(base32Enc.EncodeToString(asset.Hash), "=")
+		enc = base32Enc.EncodeToString(asset.Hash)
 	case Base64Hash:
 		enc = base64.RawURLEncoding.EncodeToString(asset.Hash)
 	default:
