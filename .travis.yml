@@ -4,6 +4,8 @@ go:
     - 1.8
     - 1.9
     - tip
+before_install:
+    - export GOROOT=$(go env GOROOT)
 before_script:
     - PKGS=$(go list ./... | grep -v /vendor/)
     - GO_FILES=$(find . -iname '*.go' -not \( -path '*/vendor/*' -prune \))
