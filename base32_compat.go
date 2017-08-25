@@ -17,6 +17,6 @@ var base32Enc = base32EncodingCompat{
 
 type base32EncodingCompat struct{ *base32.Encoding }
 
-func (enc *base32EncodingCompat) EncodeToString(src []byte) string {
+func (enc base32EncodingCompat) EncodeToString(src []byte) string {
 	return strings.TrimSuffix(enc.Encoding.EncodeToString(src), "=")
 }
