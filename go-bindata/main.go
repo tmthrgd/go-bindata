@@ -30,8 +30,6 @@ func must(err error) {
 func main() {
 	genOpts, findOpts, output := parseArgs()
 
-	io.WriteString(os.Stderr, "The go-bindata command is deprecated, use github.com/tmthrgd/go-bindata instead.\n")
-
 	var all bindata.Files
 
 	for i := 0; i < flag.NArg(); i++ {

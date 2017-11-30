@@ -12,14 +12,16 @@ abandoned the project.
 Since that fork, go-bindata has been
 [largely rewritten](https://github.com/tmthrgd/go-bindata/compare/3adb6a8b66f07a123c3d44e8f6c7e78bbdd029c2...master)
 and has become a standalone project. While the generated code has changed,
-the generated API remains backwards compatible. The CLI also remains
-backwards compatible **but is considered deprecated** and will not be updated.
-The [package API](https://godoc.org/github.com/tmthrgd/go-bindata) is not
-backwards compatible.
+the generated API remains backwards compatible. The
+[package API](https://godoc.org/github.com/tmthrgd/go-bindata) is not
+backwards compatible. The CLI remains backwards compatible, but may not be
+as feature complete as the package API.
 
 The suggested way of using go-bindata is from a single .go file with an
 ignore build tag (`// +build ignore`) run with
-`//go:generate go run path/to/generate.go`.
+`//go:generate go run path/to/generate.go`. (See
+[issue #2](https://github.com/tmthrgd/go-bindata/issues/2#issuecomment-290957538)
+for reference).
 
 *Nota bene*: Most of the README that follows has not been updated to match
 the changes made since rewriting go-bindata and likely does not accurately
