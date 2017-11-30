@@ -18,6 +18,11 @@ var printerConfig = printer.Config{
 
 func formatTemplate(name string, data interface{}) (string, error) {
 	buf := bufPool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufPool.Put(buf)
+	}()
+
 	buf.WriteString("package main;")
 
 	if err := baseTemplate.ExecuteTemplate(buf, name, data); err != nil {
@@ -38,7 +43,5 @@ func formatTemplate(name string, data interface{}) (string, error) {
 	}
 
 	out := string(bytes.TrimSpace(buf.Bytes()[len("package main\n"):]))
-	buf.Reset()
-	bufPool.Put(buf)
 	return out, nil
 }
