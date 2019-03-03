@@ -5,11 +5,14 @@
 package bindata
 
 import (
+	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
 	"path"
 	"strings"
 )
+
+var base32Enc = base32.NewEncoding("abcdefghijklmnopqrstuvwxyz234567").WithPadding(base32.NoPadding)
 
 // Name applies name hashing if required. It returns the original
 // name for NoHash and NameUnchanged and returns the mangledName
